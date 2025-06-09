@@ -1,0 +1,16 @@
+services:
+  db:
+    image: postgres:latest
+    container_name: studhunter
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: studhunter
+    ports:
+      - "5433:5432"
+    volumes:
+      - studhunter-data:/var/lib/postgresql/data
+    restart: unless-stopped
+
+volumes:
+  studhunter-data:
