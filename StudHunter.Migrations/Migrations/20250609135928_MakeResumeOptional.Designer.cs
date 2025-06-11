@@ -2,6 +2,7 @@
 using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 using StudHunter.DB.Postgres;
@@ -11,9 +12,11 @@ using StudHunter.DB.Postgres;
 namespace StudHunter.Migrations.Migrations
 {
     [DbContext(typeof(StudHunterDbContext))]
-    partial class StudHunterDbContextModelSnapshot : ModelSnapshot
+    [Migration("20250609135928_MakeResumeOptional")]
+    partial class MakeResumeOptional
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -361,8 +364,6 @@ namespace StudHunter.Migrations.Migrations
                         .HasColumnType("UUID");
 
                     b.HasKey("Id");
-
-                    b.HasIndex("SenderId");
 
                     b.HasIndex("StudentId");
 
@@ -780,12 +781,6 @@ namespace StudHunter.Migrations.Migrations
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
-                    b.HasOne("StudHunter.DB.Postgres.Models.User", "Sender")
-                        .WithMany()
-                        .HasForeignKey("SenderId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
                     b.HasOne("StudHunter.DB.Postgres.Models.Student", "Student")
                         .WithMany("Messages")
                         .HasForeignKey("StudentId")
@@ -793,8 +788,6 @@ namespace StudHunter.Migrations.Migrations
                         .IsRequired();
 
                     b.Navigation("Employer");
-
-                    b.Navigation("Sender");
 
                     b.Navigation("Student");
                 });

@@ -28,6 +28,11 @@ public class MessageConfiguration : IEntityTypeConfiguration<Message>
                .HasColumnType("TIMESTAMP")
                .HasDefaultValueSql("CURRENT_TIMESTAMP");
 
+        builder.HasOne(m => m.Sender)
+               .WithMany()
+               .HasForeignKey(m => m.SenderId)
+               .IsRequired();
+
         builder.HasIndex(m => new { m.EmployerId, m.StudentId });
     }
 }

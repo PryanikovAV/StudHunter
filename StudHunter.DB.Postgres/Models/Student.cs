@@ -34,7 +34,7 @@ public class Student : User
 
     public virtual StudentStatus Status { get; set; } = null!;    
     public virtual StudyPlan StudyPlan { get; set; } = null!;
-    public virtual Resume Resume { get; set; } = null!;
+    public virtual Resume? Resume { get; set; }
     public virtual ICollection<Message> Messages { get; set; } = new List<Message>();
     
     public enum StudentGender   

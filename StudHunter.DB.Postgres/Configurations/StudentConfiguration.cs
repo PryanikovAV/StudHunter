@@ -47,7 +47,6 @@ public class StudentConfiguration : IEntityTypeConfiguration<Student>
                .IsRequired();
 
         builder.HasOne(s => s.Resume)
-               .WithOne(r => r.Student)
-               .IsRequired();
+               .WithOne(r => r.Student);
     }
 }

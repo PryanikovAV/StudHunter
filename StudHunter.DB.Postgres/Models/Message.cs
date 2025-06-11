@@ -23,4 +23,5 @@ public class Message
 
     public virtual Employer Employer { get; set; } = null!;
     public virtual Student Student { get; set; } = null!;
+    public virtual User Sender { get; set; } = null!;
 }
