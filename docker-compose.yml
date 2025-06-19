@@ -1,7 +1,7 @@
 services:
-  db:
+  postgres:
     image: postgres:latest
-    container_name: studhunter
+    container_name: studhunter-postgres
     environment:
       POSTGRES_USER: postgres
       POSTGRES_PASSWORD: postgres
@@ -11,6 +11,23 @@ services:
     volumes:
       - studhunter-data:/var/lib/postgresql/data
     restart: unless-stopped
-
+    networks:
+      - studhunter_default
+  studhunter-api:
+    build:
+      context: .
+      dockerfile: StudHunter.API/Dockerfile
+    container_name: studhunter-api
+    ports:
+      - "8080:8080"
+    environment:
+      - ASPNETCORE_ENVIRONMENT=Docker
+      - ConnectionStrings__DefaultConnection=Host=postgres;Port=5432;Database=studhunter;Username=postgres;Password=postgres
+    depends_on:
+      - postgres
+    networks:
+      - studhunter_default
 volumes:
   studhunter-data:
+networks:
+  studhunter_default:

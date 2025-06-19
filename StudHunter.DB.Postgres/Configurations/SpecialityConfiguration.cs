@@ -13,10 +13,14 @@ public class SpecialityConfiguration : IEntityTypeConfiguration<Speciality>
                .HasDefaultValueSql("gen_random_uuid()");
         
         builder.Property(s => s.Name)
-               .HasColumnType("VARCHAR(255)");
+               .HasColumnType("VARCHAR(255)")
+               .HasMaxLength(255)
+               .IsRequired();
 
         builder.Property(s => s.Description)
-               .HasColumnType("TEXT");
+               .HasColumnType("TEXT")
+               .HasMaxLength(1000)
+               .IsRequired(false);
 
         builder.HasIndex(s => s.Name)
                .IsUnique();

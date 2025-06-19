@@ -13,21 +13,28 @@ public class ResumeConfiguration : IEntityTypeConfiguration<Resume>
                .HasDefaultValueSql("gen_random_uuid()");
 
         builder.Property(r => r.StudentId)
-               .HasColumnType("UUID");
+               .HasColumnType("UUID")
+               .IsRequired();
 
         builder.Property(r => r.Title)
-               .HasColumnType("VARCHAR(255)");
+               .HasColumnType("VARCHAR(255)")
+               .HasMaxLength(255)
+               .IsRequired();
 
         builder.Property(r => r.Description)
-               .HasColumnType("TEXT");
+               .HasColumnType("TEXT")
+               .HasMaxLength(2500)
+               .IsRequired(false);
 
         builder.Property(r => r.CreatedAt)
                .HasColumnType("TIMESTAMP")
-               .HasDefaultValueSql("CURRENT_TIMESTAMP");
+               .HasDefaultValueSql("CURRENT_TIMESTAMP")
+               .IsRequired();
 
         builder.Property(r => r.UpdatedAt)
                .HasColumnType("TIMESTAMP")
-               .HasDefaultValueSql("CURRENT_TIMESTAMP");
+               .HasDefaultValueSql("CURRENT_TIMESTAMP")
+               .IsRequired();
 
         builder.HasOne(r => r.Student)
                .WithOne(s => s.Resume)
@@ -36,15 +43,17 @@ public class ResumeConfiguration : IEntityTypeConfiguration<Resume>
 
         builder.HasMany(r => r.Favorites)
                .WithOne(f  => f.Resume)
-               .HasForeignKey(f => f.TargetId)
-               .IsRequired(false);  // because TargetId can refer to Resume or Vacancy 
+               .HasForeignKey(f => f.ResumeId)
+               .IsRequired(false);
 
         builder.HasMany(r => r.Invitations)
                .WithOne(i => i.Resume)
-               .HasForeignKey(r => r.ResumeId)
+               .HasForeignKey(i => i.ResumeId)
                .IsRequired(false);
 
         builder.HasIndex(r => r.StudentId)
                .IsUnique();
+
+        builder.HasIndex(r => r.CreatedAt);
     }
 }

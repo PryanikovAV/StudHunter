@@ -13,10 +13,14 @@ public class FacultyConfiguration: IEntityTypeConfiguration<Faculty>
                .HasDefaultValueSql("gen_random_uuid()");
 
         builder.Property(f => f.Name)
-               .HasColumnType("VARCHAR(255)");
+               .HasColumnType("VARCHAR(255)")
+               .HasMaxLength(255)
+               .IsRequired();
 
         builder.Property(f => f.Description)
-               .HasColumnType("TEXT");
+               .HasColumnType("TEXT")
+               .HasMaxLength(1000)
+               .IsRequired(false);
 
         builder.HasIndex(f => f.Name)
                .IsUnique();

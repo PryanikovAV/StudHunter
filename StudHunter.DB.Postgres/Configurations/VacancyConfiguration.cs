@@ -13,27 +13,38 @@ public class VacancyConfiguration : IEntityTypeConfiguration<Vacancy>
                .HasDefaultValueSql("gen_random_uuid()");
 
         builder.Property(vc => vc.EmployerId)
-               .HasColumnType("UUID");
+               .HasColumnType("UUID")
+               .IsRequired();
 
         builder.Property(vc => vc.Title)
-               .HasColumnType("VARCHAR(255)");
+               .HasColumnType("VARCHAR(255)")
+               .HasMaxLength(255)
+               .IsRequired();
 
         builder.Property(vc => vc.Description)
-               .HasColumnType("TEXT");
+               .HasColumnType("TEXT")
+               .HasMaxLength(2500)
+               .IsRequired(false);
 
         builder.Property(vc => vc.Salary)
-               .HasColumnType("DECIMAL(10, 2)");
+               .HasColumnType("DECIMAL(10, 2)")
+               .HasPrecision(10, 2)
+               .HasAnnotation("CheckConstraint", "Salary >= 0 AND Salary <= 1000000")
+               .IsRequired(false);
 
         builder.Property(vc => vc.CreatedAt)
                .HasColumnType("TIMESTAMP")
-               .HasDefaultValueSql("CURRENT_TIMESTAMP");
+               .HasDefaultValueSql("CURRENT_TIMESTAMP")
+               .IsRequired();
 
         builder.Property(vc => vc.UpdatedAt)
                .HasColumnType("TIMESTAMP")
-               .HasDefaultValueSql("CURRENT_TIMESTAMP");
+               .HasDefaultValueSql("CURRENT_TIMESTAMP")
+               .IsRequired();
 
         builder.Property(vc => vc.Type)
-               .HasColumnType("INTEGER");
+               .HasColumnType("INTEGER")
+               .IsRequired();
 
         builder.HasMany(vc => vc.Courses)
                .WithOne(vc => vc.Vacancy)
@@ -42,12 +53,14 @@ public class VacancyConfiguration : IEntityTypeConfiguration<Vacancy>
 
         builder.HasMany(v => v.Favorites)
                .WithOne(f => f.Vacancy)
-               .HasForeignKey(f => f.TargetId)
+               .HasForeignKey(f => f.VacancyId)
                .IsRequired(false);
 
         builder.HasMany(v => v.Invitations)
                .WithOne(i => i.Vacancy)
                .HasForeignKey(i => i.VacancyId)
                .IsRequired(false);
+
+        builder.HasIndex(vc => vc.CreatedAt);
     }
 }

@@ -7,26 +7,36 @@ public class UserConfiguration : IEntityTypeConfiguration<User>
 {
     public void Configure(EntityTypeBuilder<User> builder)
     {
-        builder.HasKey(uc => uc.Id);
+        builder.HasKey(u => u.Id);
 
-        builder.Property(uc => uc.Id)
-               .HasDefaultValueSql("gen_random_uuid()");
+        builder.Property(u => u.Id)
+               .HasColumnType("UUID")
+               .HasDefaultValueSql("gen_random_uuid()")
+               .IsRequired();
 
-        builder.HasIndex(uc => uc.Email)
-               .IsUnique();
+        builder.Property(u => u.Email)
+               .HasMaxLength(255)
+               .HasColumnType("VARCHAR(255)")
+               .IsRequired();
 
-        builder.Property(uc => uc.Email)
-               .HasColumnType("VARCHAR(255)");
+        builder.Property(u => u.ContactEmail)
+               .HasColumnType("VARCHAR(255)")
+               .HasMaxLength(255)
+               .IsRequired(false);
 
-        builder.Property(uc => uc.PasswordHash)
-               .HasColumnType("VARCHAR(255)");
+        builder.Property(u => u.ContactPhone)
+               .HasColumnType("VARCHAR(20)")
+               .HasMaxLength(20)
+               .IsRequired(false);
 
-        builder.Property(uc => uc.CreatedAt)
+        builder.Property(u => u.PasswordHash)
+               .HasColumnType("VARCHAR(255)")
+               .IsRequired();
+
+        builder.Property(u => u.CreatedAt)
                .HasColumnType("TIMESTAMP")
-               .HasDefaultValueSql("CURRENT_TIMESTAMP");
-        
-        builder.Property(uc => uc.Role)
-               .HasColumnType("INTEGER");
+               .HasDefaultValueSql("CURRENT_TIMESTAMP")
+               .IsRequired();
 
         builder.HasMany(u => u.SentInvitations)
                .WithOne(i => i.Sender)
@@ -37,5 +47,18 @@ public class UserConfiguration : IEntityTypeConfiguration<User>
                .WithOne(i => i.Receiver)
                .HasForeignKey(i => i.ReceiverId)
                .IsRequired();
+
+        builder.HasMany(u => u.SentMessages)
+               .WithOne(m => m.Sender)
+               .HasForeignKey(m => m.SenderId)
+               .IsRequired();
+
+        builder.HasMany(u => u.ReceivedMessages)
+               .WithOne(m => m.Receiver)
+               .HasForeignKey(m => m.ReceiverId)
+               .IsRequired();
+
+        builder.HasIndex(u => u.Email)
+               .IsUnique();
     }
 }

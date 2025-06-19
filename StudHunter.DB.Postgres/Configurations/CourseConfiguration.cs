@@ -7,26 +7,30 @@ public class CourseConfiguration : IEntityTypeConfiguration<Course>
 {
     public void Configure(EntityTypeBuilder<Course> builder)
     {
-        builder.HasKey(cc =>  cc.Id);
+        builder.HasKey(c => c.Id);
 
-        builder.Property(cc => cc.Id)
+        builder.Property(c => c.Id)
                .HasDefaultValueSql("gen_random_uuid()");
 
-        builder.Property(cc => cc.Name)
-               .HasColumnType("VARCHAR(255)");
+        builder.Property(c => c.Name)
+               .HasColumnType("VARCHAR(255)")
+               .HasMaxLength(255)
+               .IsRequired();
 
-        builder.Property(cc => cc.Description)
-               .HasColumnType("TEXT");
+        builder.Property(c => c.Description)
+               .HasColumnType("TEXT")
+               .HasMaxLength(1000)
+               .IsRequired(false);
 
-        builder.HasIndex(cc => cc.Name)
+        builder.HasIndex(c => c.Name)
                .IsUnique();
 
-        builder.HasMany(cc => cc.VacancyCourses)
+        builder.HasMany(c => c.VacancyCourses)
                .WithOne(vc => vc.Course)
                .HasForeignKey(vc => vc.CourseId)
                .IsRequired();
 
-        builder.HasMany(cc => cc.StudyPlanCourses)
+        builder.HasMany(c => c.StudyPlanCourses)
                .WithOne(spc => spc.Course)
                .HasForeignKey(spc => spc.CourseId)
                .IsRequired();

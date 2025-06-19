@@ -1,6 +1,5 @@
 ﻿using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
-using StudHunter.DB.Postgres.Models;
 namespace StudHunter.DB.Postgres.Configurations;
 
 public class InvitationConfiguration : IEntityTypeConfiguration<Invitation>
@@ -13,33 +12,46 @@ public class InvitationConfiguration : IEntityTypeConfiguration<Invitation>
                .HasDefaultValueSql("gen_random_uuid()");
 
         builder.Property(i => i.SenderId)
-               .HasColumnType("UUID");
+               .HasColumnType("UUID")
+               .IsRequired();
 
         builder.Property(i => i.ReceiverId)
-               .HasColumnType("UUID");
+               .HasColumnType("UUID")
+               .IsRequired();
 
         builder.Property(i => i.VacancyId)
-               .HasColumnType("UUID");
+               .HasColumnType("UUID")
+               .HasColumnName("VacancyId")
+               .IsRequired(false);
 
         builder.Property(i => i.ResumeId)
-               .HasColumnType("UUID");
+               .HasColumnType("UUID")
+               .HasColumnName("ResumeId")
+               .IsRequired(false);
 
         builder.Property(i => i.Type)
-               .HasColumnType("INTEGER");
+               .HasColumnType("INTEGER")
+               .IsRequired();
 
         builder.Property(i => i.Message)
-               .HasColumnType("TEXT");
+               .HasColumnType("TEXT")
+               .HasMaxLength(1000)
+               .IsRequired(false);
 
         builder.Property(i => i.Status)
-               .HasColumnType("INTEGER");
+               .HasColumnType("INTEGER")
+               .HasDefaultValue(Invitation.InvitationStatus.Sent)
+               .IsRequired();
 
         builder.Property(i => i.CreatedAt)
                .HasColumnType("TIMESTAMP")
-               .HasDefaultValueSql("CURRENT_TIMESTAMP");
+               .HasDefaultValueSql("CURRENT_TIMESTAMP")
+               .IsRequired();
 
         builder.Property(i => i.UpdatedAt)
                .HasColumnType("TIMESTAMP")
-               .HasDefaultValueSql("CURRENT_TIMESTAMP");
+               .HasDefaultValueSql("CURRENT_TIMESTAMP")
+               .IsRequired();
 
         builder.HasOne(i => i.Sender)
                .WithMany(u => u.SentInvitations)
@@ -65,8 +77,18 @@ public class InvitationConfiguration : IEntityTypeConfiguration<Invitation>
         {
             i.SenderId,
             i.ReceiverId,
-            i.CreatedAt
+            i.VacancyId
         })
-            .IsUnique();
+            .IsUnique()
+            .HasFilter("\"VacancyId\" is not NULL");
+
+        builder.HasIndex(i => new
+        {
+            i.SenderId,
+            i.ReceiverId,
+            i.ResumeId
+        })
+            .IsUnique()
+            .HasFilter("\"ResumeId\" IS NOT NULL");
     }
 }

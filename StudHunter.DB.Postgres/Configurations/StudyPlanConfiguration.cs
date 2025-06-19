@@ -13,19 +13,29 @@ public class StudyPlanConfiguration : IEntityTypeConfiguration<StudyPlan>
                .HasDefaultValueSql("gen_random_uuid()");
 
         builder.Property(sp => sp.StudentId)
-               .HasColumnType("UUID");
+               .HasColumnType("UUID")
+               .IsRequired();
 
+        builder.Property(s => s.CourseNumber)
+               .HasColumnType("INTEGER")
+               .HasDefaultValue(1)
+               .IsRequired();
+       
         builder.Property(sp => sp.FacultyId)
-               .HasColumnType("UUID");
+               .HasColumnType("UUID")
+               .IsRequired();
 
         builder.Property(sp => sp.SpecialityId)
-               .HasColumnType("UUID");
+               .HasColumnType("UUID")
+               .IsRequired();
 
         builder.Property(sp => sp.StudyForm)
-               .HasColumnType("INTEGER");
+               .HasColumnType("INTEGER")
+               .IsRequired();
 
         builder.Property(sp => sp.BeginYear)
-               .HasColumnType("DATE");
+               .HasColumnType("DATE")
+               .IsRequired();
 
         builder.HasOne(sp => sp.Student)
                .WithOne(s => s.StudyPlan)

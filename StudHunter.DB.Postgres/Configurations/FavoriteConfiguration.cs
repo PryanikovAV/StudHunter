@@ -13,17 +13,23 @@ public class FavoriteConfiguration : IEntityTypeConfiguration<Favorite>
                .HasDefaultValueSql("gen_random_uuid()");
 
         builder.Property(f => f.UserId)
-               .HasColumnType("UUID");
+               .HasColumnType("UUID")
+               .IsRequired();
 
-        builder.Property(f => f.TargetId)
-               .HasColumnType("UUID");
+        builder.Property(f => f.VacancyId)
+               .HasColumnType("UUID")
+               .HasColumnName("VacancyId")
+               .IsRequired(false);
 
-        builder.Property(f => f.Target)
-               .HasColumnType("INTEGER");
+        builder.Property(f => f.ResumeId)
+               .HasColumnType("UUID")
+               .HasColumnName("ResumeId")
+               .IsRequired(false);
 
         builder.Property(f => f.AddedAt)
                .HasColumnType("TIMESTAMP")
-               .HasDefaultValueSql("CURRENT_TIMESTAMP");
+               .HasDefaultValueSql("CURRENT_TIMESTAMP")
+               .IsRequired();
 
         builder.HasOne(f => f.User)
                .WithMany(u => u.Favorites)
@@ -32,15 +38,22 @@ public class FavoriteConfiguration : IEntityTypeConfiguration<Favorite>
 
         builder.HasOne(f => f.Vacancy)
                .WithMany(v => v.Favorites)
-               .HasForeignKey(f => f.TargetId)
+               .HasForeignKey(f => f.VacancyId)
                .IsRequired(false);
 
         builder.HasOne(f => f.Resume)
                .WithMany(r => r.Favorites)
-               .HasForeignKey(f => f.TargetId)
+               .HasForeignKey(f => f.ResumeId)
                .IsRequired(false);
 
-        builder.HasIndex(f => new { f.UserId, f.TargetId, f.Target })
-               .IsUnique();
+        builder.HasIndex(f => f.ResumeId);
+
+        builder.HasIndex(f => new { f.UserId, f.ResumeId })
+               .IsUnique()
+               .HasFilter("\"ResumeId\" IS NOT NULL");
+
+        builder.HasIndex(f => new { f.UserId, f.VacancyId })
+               .IsUnique()
+               .HasFilter("\"VacancyId\" IS NOT NULL");
     }
 }

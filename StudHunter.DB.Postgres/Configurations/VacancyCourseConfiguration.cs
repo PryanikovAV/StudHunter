@@ -7,13 +7,17 @@ public class VacancyCourseConfiguration : IEntityTypeConfiguration<VacancyCourse
 {
     public void Configure(EntityTypeBuilder<VacancyCourse> builder)
     {
-        builder.HasKey(vc => new { vc.CourseId, vc.VacancyId });
-        
-        builder.Property(vc => vc.CourseId)
-               .HasColumnType("UUID");
+        builder.HasKey(vc => new { vc.CourseId,
+                                   vc.VacancyId });
 
         builder.Property(vc => vc.VacancyId)
-               .HasColumnType("UUID");
+               .HasColumnType("UUID")
+               .HasColumnName("VacancyId")
+               .IsRequired();
+
+        builder.Property(vc => vc.CourseId)
+               .HasColumnType("UUID")
+               .IsRequired();
 
         builder.HasOne(vc => vc.Course)
                .WithMany(c => c.VacancyCourses)
@@ -22,7 +26,10 @@ public class VacancyCourseConfiguration : IEntityTypeConfiguration<VacancyCourse
 
         builder.HasOne(vc => vc.Vacancy)
                .WithMany(v => v.Courses)
-               .HasForeignKey(vs => vs.VacancyId)
+               .HasForeignKey(vc => vc.VacancyId)
                .IsRequired();
+
+        builder.HasIndex(vc => new { vc.CourseId, vc.VacancyId })
+               .IsUnique();
     }
 }

@@ -13,7 +13,9 @@ public class StudentStatusConfiguration : IEntityTypeConfiguration<StudentStatus
                .HasColumnType("INTEGER");
 
         builder.Property(ss => ss.Name)
-               .HasColumnType("VARCHAR(50)");
+               .HasColumnType("VARCHAR(50)")
+               .HasMaxLength(50)
+               .IsRequired();
 
         builder.HasData(
             new StudentStatus { Id = 1, Name = "Учусь" },

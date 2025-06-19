@@ -10,10 +10,12 @@ public class StudyPlanCourseConfiguration : IEntityTypeConfiguration<StudyPlanCo
         builder.HasKey(spc => new { spc.StudyPlanId, spc.CourseId });
 
         builder.Property(spc => spc.StudyPlanId)
-               .HasColumnType("UUID");
+               .HasColumnType("UUID")
+               .IsRequired();
 
         builder.Property(spc => spc.CourseId)
-               .HasColumnType("UUID");
+               .HasColumnType("UUID")
+               .IsRequired();
 
         builder.HasOne(spc => spc.StudyPlan)
                .WithMany(sp => sp.StudyPlanCourses)
