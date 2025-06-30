@@ -7,11 +7,6 @@ public class AdministratorConfiguration : IEntityTypeConfiguration<Administrator
 {
     public void Configure(EntityTypeBuilder<Administrator> builder)
     {
-        //builder.Property(u => u.Id)
-        //       .HasColumnType("UUID")
-        //       .HasDefaultValueSql("gen_random_uuid()")
-        //       .IsRequired();
-
         builder.Property(s => s.FirstName)
                .HasColumnType("VARCHAR(50)")
                .HasMaxLength(50)
@@ -23,8 +18,7 @@ public class AdministratorConfiguration : IEntityTypeConfiguration<Administrator
                .IsRequired();
 
         builder.Property(s => s.AdminLevel)
-               .HasColumnType("VARCHAR(50)")
-               .HasMaxLength(50)
+               .HasColumnType("INTEGER")
                .IsRequired();
     }
 }

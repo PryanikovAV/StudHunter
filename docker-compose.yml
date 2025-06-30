@@ -11,23 +11,19 @@ services:
     volumes:
       - studhunter-data:/var/lib/postgresql/data
     restart: unless-stopped
-    networks:
-      - studhunter_default
   studhunter-api:
     build:
       context: .
       dockerfile: StudHunter.API/Dockerfile
     container_name: studhunter-api
     ports:
-      - "8080:8080"
+      - "5010:8080"
     environment:
-      - ASPNETCORE_ENVIRONMENT=Docker
+      - ASPNETCORE_ENVIRONMENT=Development
+      - ASPNETCORE_HTTP_PORTS=8080
       - ConnectionStrings__DefaultConnection=Host=postgres;Port=5432;Database=studhunter;Username=postgres;Password=postgres
     depends_on:
       - postgres
-    networks:
-      - studhunter_default
+    restart: unless-stopped
 volumes:
   studhunter-data:
-networks:
-  studhunter_default:

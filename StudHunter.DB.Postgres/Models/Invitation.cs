@@ -36,11 +36,8 @@ public class Invitation
 
     public enum InvitationStatus
     {
-        [Display(Name = "Отправлено")]
         Sent,
-        [Display(Name = "Принято")]
         Accepted,
-        [Display(Name = "Отклонено")]
         Rejected
     }
 }

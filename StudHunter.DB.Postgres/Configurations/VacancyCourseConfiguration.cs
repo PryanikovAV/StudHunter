@@ -28,8 +28,5 @@ public class VacancyCourseConfiguration : IEntityTypeConfiguration<VacancyCourse
                .WithMany(v => v.Courses)
                .HasForeignKey(vc => vc.VacancyId)
                .IsRequired();
-
-        builder.HasIndex(vc => new { vc.CourseId, vc.VacancyId })
-               .IsUnique();
     }
 }

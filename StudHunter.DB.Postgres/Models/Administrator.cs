@@ -6,5 +6,11 @@ public class Administrator : User
 
     public string LastName { get; set; } = null!;
 
-    public string AdminLevel { get; set; } = null!;
+    public AdministratorLevel AdminLevel { get; set; }
+
+    public enum AdministratorLevel
+    {
+        SuperAdmin,
+        Moderator
+    }
 }

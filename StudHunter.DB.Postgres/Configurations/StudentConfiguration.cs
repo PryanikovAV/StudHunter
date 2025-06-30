@@ -7,11 +7,6 @@ public class StudentConfiguration : IEntityTypeConfiguration<Student>
 {
     public void Configure(EntityTypeBuilder<Student> builder)
     {
-        //builder.Property(u => u.Id)
-        //       .HasColumnType("UUID")
-        //       .HasDefaultValueSql("gen_random_uuid()")
-        //       .IsRequired();
-
         builder.Property(s => s.FirstName)
                .HasColumnType("VARCHAR(50)")
                .HasMaxLength(50)
@@ -21,7 +16,7 @@ public class StudentConfiguration : IEntityTypeConfiguration<Student>
                .HasColumnType("VARCHAR(50)")
                .HasMaxLength(50)
                .IsRequired();
-        
+
         builder.Property(s => s.Gender)
                .HasColumnType("INTEGER")
                .IsRequired();
@@ -45,13 +40,13 @@ public class StudentConfiguration : IEntityTypeConfiguration<Student>
                .HasForeignKey(s => s.StatusId)
                .IsRequired(false);
 
+        builder.HasOne(s => s.Resume)
+               .WithOne(r => r.Student)
+               .IsRequired(false);
+
         builder.HasOne(s => s.StudyPlan)
                .WithOne(sp => sp.Student)
                .HasForeignKey<StudyPlan>(sp => sp.StudentId)
                .IsRequired();
-
-        builder.HasOne(s => s.Resume)
-               .WithOne(r => r.Student)
-               .IsRequired(false);
     }
 }

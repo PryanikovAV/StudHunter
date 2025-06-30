@@ -1,43 +1,27 @@
-using System.IdentityModel.Tokens.Jwt;
-using System.Text;
-using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.EntityFrameworkCore;
-using Microsoft.IdentityModel.Tokens;
+using StudHunter.API.Services;
 using StudHunter.DB.Postgres;
 
 var builder = WebApplication.CreateBuilder(args);
 
-var services = builder.Services;
-var configuration = builder.Configuration;
+builder.Services.AddDbContext<StudHunterDbContext>(options =>
+    options.UseNpgsql(builder.Configuration.GetConnectionString("DefaultConnection")));
 
-services.AddDbContext<StudHunterDbContext>(options => 
-    options.UseNpgsql(
-        builder.Configuration.GetConnectionString("DefaultConnection")));
-
-//services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
-//    .AddJwtBearer(options =>
-//    {
-//        options.TokenValidationParameters = new TokenValidationParameters
-//        {
-//            ValidateIssuer = true,
-//            ValidateLifetime = true,
-//            ValidateIssuerSigningKey = true,
-
-//            ValidIssuer = configuration["Jwt:Issuer"],
-//            IssuerSigningKey = new SymmetricSecurityKey(
-//                Encoding.UTF8.GetBytes(configuration["Jwt:Key"]!)),
-        
-//            ValidateAudience = false
-//        };
-//    });
-
-//services.AddAuthorization();
+builder.Services.AddControllers();
+builder.Services.AddScoped<AdministratorService>();
+builder.Services.AddScoped<CourseService>();
+builder.Services.AddScoped<EmployerService>();
+builder.Services.AddScoped<FacultyService>();
+builder.Services.AddScoped<FavoriteService>();
+builder.Services.AddScoped<ResumeService>();
+builder.Services.AddScoped<StudentService>();
+builder.Services.AddScoped<VacancyService>();
+builder.Services.AddScoped<IPasswordHasher, PasswordHasher>();
 
 var app = builder.Build();
 
-//app.UseAuthentication();
-//app.UseAuthentication();
-
-app.MapGet("/", () => "StudHunter Service");
+app.UseRouting();
+app.MapControllers();
+app.MapGet("/", () => "StudHunter Service");  // check localhost:8080
 
 app.Run();

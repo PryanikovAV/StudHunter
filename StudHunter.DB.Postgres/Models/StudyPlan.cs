@@ -25,11 +25,8 @@ public class StudyPlan
 
     public enum StudyForms
     {
-        [Display(Name = "Очная")]
         fulltime,
-        [Display(Name = "Очно-заочная")]
         parttime,
-        [Display(Name = "Заочная")]
         correspondence
     }
 }

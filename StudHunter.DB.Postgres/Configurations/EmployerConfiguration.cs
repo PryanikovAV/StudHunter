@@ -7,11 +7,6 @@ public class EmployerConfiguration : IEntityTypeConfiguration<Employer>
 {
     public void Configure(EntityTypeBuilder<Employer> builder)
     {
-        //builder.Property(u => u.Id)
-        //       .HasColumnType("UUID")
-        //       .HasDefaultValueSql("gen_random_uuid()")
-        //       .IsRequired();
-
         builder.Property(e => e.AccreditationStatus)
                .HasColumnType("BOOLEAN")
                .HasDefaultValue(false)

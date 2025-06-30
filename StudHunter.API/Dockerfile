@@ -12,6 +12,7 @@ FROM mcr.microsoft.com/dotnet/sdk:9.0 AS build
 ARG BUILD_CONFIGURATION=Release
 WORKDIR /src
 COPY ["StudHunter.API/StudHunter.API.csproj", "StudHunter.API/"]
+COPY ["StudHunter.DB.Postgres/StudHunter.DB.Postgres.csproj", "StudHunter.DB.Postgres/"]
 RUN dotnet restore "./StudHunter.API/StudHunter.API.csproj"
 COPY . .
 WORKDIR "/src/StudHunter.API"
