@@ -7,8 +7,11 @@ public class UserAchievementConfiguration : IEntityTypeConfiguration<UserAchieve
 {
     public void Configure(EntityTypeBuilder<UserAchievement> builder)
     {
-        builder.HasKey(ua => new { ua.UserId,
-                                   ua.AchievementTemplateId });
+        builder.HasKey(ua => new
+        {
+            ua.UserId,
+            ua.AchievementTemplateId
+        });
 
         builder.Property(ua => ua.UserId)
                .HasColumnType("UUID")

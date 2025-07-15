@@ -1,16 +1,14 @@
 ﻿using Microsoft.EntityFrameworkCore;
 using StudHunter.API.ModelsDto.Favorite;
+using StudHunter.API.Services.CommonService;
 using StudHunter.DB.Postgres;
 using StudHunter.DB.Postgres.Models;
 
 namespace StudHunter.API.Services;
 
-public class FavoriteService(StudHunterDbContext context)
+public class FavoriteService(StudHunterDbContext context) : BaseEntityService(context)
 {
-    private readonly StudHunterDbContext _context = context;
-
-    public async Task<IEnumerable<FavoriteDto>>
-        GetFavoritesAsync(Guid userId)
+    public async Task<IEnumerable<FavoriteDto>> GetFavoritesAsync(Guid userId)
     {
         return await _context.Favorites
             .Where(f => f.UserId == userId)
@@ -25,8 +23,7 @@ public class FavoriteService(StudHunterDbContext context)
             .ToListAsync();
     }
 
-    public async Task<(FavoriteDto? Favorite, string? Error)>
-        CreateFavoriteAsync(Guid userId, CreateFavoriteDto dto)
+    public async Task<(FavoriteDto? Favorite, string? Error)> CreateFavoriteAsync(Guid userId, CreateFavoriteDto dto)
     {
         if (dto.VacancyId == null && dto.ResumeId == null)
             return (null, "Either VacancyId or ResumeId must be provided.");
@@ -34,14 +31,13 @@ public class FavoriteService(StudHunterDbContext context)
         if (dto.VacancyId != null && dto.ResumeId != null)
             return (null, "Only one of VacancyId or ResumeId can be provided.");
 
-        if (dto.VacancyId != null && !await _context.Vacancies.AnyAsync(v => v.Id == dto.VacancyId)
+        if (dto.VacancyId != null && !await _context.Vacancies.AnyAsync(v => v.Id == dto.VacancyId))
             return (null, "Vacancy not found.");
 
         if (dto.ResumeId != null && !await _context.Resumes.AnyAsync(r => r.Id == dto.ResumeId))
             return (null, "Resume not found.");
 
-        if (await _context.Favorites.AnyAsync(f => f.UserId == userId &&
-            (f.VacancyId == dto.VacancyId || f.ResumeId == dto.ResumeId)))
+        if (await _context.Favorites.AnyAsync(f => f.UserId == userId && (f.VacancyId == dto.VacancyId || f.ResumeId == dto.ResumeId)))
             return (null, "Favorite already exists.");
 
         var favorite = new Favorite
@@ -76,23 +72,6 @@ public class FavoriteService(StudHunterDbContext context)
 
     public async Task<(bool Success, string? Error)> DeleteFavoriteAsync(Guid id)
     {
-        var favorite = await _context.Favorites
-            .FirstOrDefaultAsync(f => f.Id == id);
-
-        if (favorite == null)
-            return (false, "Favorite not found");
-
-        _context.Favorites.Remove(favorite);
-
-        try
-        {
-            await _context.SaveChangesAsync();
-        }
-        catch (DbUpdateException ex)
-        {
-            return (false, $"Failed to delete favorite: {ex.InnerException?.Message}");
-        }
-
-        return (true, null);
-    }   
+        return await DeleteEntityAsync<Favorite>(id);
+    }
 }

@@ -3,7 +3,7 @@ using Microsoft.EntityFrameworkCore.Metadata.Builders;
 using StudHunter.DB.Postgres.Models;
 namespace StudHunter.DB.Postgres.Configurations;
 
-public class FacultyConfiguration: IEntityTypeConfiguration<Faculty>
+public class FacultyConfiguration : IEntityTypeConfiguration<Faculty>
 {
     public void Configure(EntityTypeBuilder<Faculty> builder)
     {

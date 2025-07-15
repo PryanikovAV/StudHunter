@@ -4,7 +4,7 @@ public class Resume
 {
     public Guid Id { get; set; }
 
-    public Guid StudentId { get; set; }    
+    public Guid StudentId { get; set; }
 
     public string Title { get; set; } = null!;
 

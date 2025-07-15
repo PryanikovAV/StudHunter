@@ -16,7 +16,7 @@ public static class EnumExtensions
         {
             return enumValue.ToString();
         }
-        
+
         var displayAttribute = memberInfo
             .GetCustomAttribute<DisplayAttribute>();
 

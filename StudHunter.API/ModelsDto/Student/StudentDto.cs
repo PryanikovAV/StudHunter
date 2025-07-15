@@ -1,4 +1,5 @@
-﻿using System.ComponentModel.DataAnnotations;
+﻿using StudHunter.API.ModelsDto.UserAchievement;
+using System.ComponentModel.DataAnnotations;
 
 namespace StudHunter.API.ModelsDto.Student;
 
@@ -38,6 +39,8 @@ public class StudentDto
     public int? StatusId { get; set; }
 
     public Guid? ResumeId { get; set; }
+
+    public List<UserAchievementDto> Achievements { get; set; } = new List<UserAchievementDto>();
 
     // ===== StudyPlan =====
     public int CourseNumber { get; set; }

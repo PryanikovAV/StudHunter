@@ -1,33 +1,31 @@
 ﻿using Microsoft.EntityFrameworkCore;
 using StudHunter.API.ModelsDto.Resume;
+using StudHunter.API.Services.CommonService;
 using StudHunter.DB.Postgres;
 using StudHunter.DB.Postgres.Models;
 
 namespace StudHunter.API.Services;
 
-public class ResumeService(StudHunterDbContext context)
+public class ResumeService(StudHunterDbContext context) : BaseEntityService(context)
 {
-    private readonly StudHunterDbContext _context = context;
-
-    public async Task<IEnumerable<ResumeDto>> GetResumesAsync()
+    public async Task<IEnumerable<ResumeDto>> GetAllResumesAsync()
     {
         return await _context.Resumes
             .Select(r => new ResumeDto
-            {
-                Id = r.Id,
-                StudentId = r.StudentId,
-                Title = r.Title,
-                Description = r.Description,
-                CreatedAt = r.CreatedAt,
-                UpdatedAt = r.UpdatedAt
-            })
+        {
+            Id = r.Id,
+            StudentId = r.StudentId,
+            Title = r.Title,
+            Description = r.Description,
+            CreatedAt = r.CreatedAt,
+            UpdatedAt = r.UpdatedAt
+        })
             .ToListAsync();
     }
 
     public async Task<ResumeDto?> GetResumeAsync(Guid id)
     {
-        var resume = await _context.Resumes
-            .FirstOrDefaultAsync(r => r.Id == id);
+        var resume = await _context.Resumes.FirstOrDefaultAsync(r => r.Id == id);
         
         if (resume == null)
             return null;
@@ -106,32 +104,4 @@ public class ResumeService(StudHunterDbContext context)
         }
         return (true, null);
     }
-
-    public async Task<(bool Success, string? Error)> DeleteResumeAsync(Guid id)
-    {
-        var resume = await _context.Resumes
-            .FirstOrDefaultAsync(r => r.Id == id);
-        
-        if (resume == null)
-            return (false, "Resume not found");
-
-        if (await _context.Favorites.AnyAsync(f => f.ResumeId == id))
-            return (false, "Cannot delete resume with associated favorites");
-
-        if (await _context.Invitations.AnyAsync(i => i.ResumeId == id))
-            return (false, "Cannot delete resume with associated invitations");
-
-        _context.Resumes.Remove(resume);
-        
-        try
-        {
-            await _context.SaveChangesAsync();
-        }
-        catch (DbUpdateException ex)
-        {
-            return (false, $"Failed to delete resume: {ex.InnerException?.Message}");
-        }
-        
-        return (true, null);
-    }    
 }

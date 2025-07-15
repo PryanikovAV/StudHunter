@@ -1,6 +1,4 @@
-﻿using System.ComponentModel.DataAnnotations;
-
-namespace StudHunter.API.ModelsDto.Favorite;
+﻿namespace StudHunter.API.ModelsDto.Favorite;
 
 public class CreateFavoriteDto
 {

@@ -18,23 +18,22 @@ public class FavoriteController(FavoriteService favoriteService) : ControllerBas
     }
 
     [HttpPost]
-    public async Task<IActionResult> 
-        CreateFavorite([FromBody] CreateFavoriteDto dto)
+    public async Task<IActionResult> CreateFavorite([FromBody] CreateFavoriteDto dto)
     {
         var userId = Guid.NewGuid();  // <- Change this !!! (get from Jwt token)
-        var (favorite, error) = await _favoriteService.CreateFavoriteAsync(userId, dto);        
+        var (favorite, error) = await _favoriteService.CreateFavoriteAsync(userId, dto);
         if (error != null)
-            return Conflict(new { error });        
-        return CreatedAtAction(nameof(GetFavorites), new { userId = favorite!.UserId}, favorite);
+            return Conflict(new { error });
+        return CreatedAtAction(nameof(GetFavorites),
+            new { userId = favorite!.UserId }, favorite);
     }
 
     [HttpDelete("{id}")]
-    public async Task<IActionResult> 
-        DeleteFavorite(Guid id)
+    public async Task<IActionResult> DeleteFavorite(Guid id)
     {
-        var (success, error) = await _favoriteService.DeleteFavoriteAsync(id);        
+        var (success, error) = await _favoriteService.DeleteFavoriteAsync(id);
         if (!success)
-            return error == null ? NotFound() : Conflict(new { error });        
+            return error == null ? NotFound() : Conflict(new { error });
         return NoContent();
     }
 }

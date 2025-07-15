@@ -27,4 +27,6 @@ public class CreateEmployerDto
 
     [MaxLength(255)]
     public string? Specialization { get; set; }
+
+    public bool AccreditationStatus = false;
 }

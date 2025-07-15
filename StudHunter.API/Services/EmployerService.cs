@@ -1,43 +1,45 @@
 ﻿using Microsoft.EntityFrameworkCore;
 using StudHunter.API.ModelsDto.Employer;
+using StudHunter.API.Services.CommonService;
 using StudHunter.DB.Postgres;
 using StudHunter.DB.Postgres.Models;
 
 namespace StudHunter.API.Services;
 
-public class EmployerService(StudHunterDbContext context, IPasswordHasher passwordHasher)
+public class EmployerService(StudHunterDbContext context, IPasswordHasher passwordHasher) : BaseEntityService(context)
 {
-    private readonly StudHunterDbContext _context = context;
     private readonly IPasswordHasher _passwordHasher = passwordHasher;
 
-    public async Task<IEnumerable<EmployerDto>> GetEmployersAsync()
+    public async Task<IEnumerable<EmployerDto>> GetAllEmployersAsync()
     {
         return await _context.Employers
             .Include(e => e.Vacancies)
             .Select(e => new EmployerDto
-        {
-            Id = e.Id,
-            Email = e.Email,
-            ContactEmail = e.ContactEmail,
-            ContactPhone = e.ContactPhone,
-            CreatedAt = e.CreatedAt,
-            AccreditationStatus = e.AccreditationStatus,
-            Name = e.Name,
-            Description = e.Description,
-            Website = e.Website,
-            Specialization = e.Specialization,
-            VacancyIds = e.Vacancies.Select(v => v.Id).ToList()
-        })
-        .ToListAsync();
+            {
+                Id = e.Id,
+                Email = e.Email,
+                ContactEmail = e.ContactEmail,
+                ContactPhone = e.ContactPhone,
+                CreatedAt = e.CreatedAt,
+                AccreditationStatus = e.AccreditationStatus,
+                Name = e.Name,
+                Description = e.Description,
+                Website = e.Website,
+                Specialization = e.Specialization,
+                VacancyIds = e.Vacancies.Select(v => v.Id).ToList()
+            })
+            .ToListAsync();
     }
 
     public async Task<EmployerDto?> GetEmployerAsync(Guid id)
     {
-        var employer = await _context.Employers.FirstOrDefaultAsync(e => e.Id == id);
+        var employer = await _context.Employers
+            .Include(e => e.Vacancies)
+            .FirstOrDefaultAsync(e => e.Id == id);
 
         if (employer == null)
             return null;
-        
+
         return new EmployerDto
         {
             Id = employer.Id,
@@ -49,7 +51,8 @@ public class EmployerService(StudHunterDbContext context, IPasswordHasher passwo
             Name = employer.Name,
             Description = employer.Description,
             Website = employer.Website,
-            Specialization = employer.Specialization
+            Specialization = employer.Specialization,
+            VacancyIds = employer.Vacancies.Select(v => v.Id).ToList()
         };
     }
 
@@ -72,9 +75,9 @@ public class EmployerService(StudHunterDbContext context, IPasswordHasher passwo
             Website = dto.Website,
             Specialization = dto.Specialization
         };
-        
+
         _context.Employers.Add(employer);
-        
+
         try
         {
             await _context.SaveChangesAsync();
@@ -83,7 +86,7 @@ public class EmployerService(StudHunterDbContext context, IPasswordHasher passwo
         {
             return (null, $"Failed to create employer: {ex.InnerException?.Message}");
         }
-        
+
         return (new EmployerDto
         {
             Id = employer.Id,
@@ -102,10 +105,10 @@ public class EmployerService(StudHunterDbContext context, IPasswordHasher passwo
     public async Task<(bool Success, string? Error)> UpdateEmployerAsync(Guid id, UpdateEmployerDto dto)
     {
         var employer = await _context.Employers.FirstOrDefaultAsync(e => e.Id == id);
-        
+
         if (employer == null)
             return (false, "Employer not found");
-        
+
         if (dto.Email != null && await _context.Employers.AnyAsync(s => s.Email == dto.Email && s.Id != id))
             return (false, "Another employer with this email already exists");
 
@@ -117,7 +120,7 @@ public class EmployerService(StudHunterDbContext context, IPasswordHasher passwo
             employer.ContactPhone = dto.ContactPhone;
         if (dto.ContactEmail != null)
             employer.ContactEmail = dto.ContactEmail;
-        if(dto.Name != null)
+        if (dto.Name != null)
             employer.Name = dto.Name;
         if (dto.Description != null)
             employer.Description = dto.Description;
@@ -133,31 +136,12 @@ public class EmployerService(StudHunterDbContext context, IPasswordHasher passwo
         {
             return (false, $"Failed to update employer: {ex.InnerException?.Message}");
         }
-        
+
         return (true, null);
     }
 
     public async Task<(bool Success, string? Error)> DeleteEmployerAsync(Guid id)
     {
-        var employer = await _context.Employers.FirstOrDefaultAsync(e => e.Id == id);
-        
-        if (employer == null)
-            return (false, "Employer not found");
-
-        if (await _context.Vacancies.AnyAsync(v => v.EmployerId == id))
-            return (false, "Cannot delete employer with existing vacancies");
-
-        _context.Employers.Remove(employer);
-        
-        try
-        {
-            await _context.SaveChangesAsync();
-        }
-        catch (DbUpdateException ex)
-        {
-            return (false, $"Failed to delete employer: {ex.InnerException?.Message}");
-        }
-
-        return (true, null);
+        return await DeleteEntityAsync<Employer>(id);
     }
 }

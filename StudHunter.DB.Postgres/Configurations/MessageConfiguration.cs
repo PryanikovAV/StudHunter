@@ -23,7 +23,6 @@ public class MessageConfiguration : IEntityTypeConfiguration<Message>
         builder.Property(m => m.Context)
                .HasColumnType("TEXT")
                .HasMaxLength(1000)
-               .HasDefaultValue("")
                .IsRequired();
 
         builder.Property(m => m.SentAt)

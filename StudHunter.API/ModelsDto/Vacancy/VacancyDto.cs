@@ -16,7 +16,7 @@ public class VacancyDto
     public string? Description { get; set; }
 
     public decimal? Salary { get; set; }
-    
+
     public DateTime CreatedAt { get; set; }
 
     public DateTime UpdatedAt { get; set; }

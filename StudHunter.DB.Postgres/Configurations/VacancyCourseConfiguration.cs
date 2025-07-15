@@ -7,8 +7,11 @@ public class VacancyCourseConfiguration : IEntityTypeConfiguration<VacancyCourse
 {
     public void Configure(EntityTypeBuilder<VacancyCourse> builder)
     {
-        builder.HasKey(vc => new { vc.CourseId,
-                                   vc.VacancyId });
+        builder.HasKey(vc => new
+        {
+            vc.CourseId,
+            vc.VacancyId
+        });
 
         builder.Property(vc => vc.VacancyId)
                .HasColumnType("UUID")

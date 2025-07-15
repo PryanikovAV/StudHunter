@@ -42,10 +42,10 @@ public class CreateStudentDto
 
     [Required]
     public Guid SpecialityId { get; set; }
-    
+
     [Required, RegularExpression("fulltime|parttime|correspondence", ErrorMessage = "StudyForm must be 'fulltime', 'parttime', or 'correspondence'")]
     public string StudyForm { get; set; } = string.Empty;
-    
+
     [Required]
     public DateOnly BeginYear { get; set; }
     // ===== StudyPlan =====

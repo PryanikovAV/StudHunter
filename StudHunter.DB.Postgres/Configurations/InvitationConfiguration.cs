@@ -6,7 +6,7 @@ public class InvitationConfiguration : IEntityTypeConfiguration<Invitation>
 {
     public void Configure(EntityTypeBuilder<Invitation> builder)
     {
-        builder.HasKey(i  => i.Id);
+        builder.HasKey(i => i.Id);
 
         builder.Property(i => i.Id)
                .HasDefaultValueSql("gen_random_uuid()");

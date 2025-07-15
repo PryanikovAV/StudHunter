@@ -28,4 +28,3 @@ public class UpdateEmployerDto
     [MaxLength(255)]
     public string? Specialization { get; set; }
 }
-    

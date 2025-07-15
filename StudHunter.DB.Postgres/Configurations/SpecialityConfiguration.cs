@@ -7,11 +7,11 @@ public class SpecialityConfiguration : IEntityTypeConfiguration<Speciality>
 {
     public void Configure(EntityTypeBuilder<Speciality> builder)
     {
-        builder.HasKey(s  => s.Id);
+        builder.HasKey(s => s.Id);
 
         builder.Property(s => s.Id)
                .HasDefaultValueSql("gen_random_uuid()");
-        
+
         builder.Property(s => s.Name)
                .HasColumnType("VARCHAR(255)")
                .HasMaxLength(255)

@@ -22,7 +22,7 @@ public class UpdateAdministratorDto
     [MaxLength(50)]
     public string? LastName { get; set; }
 
-    [RegularExpression("SuperAdmin|Moderator", 
+    [RegularExpression("SuperAdmin|Moderator",
         ErrorMessage = "AdminLevel must be 'SuperAdmin' or 'Moderator'")]
     public string? AdminLevel { get; set; }
 }

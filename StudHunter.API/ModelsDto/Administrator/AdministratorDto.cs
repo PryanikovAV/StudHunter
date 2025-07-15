@@ -25,7 +25,7 @@ public class AdministratorDto
     [Required, MaxLength(50)]
     public string LastName { get; set; } = string.Empty;
 
-    [Required, RegularExpression("SuperAdmin|Moderator", 
+    [Required, RegularExpression("SuperAdmin|Moderator",
         ErrorMessage = "AdminLevel must be 'SuperAdmin' or 'Moderator'")]
     public string AdminLevel { get; set; } = string.Empty;
 }

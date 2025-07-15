@@ -1,46 +1,23 @@
 ﻿using Microsoft.EntityFrameworkCore;
 using StudHunter.API.ModelsDto.Student;
+using StudHunter.API.ModelsDto.UserAchievement;
+using StudHunter.API.Services.CommonService;
 using StudHunter.DB.Postgres;
 using StudHunter.DB.Postgres.Models;
 
 namespace StudHunter.API.Services;
 
-public class StudentService(StudHunterDbContext context, IPasswordHasher passwordHasher)
+public class StudentService(StudHunterDbContext context, IPasswordHasher passwordHasher) : BaseEntityService(context)
 {
-    private readonly StudHunterDbContext _context = context;
     private readonly IPasswordHasher _passwordHasher = passwordHasher;
-
-    public async Task<IEnumerable<StudentDto>> GetStudentsAsync()
-    {
-        return await _context.Students.Select(s => new StudentDto
-        {
-            Id = s.Id,
-            FirstName = s.FirstName,
-            LastName = s.LastName,
-            Email = s.Email,
-            Gender = s.Gender.ToString(),
-            BirthDate = s.BirthDate,
-            Photo = s.Photo,
-            ContactPhone = s.ContactPhone,
-            ContactEmail = s.ContactEmail,
-            IsForeign = s.IsForeign,
-            StatusId = s.StatusId,
-            ResumeId = s.Resume != null ? s.Resume.Id : null,
-            CreatedAt = s.CreatedAt,
-            CourseNumber = s.StudyPlan.CourseNumber,
-            FacultyId = s.StudyPlan.FacultyId,
-            SpecialityId = s.StudyPlan.SpecialityId,
-            StudyForm = s.StudyPlan.StudyForm.ToString(),
-            BeginYear = s.StudyPlan.BeginYear
-        })
-            .ToListAsync();
-    }
 
     public async Task<StudentDto?> GetStudentAsync(Guid id)
     {
         var student = await _context.Students
             .Include(s => s.Resume)
             .Include(s => s.StudyPlan)
+            .Include(s => s.Achievements)
+            .ThenInclude(ua => ua.AchievementTemplate)
             .FirstOrDefaultAsync(s => s.Id == id);
 
         if (student == null)
@@ -65,7 +42,15 @@ public class StudentService(StudHunterDbContext context, IPasswordHasher passwor
             FacultyId = student.StudyPlan.FacultyId,
             SpecialityId = student.StudyPlan.SpecialityId,
             StudyForm = student.StudyPlan.StudyForm.ToString(),
-            BeginYear = student.StudyPlan.BeginYear
+            BeginYear = student.StudyPlan.BeginYear,
+            Achievements = student.Achievements.Select(userAchievement => new UserAchievementDto
+            {
+                UserId = userAchievement.UserId,
+                AchievementTemplateId = userAchievement.AchievementTemplateId,
+                AchievementAt = userAchievement.AchievementAt,
+                AchievementName = userAchievement.AchievementTemplate.Name,
+                AchievementDescription = userAchievement.AchievementTemplate.Description
+            }).ToList()
         };
     }
 
@@ -79,7 +64,7 @@ public class StudentService(StudHunterDbContext context, IPasswordHasher passwor
 
         if (!await _context.Specialities.AnyAsync(s => s.Id == dto.SpecialityId))
             return (null, "Speciality not found");
-                
+
         var student = new Student
         {
             Id = Guid.NewGuid(),
@@ -208,30 +193,11 @@ public class StudentService(StudHunterDbContext context, IPasswordHasher passwor
         {
             return (false, $"Failed to update student: {ex.InnerException?.Message}");
         }
-
         return (true, null);
     }
 
     public async Task<(bool Success, string? Error)> DeleteStudentAsync(Guid id)
     {
-        var student = await _context.Students.FirstOrDefaultAsync(s => s.Id == id);
-        
-        if (student == null)
-            return (false, "Student not found");
-
-        if (await _context.Resumes.AnyAsync(r => r.StudentId == id))
-            return (false, "Cannot delete student with associated resume");
-
-        _context.Students.Remove(student);
-        try
-        {
-            await _context.SaveChangesAsync();
-        }
-        catch (DbUpdateException ex)
-        {
-            return (false, $"Failed to delete student: {ex.InnerException?.Message}");
-        }
-
-        return (true, null);
+        return await DeleteEntityAsync<Student>(id);
     }
 }

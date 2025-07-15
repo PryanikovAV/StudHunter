@@ -42,7 +42,7 @@ public class ResumeConfiguration : IEntityTypeConfiguration<Resume>
                .IsRequired();
 
         builder.HasMany(r => r.Favorites)
-               .WithOne(f  => f.Resume)
+               .WithOne(f => f.Resume)
                .HasForeignKey(f => f.ResumeId)
                .IsRequired(false);
 

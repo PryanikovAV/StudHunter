@@ -1,4 +1,5 @@
-﻿using System.ComponentModel.DataAnnotations;
+﻿using StudHunter.API.ModelsDto.UserAchievement;
+using System.ComponentModel.DataAnnotations;
 
 namespace StudHunter.API.ModelsDto.Employer;
 
@@ -34,4 +35,6 @@ public class EmployerDto
     public string? Specialization { get; set; }
 
     public List<Guid> VacancyIds { get; set; } = new List<Guid>();
+
+    public List<UserAchievementDto> Achievements { get; set; } = new List<UserAchievementDto>();
 }

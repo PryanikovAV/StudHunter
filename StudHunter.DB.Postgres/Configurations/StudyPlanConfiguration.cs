@@ -20,7 +20,7 @@ public class StudyPlanConfiguration : IEntityTypeConfiguration<StudyPlan>
                .HasColumnType("INTEGER")
                .HasDefaultValue(1)
                .IsRequired();
-       
+
         builder.Property(sp => sp.FacultyId)
                .HasColumnType("UUID")
                .IsRequired();
@@ -41,7 +41,7 @@ public class StudyPlanConfiguration : IEntityTypeConfiguration<StudyPlan>
                .WithOne(s => s.StudyPlan)
                .HasForeignKey<StudyPlan>(sp => sp.StudentId)
                .IsRequired();
-        
+
         builder.HasOne(sp => sp.Faculty)
                .WithMany(f => f.StudyPlans)
                .HasForeignKey(sp => sp.FacultyId)
