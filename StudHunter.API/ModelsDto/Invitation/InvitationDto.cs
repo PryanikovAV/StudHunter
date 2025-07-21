@@ -26,4 +26,8 @@ public class InvitationDto
     public DateTime CreatedAt { get; set; }
 
     public DateTime UpdatedAt { get; set; }
+
+    public string? VacancyStatus { get; set; }
+
+    public string? ResumeStatus { get; set; }
 }

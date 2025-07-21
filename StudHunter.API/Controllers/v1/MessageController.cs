@@ -23,10 +23,14 @@ public class MessageController(MessageService messageService) : ControllerBase
         var messages = await _messageService.GetMessagesByUserAsync(userId, sent: false);
         return Ok(messages);
     }
-
+    // TODO: add jwt
+    // TODO: check/fix 'return nameof(GetSentMessages)'
     [HttpPost]
     public async Task<IActionResult> CreateMessage([FromBody] CreateMessageDto dto)
     {
+        if (!ModelState.IsValid)
+            return BadRequest(ModelState);
+
         var senderId = Guid.NewGuid();  // <- Change this !!! (get from Jwt token)
         var (message, error) = await _messageService.CreateMessageAsync(senderId, dto);
         if (error != null)

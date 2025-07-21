@@ -19,6 +19,8 @@ public class Vacancy
 
     public VacancyType Type { get; set; }
 
+    public bool IsDeleted { get; set; }
+
     public virtual Employer Employer { get; set; } = null!;
     public virtual ICollection<VacancyCourse> Courses { get; set; } = new List<VacancyCourse>();
     public virtual ICollection<Favorite> Favorites { get; set; } = new List<Favorite>();

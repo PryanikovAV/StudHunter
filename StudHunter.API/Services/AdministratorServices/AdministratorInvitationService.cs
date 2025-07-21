@@ -5,7 +5,7 @@ using StudHunter.DB.Postgres;
 
 namespace StudHunter.API.Services.AdministratorServices;
 
-public class AdministratorInvitationService(StudHunterDbContext context) : BaseAdministratorService(context)
+public class AdministratorInvitationService(StudHunterDbContext context) : BaseEntityService(context)
 {
     public async Task<IEnumerable<InvitationDto>> GetAllInvitationsAsync()
     {
@@ -22,15 +22,15 @@ public class AdministratorInvitationService(StudHunterDbContext context) : BaseA
             CreatedAt = i.CreatedAt,
             UpdatedAt = i.UpdatedAt
         })
-            .OrderByDescending(i => i.CreatedAt)
-            .ToListAsync();
+        .OrderByDescending(i => i.CreatedAt)
+        .ToListAsync();
     }
 
     public async Task<IEnumerable<InvitationDto>> GetInvitationsByUserAsync(Guid userId, bool sent = false)
     {
         var query = sent
-            ? _context.Invitations.Where(i => i.SenderId == userId)
-            : _context.Invitations.Where(i => i.ReceiverId == userId);
+        ? _context.Invitations.Where(i => i.SenderId == userId)
+        : _context.Invitations.Where(i => i.ReceiverId == userId);
 
         return await _context.Invitations.Select(i => new InvitationDto
         {
@@ -45,8 +45,8 @@ public class AdministratorInvitationService(StudHunterDbContext context) : BaseA
             CreatedAt = i.CreatedAt,
             UpdatedAt = i.UpdatedAt
         })
-            .OrderByDescending(i => i.CreatedAt)
-            .ToListAsync();
+        .OrderByDescending(i => i.CreatedAt)
+        .ToListAsync();
     }
 
     public async Task<(bool Success, string? Error)> UpdateInvitationStatusAsync(Guid id, Guid receiverId, UpdateInvitationDto dto)
@@ -62,19 +62,11 @@ public class AdministratorInvitationService(StudHunterDbContext context) : BaseA
         invitation.Status = Enum.Parse<Invitation.InvitationStatus>(dto.Status);
         invitation.UpdatedAt = DateTime.UtcNow;
 
-        try
-        {
-            await _context.SaveChangesAsync();
-        }
-        catch (DbUpdateException ex)
-        {
-            return (false, $"Failed to update invitation: {ex.InnerException?.Message}");
-        }
-        return (true, null);
+        return await SaveChangesAsync("update", "Invitation");
     }
 
     public async Task<(bool Success, string? Error)> DeleteInvitationAsync(Guid id)
     {
-        return await DeleteEntityAsync<Invitation>(id);
+        return await HardDeleteEntityAsync<Invitation>(id);
     }
 }

@@ -44,9 +44,10 @@ namespace StudHunter.DB.Postgres.Migrations
                     ContactPhone = table.Column<string>(type: "VARCHAR(20)", maxLength: 20, nullable: true),
                     PasswordHash = table.Column<string>(type: "VARCHAR(255)", nullable: false),
                     CreatedAt = table.Column<DateTime>(type: "TIMESTAMP", nullable: false, defaultValueSql: "CURRENT_TIMESTAMP"),
+                    IsDeleted = table.Column<bool>(type: "BOOLEAN", nullable: false, defaultValue: false),
                     FirstName = table.Column<string>(type: "VARCHAR(50)", maxLength: 50, nullable: false),
                     LastName = table.Column<string>(type: "VARCHAR(50)", maxLength: 50, nullable: false),
-                    AdminLevel = table.Column<string>(type: "VARCHAR(50)", maxLength: 50, nullable: false)
+                    AdminLevel = table.Column<int>(type: "INTEGER", nullable: false)
                 },
                 constraints: table =>
                 {
@@ -78,6 +79,7 @@ namespace StudHunter.DB.Postgres.Migrations
                     ContactPhone = table.Column<string>(type: "VARCHAR(20)", maxLength: 20, nullable: true),
                     PasswordHash = table.Column<string>(type: "VARCHAR(255)", nullable: false),
                     CreatedAt = table.Column<DateTime>(type: "TIMESTAMP", nullable: false, defaultValueSql: "CURRENT_TIMESTAMP"),
+                    IsDeleted = table.Column<bool>(type: "BOOLEAN", nullable: false, defaultValue: false),
                     AccreditationStatus = table.Column<bool>(type: "BOOLEAN", nullable: false, defaultValue: false),
                     Name = table.Column<string>(type: "VARCHAR(255)", maxLength: 255, nullable: false),
                     Description = table.Column<string>(type: "TEXT", maxLength: 1000, nullable: true),
@@ -111,7 +113,7 @@ namespace StudHunter.DB.Postgres.Migrations
                     Id = table.Column<Guid>(type: "uuid", nullable: false, defaultValueSql: "gen_random_uuid()"),
                     SenderId = table.Column<Guid>(type: "UUID", nullable: false),
                     ReceiverId = table.Column<Guid>(type: "UUID", nullable: false),
-                    Context = table.Column<string>(type: "TEXT", maxLength: 1000, nullable: false, defaultValue: ""),
+                    Context = table.Column<string>(type: "TEXT", maxLength: 1000, nullable: false),
                     SentAt = table.Column<DateTime>(type: "TIMESTAMP", nullable: false, defaultValueSql: "CURRENT_TIMESTAMP")
                 },
                 constraints: table =>
@@ -180,7 +182,8 @@ namespace StudHunter.DB.Postgres.Migrations
                     Salary = table.Column<decimal>(type: "numeric(10,2)", precision: 10, scale: 2, nullable: true),
                     CreatedAt = table.Column<DateTime>(type: "TIMESTAMP", nullable: false, defaultValueSql: "CURRENT_TIMESTAMP"),
                     UpdatedAt = table.Column<DateTime>(type: "TIMESTAMP", nullable: false, defaultValueSql: "CURRENT_TIMESTAMP"),
-                    Type = table.Column<int>(type: "INTEGER", nullable: false)
+                    Type = table.Column<int>(type: "INTEGER", nullable: false),
+                    IsDeleted = table.Column<bool>(type: "BOOLEAN", nullable: false, defaultValue: false)
                 },
                 constraints: table =>
                 {
@@ -205,6 +208,7 @@ namespace StudHunter.DB.Postgres.Migrations
                     ContactPhone = table.Column<string>(type: "VARCHAR(20)", maxLength: 20, nullable: true),
                     PasswordHash = table.Column<string>(type: "VARCHAR(255)", nullable: false),
                     CreatedAt = table.Column<DateTime>(type: "TIMESTAMP", nullable: false, defaultValueSql: "CURRENT_TIMESTAMP"),
+                    IsDeleted = table.Column<bool>(type: "BOOLEAN", nullable: false, defaultValue: false),
                     FirstName = table.Column<string>(type: "VARCHAR(50)", maxLength: 50, nullable: false),
                     LastName = table.Column<string>(type: "VARCHAR(50)", maxLength: 50, nullable: false),
                     Gender = table.Column<int>(type: "INTEGER", nullable: false),
@@ -221,7 +225,8 @@ namespace StudHunter.DB.Postgres.Migrations
                         column: x => x.StatusId,
                         principalSchema: "studhunter",
                         principalTable: "StudentStatuses",
-                        principalColumn: "Id");
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.SetNull);
                 });
 
             migrationBuilder.CreateTable(
@@ -261,7 +266,8 @@ namespace StudHunter.DB.Postgres.Migrations
                     Title = table.Column<string>(type: "VARCHAR(255)", maxLength: 255, nullable: false),
                     Description = table.Column<string>(type: "TEXT", maxLength: 2500, nullable: true),
                     CreatedAt = table.Column<DateTime>(type: "TIMESTAMP", nullable: false, defaultValueSql: "CURRENT_TIMESTAMP"),
-                    UpdatedAt = table.Column<DateTime>(type: "TIMESTAMP", nullable: false, defaultValueSql: "CURRENT_TIMESTAMP")
+                    UpdatedAt = table.Column<DateTime>(type: "TIMESTAMP", nullable: false, defaultValueSql: "CURRENT_TIMESTAMP"),
+                    IsDeleted = table.Column<bool>(type: "BOOLEAN", nullable: false, defaultValue: false)
                 },
                 constraints: table =>
                 {
@@ -271,7 +277,8 @@ namespace StudHunter.DB.Postgres.Migrations
                         column: x => x.StudentId,
                         principalSchema: "studhunter",
                         principalTable: "Students",
-                        principalColumn: "Id");
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Cascade);
                 });
 
             migrationBuilder.CreateTable(
@@ -449,12 +456,6 @@ namespace StudHunter.DB.Postgres.Migrations
                 table: "AchievementTemplates",
                 column: "Name",
                 unique: true);
-
-            migrationBuilder.CreateIndex(
-                name: "IX_AchievementTemplates_Target",
-                schema: "studhunter",
-                table: "AchievementTemplates",
-                column: "Target");
 
             migrationBuilder.CreateIndex(
                 name: "IX_Administrators_Email",
@@ -636,23 +637,10 @@ namespace StudHunter.DB.Postgres.Migrations
                 unique: true);
 
             migrationBuilder.CreateIndex(
-                name: "IX_Vacancies_CreatedAt",
-                schema: "studhunter",
-                table: "Vacancies",
-                column: "CreatedAt");
-
-            migrationBuilder.CreateIndex(
                 name: "IX_Vacancies_EmployerId",
                 schema: "studhunter",
                 table: "Vacancies",
                 column: "EmployerId");
-
-            migrationBuilder.CreateIndex(
-                name: "IX_VacancyCourses_CourseId_VacancyId",
-                schema: "studhunter",
-                table: "VacancyCourses",
-                columns: new[] { "CourseId", "VacancyId" },
-                unique: true);
 
             migrationBuilder.CreateIndex(
                 name: "IX_VacancyCourses_VacancyId",

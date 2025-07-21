@@ -1,18 +1,16 @@
 ﻿using Microsoft.EntityFrameworkCore;
 using StudHunter.API.ModelsDto.Administrator;
-using StudHunter.API.ModelsDto.Message;
-using StudHunter.API.ModelsDto.Invitation;
 using StudHunter.DB.Postgres;
 using StudHunter.DB.Postgres.Models;
 using StudHunter.API.Services.CommonService;
 
 namespace StudHunter.API.Services.AdministratorServices;
 
-public class AdministratorService(StudHunterDbContext context, IPasswordHasher passwordHasher) : BaseAdministratorService(context)
+public class AdministratorService(StudHunterDbContext context, IPasswordHasher passwordHasher) : BaseEntityService(context)
 {
     private readonly IPasswordHasher _passwordHasher = passwordHasher;
 
-    public async Task<IEnumerable<AdministratorDto>> GetAdministratorsAsync()
+    public async Task<IEnumerable<AdministratorDto>> GetAllAdministratorsAsync()
     {
         return await _context.Administrators.Select(a => new AdministratorDto
         {
@@ -25,7 +23,7 @@ public class AdministratorService(StudHunterDbContext context, IPasswordHasher p
             LastName = a.LastName,
             AdminLevel = a.AdminLevel.ToString()
         })
-            .ToListAsync();
+        .ToListAsync();
     }
 
     public async Task<AdministratorDto?> GetAdministratorAsync(Guid id)
@@ -68,14 +66,9 @@ public class AdministratorService(StudHunterDbContext context, IPasswordHasher p
 
         _context.Administrators.Add(administrator);
 
-        try
-        {
-            await _context.SaveChangesAsync();
-        }
-        catch (DbUpdateException ex)
-        {
-            return (null, $"Failed to create administrator: {ex.InnerException?.Message}");
-        }
+        var (success, error) = await SaveChangesAsync("create", "Administrator");
+        if (!success)
+            return (null, error);
 
         return (new AdministratorDto
         {
@@ -115,19 +108,13 @@ public class AdministratorService(StudHunterDbContext context, IPasswordHasher p
         if (dto.AdminLevel != null)
             administrator.AdminLevel = Enum.Parse<Administrator.AdministratorLevel>(dto.AdminLevel);
 
-        try
-        {
-            await _context.SaveChangesAsync();
-        }
-        catch (DbUpdateException ex)
-        {
-            return (false, $"Failed to update administrator: {ex.InnerException?.Message}");
-        }
-        return (true, null);
+        return await SaveChangesAsync("update", "Administrator");
     }
 
-    public async Task<(bool Success, string? Error)> DeleteAdministratorAsync(Guid id)
+    public async Task<(bool Success, string? Error)> DeletedministratorAsync(Guid id, bool hardDelete = false)
     {
-        return await DeleteEntityAsync<Administrator>(id);
+        return hardDelete
+        ? await HardDeleteEntityAsync<Administrator>(id)
+        : await SoftDeleteEntityAsync<Administrator>(id);
     }
 }

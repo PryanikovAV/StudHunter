@@ -13,7 +13,7 @@ public class CourseService(StudHunterDbContext context) : BaseEntityService(cont
             Name = c.Name,
             Description = c.Description
         })
-            .ToListAsync();
+        .ToListAsync();
     }
 
     public async Task<CourseDto?> GetCourseAsync(Guid id)

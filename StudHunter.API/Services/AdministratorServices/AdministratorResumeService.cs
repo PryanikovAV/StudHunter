@@ -6,7 +6,7 @@ using StudHunter.DB.Postgres.Models;
 
 namespace StudHunter.API.Services.AdministratorServices;
 
-public class AdministratorResumeService(StudHunterDbContext context) : BaseAdministratorService(context)
+public class AdministratorResumeService(StudHunterDbContext context) : BaseEntityService(context)
 {
     public async Task<IEnumerable<ResumeDto>> GetAllResumesAsync()
     {
@@ -19,7 +19,7 @@ public class AdministratorResumeService(StudHunterDbContext context) : BaseAdmin
             CreatedAt = r.CreatedAt,
             UpdatedAt = r.UpdatedAt
         })
-            .ToListAsync();
+        .ToListAsync();
     }
 
     public async Task<ResumeDto?> GetResumeAsync(Guid id)
@@ -53,20 +53,23 @@ public class AdministratorResumeService(StudHunterDbContext context) : BaseAdmin
             resume.Description = dto.Description;
         resume.UpdatedAt = DateTime.UtcNow;
 
-        try
-        {
-            await _context.SaveChangesAsync();
-        }
-        catch (DbUpdateException ex)
-        {
-            return (false, $"Failed to update resume: {ex.InnerException?.Message}");
-        }
-
-        return (true, null);
+        return await SaveChangesAsync("update", "Resume");
     }
 
     public async Task<(bool Success, string? Error)> DeleteResumeAsync(Guid id)
     {
-        return await DeleteEntityAsync<Resume>(id);
+        return await HardDeleteEntityAsync<Resume>(id);
+    }
+
+    public async Task<(bool Success, string? Error)> SoftDeleteResumeAsync(Guid id)
+    {
+        var resume = await _context.Resumes.FirstOrDefaultAsync(r => r.Id == id);
+
+        if (resume == null)
+            return (false, "Resume not found");
+
+        resume.IsDeleted = true;
+
+        return await SaveChangesAsync("soft delete", "Resume");
     }
 }

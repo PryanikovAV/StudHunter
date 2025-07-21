@@ -1,10 +1,9 @@
 ﻿using Microsoft.AspNetCore.Mvc;
-using StudHunter.API.ModelsDto.UserAchievement;
 using StudHunter.API.Services;
 
 namespace StudHunter.API.Controllers.v1;
 
-[Route("api/v1/admin/[controller]")]
+[Route("api/v1/[controller]")]
 [ApiController]
 public class UserAchievementController(UserAchievementService userAchievementService) : ControllerBase
 {
@@ -16,4 +15,6 @@ public class UserAchievementController(UserAchievementService userAchievementSer
         var achievements = await _userAchievementService.GetUserAchievementsAsync(id);
         return Ok(achievements);
     }
+    // TODO: add GrantAchievementAync from UserAchievementService
+    // TODO: make method to undo achievements
 }

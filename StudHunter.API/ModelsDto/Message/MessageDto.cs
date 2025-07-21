@@ -8,10 +8,14 @@ public class MessageDto
 
     public Guid SenderId { get; set; }
 
+    public string SenderEmail { get; set; } = string.Empty;
+
     public Guid ReceiverId { get; set; }
 
+    public string ReceiverEmail { get; set; } = string.Empty;
+
     [Required]
-    [StringLength(1000, ErrorMessage = "Maximum length 1000 characters")]
+    [StringLength(1000)]
     public string Context { get; set; } = string.Empty;
 
     public DateTime SentAt { get; set; }

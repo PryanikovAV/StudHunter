@@ -6,7 +6,7 @@ using StudHunter.DB.Postgres.Models;
 
 namespace StudHunter.API.Services.AdministratorServices;
 
-public class AdministratorAchievementTemplateService(StudHunterDbContext context) : BaseAdministratorService(context)
+public class AdministratorAchievementTemplateService(StudHunterDbContext context) : BaseEntityService(context)
 {
     public async Task<IEnumerable<AchievementTemplateDto>> GetAllAchievementTemplatesAsync()
     {
@@ -17,7 +17,7 @@ public class AdministratorAchievementTemplateService(StudHunterDbContext context
             Description = a.Description,
             Target = a.Target.ToString()
         })
-            .ToListAsync();
+        .ToListAsync();
     }
     public async Task<AchievementTemplateDto?> GetAchievementTemplateAsync(int id)
     {
@@ -49,14 +49,9 @@ public class AdministratorAchievementTemplateService(StudHunterDbContext context
 
         _context.AchievementTemplates.Add(template);
 
-        try
-        {
-            await _context.SaveChangesAsync();
-        }
-        catch (DbUpdateException ex)
-        {
-            return (null, $"Failed to create achievement template: {ex.InnerException?.Message}");
-        }
+        var (success, error) = await SaveChangesAsync("create", "AchievementTemplate");
+        if (!success)
+            return (null, error);
 
         return (new AchievementTemplateDto
         {
@@ -86,20 +81,11 @@ public class AdministratorAchievementTemplateService(StudHunterDbContext context
         if (dto.Target != null)
             template.Target = Enum.Parse<AchievementTemplate.AchievementTarget>(dto.Target);
 
-        try
-        {
-            await _context.SaveChangesAsync();
-        }
-        catch (DbUpdateException ex)
-        {
-            return (false, $"Failed to update achievement template: {ex.InnerException?.Message}");
-        }
-
-        return (true, null);
+        return await SaveChangesAsync("update", "AchievementTemplate");
     }
 
     public async Task<(bool Success, string? Error)> DeleteAchievementTemplateAsync(int id)
     {
-        return await DeleteEntityAsync<AchievementTemplate>(id);
+        return await HardDeleteEntityAsync<AchievementTemplate>(id);
     }
 }

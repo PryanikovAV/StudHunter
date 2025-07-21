@@ -36,6 +36,10 @@ public class EmployerConfiguration : IEntityTypeConfiguration<Employer>
         builder.HasMany(e => e.Vacancies)
                .WithOne(v => v.Employer)
                .HasForeignKey(v => v.EmployerId)
+               .OnDelete(DeleteBehavior.Cascade)
                .IsRequired();
+
+        builder.HasIndex(e => e.Email)
+               .IsUnique();
     }
 }

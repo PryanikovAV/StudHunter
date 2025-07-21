@@ -12,7 +12,7 @@ using StudHunter.DB.Postgres;
 namespace StudHunter.DB.Postgres.Migrations
 {
     [DbContext(typeof(StudHunterDbContext))]
-    [Migration("20250620151900_InitialCreate")]
+    [Migration("20250721150431_InitialCreate")]
     partial class InitialCreate
     {
         /// <inheritdoc />
@@ -21,7 +21,7 @@ namespace StudHunter.DB.Postgres.Migrations
 #pragma warning disable 612, 618
             modelBuilder
                 .HasDefaultSchema("studhunter")
-                .HasAnnotation("ProductVersion", "9.0.6")
+                .HasAnnotation("ProductVersion", "9.0.7")
                 .HasAnnotation("Relational:MaxIdentifierLength", 63);
 
             NpgsqlModelBuilderExtensions.UseIdentityByDefaultColumns(modelBuilder);
@@ -112,8 +112,6 @@ namespace StudHunter.DB.Postgres.Migrations
 
                     b.HasIndex("Name")
                         .IsUnique();
-
-                    b.HasIndex("Target");
 
                     b.ToTable("AchievementTemplates", "studhunter");
 
@@ -364,10 +362,8 @@ namespace StudHunter.DB.Postgres.Migrations
 
                     b.Property<string>("Context")
                         .IsRequired()
-                        .ValueGeneratedOnAdd()
                         .HasMaxLength(1000)
-                        .HasColumnType("TEXT")
-                        .HasDefaultValue("");
+                        .HasColumnType("TEXT");
 
                     b.Property<Guid>("ReceiverId")
                         .HasColumnType("UUID");
@@ -406,6 +402,11 @@ namespace StudHunter.DB.Postgres.Migrations
                     b.Property<string>("Description")
                         .HasMaxLength(2500)
                         .HasColumnType("TEXT");
+
+                    b.Property<bool>("IsDeleted")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("BOOLEAN")
+                        .HasDefaultValue(false);
 
                     b.Property<Guid>("StudentId")
                         .HasColumnType("UUID");
@@ -578,6 +579,11 @@ namespace StudHunter.DB.Postgres.Migrations
                         .HasMaxLength(255)
                         .HasColumnType("VARCHAR(255)");
 
+                    b.Property<bool>("IsDeleted")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("BOOLEAN")
+                        .HasDefaultValue(false);
+
                     b.Property<string>("PasswordHash")
                         .IsRequired()
                         .HasColumnType("VARCHAR(255)");
@@ -632,6 +638,11 @@ namespace StudHunter.DB.Postgres.Migrations
                     b.Property<Guid>("EmployerId")
                         .HasColumnType("UUID");
 
+                    b.Property<bool>("IsDeleted")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("BOOLEAN")
+                        .HasDefaultValue(false);
+
                     b.Property<decimal?>("Salary")
                         .HasPrecision(10, 2)
                         .HasColumnType("DECIMAL(10, 2)")
@@ -652,8 +663,6 @@ namespace StudHunter.DB.Postgres.Migrations
 
                     b.HasKey("Id");
 
-                    b.HasIndex("CreatedAt");
-
                     b.HasIndex("EmployerId");
 
                     b.ToTable("Vacancies", "studhunter");
@@ -672,9 +681,6 @@ namespace StudHunter.DB.Postgres.Migrations
 
                     b.HasIndex("VacancyId");
 
-                    b.HasIndex("CourseId", "VacancyId")
-                        .IsUnique();
-
                     b.ToTable("VacancyCourses", "studhunter");
                 });
 
@@ -682,10 +688,8 @@ namespace StudHunter.DB.Postgres.Migrations
                 {
                     b.HasBaseType("StudHunter.DB.Postgres.Models.User");
 
-                    b.Property<string>("AdminLevel")
-                        .IsRequired()
-                        .HasMaxLength(50)
-                        .HasColumnType("VARCHAR(50)");
+                    b.Property<int>("AdminLevel")
+                        .HasColumnType("INTEGER");
 
                     b.Property<string>("FirstName")
                         .IsRequired()
@@ -826,13 +830,13 @@ namespace StudHunter.DB.Postgres.Migrations
                     b.HasOne("StudHunter.DB.Postgres.Models.User", "Receiver")
                         .WithMany("ReceivedMessages")
                         .HasForeignKey("ReceiverId")
-                        .OnDelete(DeleteBehavior.Cascade)
+                        .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
 
                     b.HasOne("StudHunter.DB.Postgres.Models.User", "Sender")
                         .WithMany("SentMessages")
                         .HasForeignKey("SenderId")
-                        .OnDelete(DeleteBehavior.Cascade)
+                        .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
 
                     b.Navigation("Receiver");
@@ -844,7 +848,8 @@ namespace StudHunter.DB.Postgres.Migrations
                 {
                     b.HasOne("StudHunter.DB.Postgres.Models.Student", "Student")
                         .WithOne("Resume")
-                        .HasForeignKey("StudHunter.DB.Postgres.Models.Resume", "StudentId");
+                        .HasForeignKey("StudHunter.DB.Postgres.Models.Resume", "StudentId")
+                        .OnDelete(DeleteBehavior.Cascade);
 
                     b.Navigation("Student");
                 });
@@ -948,7 +953,8 @@ namespace StudHunter.DB.Postgres.Migrations
                 {
                     b.HasOne("StudHunter.DB.Postgres.Models.StudentStatus", "Status")
                         .WithMany()
-                        .HasForeignKey("StatusId");
+                        .HasForeignKey("StatusId")
+                        .OnDelete(DeleteBehavior.SetNull);
 
                     b.Navigation("Status");
                 });

@@ -20,6 +20,9 @@ public class FavoriteController(FavoriteService favoriteService) : ControllerBas
     [HttpPost]
     public async Task<IActionResult> CreateFavorite([FromBody] CreateFavoriteDto dto)
     {
+        if (!ModelState.IsValid)
+            return BadRequest(ModelState);
+
         var userId = Guid.NewGuid();  // <- Change this !!! (get from Jwt token)
         var (favorite, error) = await _favoriteService.CreateFavoriteAsync(userId, dto);
         if (error != null)

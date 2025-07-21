@@ -38,15 +38,21 @@ public class StudentConfiguration : IEntityTypeConfiguration<Student>
         builder.HasOne(s => s.Status)
                .WithMany()
                .HasForeignKey(s => s.StatusId)
+               .OnDelete(DeleteBehavior.SetNull)
                .IsRequired(false);
 
         builder.HasOne(s => s.Resume)
                .WithOne(r => r.Student)
+               .OnDelete(DeleteBehavior.Cascade)
                .IsRequired(false);
 
         builder.HasOne(s => s.StudyPlan)
                .WithOne(sp => sp.Student)
                .HasForeignKey<StudyPlan>(sp => sp.StudentId)
+               .OnDelete(DeleteBehavior.Cascade)
                .IsRequired();
+
+        builder.HasIndex(s => s.Email)
+               .IsUnique();
     }
 }

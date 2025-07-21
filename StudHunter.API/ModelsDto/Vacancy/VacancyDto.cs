@@ -21,6 +21,8 @@ public class VacancyDto
 
     public DateTime UpdatedAt { get; set; }
 
+    public bool IsDeleted { get; set; }
+
     [Required, RegularExpression("Internship|Job", ErrorMessage = "Type must be 'Internship' or 'Job'")]
     public string Type { get; set; } = string.Empty;
 

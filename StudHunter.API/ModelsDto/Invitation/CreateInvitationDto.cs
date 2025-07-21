@@ -10,9 +10,10 @@ public class CreateInvitationDto
 
     public Guid? ResumeId { get; set; }
 
-    [Required, RegularExpression("EmployerToStudent|StudentToEmployer", ErrorMessage = "Type must be 'EmployerToStudent' or 'StudentToEmployer'")]
+    [Required(ErrorMessage = "{0} is required")]
+    [RegularExpression("EmployerToStudent|StudentToEmployer", ErrorMessage = "{0} must be 'EmployerToStudent' or 'StudentToEmployer'")]
     public string Type { get; set; } = string.Empty;
 
-    [MaxLength(1000)]
+    [StringLength(1000, ErrorMessage = "{0} cannot exceed {1} characters")]
     public string? Message { get; set; }
 }

@@ -42,6 +42,11 @@ public class VacancyConfiguration : IEntityTypeConfiguration<Vacancy>
                .HasDefaultValueSql("CURRENT_TIMESTAMP")
                .IsRequired();
 
+        builder.Property(r => r.IsDeleted)
+               .HasColumnType("BOOLEAN")
+               .HasDefaultValue(false)
+               .IsRequired();
+
         builder.Property(vc => vc.Type)
                .HasColumnType("INTEGER")
                .IsRequired();
@@ -61,6 +66,6 @@ public class VacancyConfiguration : IEntityTypeConfiguration<Vacancy>
                .HasForeignKey(i => i.VacancyId)
                .IsRequired(false);
 
-        builder.HasIndex(vc => vc.CreatedAt);
+        builder.HasQueryFilter(v => !v.IsDeleted);
     }
 }

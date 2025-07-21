@@ -15,7 +15,7 @@ public class FacultyService(StudHunterDbContext context) : BaseEntityService(con
             Name = f.Name,
             Description = f.Description
         })
-            .ToListAsync();
+        .ToListAsync();
     }
 
     public async Task<FacultyDto?> GetFacultyAsync(Guid id)

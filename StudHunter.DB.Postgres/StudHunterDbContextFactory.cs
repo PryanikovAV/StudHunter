@@ -11,6 +11,7 @@ public class StudHunterDbContextFactory : IDesignTimeDbContextFactory<StudHunter
         var configuration = new ConfigurationBuilder()
             .SetBasePath(Directory.GetCurrentDirectory())
             .AddJsonFile("appsettings.json")
+            .AddJsonFile("appsettings.Development.json", optional: true)
             .Build();
 
         var connectionString = configuration.GetConnectionString("DefaultConnection");

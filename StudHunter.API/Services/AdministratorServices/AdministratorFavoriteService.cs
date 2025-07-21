@@ -6,7 +6,7 @@ using StudHunter.DB.Postgres.Models;
 
 namespace StudHunter.API.Services.AdministratorServices;
 
-public class AdministratorFavoriteService(StudHunterDbContext context) : BaseAdministratorService(context)
+public class AdministratorFavoriteService(StudHunterDbContext context) : BaseEntityService(context)
 {
     public async Task<IEnumerable<FavoriteDto>> GetAllFavoritesAsync()
     {
@@ -18,26 +18,26 @@ public class AdministratorFavoriteService(StudHunterDbContext context) : BaseAdm
             ResumeId = f.ResumeId,
             AddedAt = f.AddedAt
         })
-            .ToListAsync();
+        .ToListAsync();
     }
 
     public async Task<IEnumerable<FavoriteDto>> GetFavoritesAsync(Guid userId)
     {
         return await _context.Favorites
-            .Where(f => f.UserId == userId)
-            .Select(f => new FavoriteDto
-            {
-                Id = f.Id,
-                UserId = f.UserId,
-                VacancyId = f.VacancyId,
-                ResumeId = f.ResumeId,
-                AddedAt = f.AddedAt
-            })
-            .ToListAsync();
+        .Where(f => f.UserId == userId)
+        .Select(f => new FavoriteDto
+        {
+            Id = f.Id,
+            UserId = f.UserId,
+            VacancyId = f.VacancyId,
+            ResumeId = f.ResumeId,
+            AddedAt = f.AddedAt
+        })
+        .ToListAsync();
     }
 
     public async Task<(bool Success, string? Error)> DeleteFavoriteAsync(Guid id)
     {
-        return await DeleteEntityAsync<Favorite>(id);
+        return await HardDeleteEntityAsync<Favorite>(id);
     }
 }

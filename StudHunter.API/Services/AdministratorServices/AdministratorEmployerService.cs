@@ -6,34 +6,34 @@ using StudHunter.DB.Postgres.Models;
 
 namespace StudHunter.API.Services.AdministratorServices;
 
-public class AdministratorEmployerService(StudHunterDbContext context) : BaseAdministratorService(context)
+public class AdministratorEmployerService(StudHunterDbContext context) : BaseEntityService(context)
 {
     public async Task<IEnumerable<EmployerDto>> GetAllEmployersAsync()
     {
         return await _context.Employers
-            .Include(e => e.Vacancies)
-            .Select(e => new EmployerDto
-            {
-                Id = e.Id,
-                Email = e.Email,
-                ContactEmail = e.ContactEmail,
-                ContactPhone = e.ContactPhone,
-                CreatedAt = e.CreatedAt,
-                AccreditationStatus = e.AccreditationStatus,
-                Name = e.Name,
-                Description = e.Description,
-                Website = e.Website,
-                Specialization = e.Specialization,
-                VacancyIds = e.Vacancies.Select(v => v.Id).ToList()
-            })
-            .ToListAsync();
+        .Include(e => e.Vacancies)
+        .Select(e => new EmployerDto
+        {
+            Id = e.Id,
+            Email = e.Email,
+            ContactEmail = e.ContactEmail,
+            ContactPhone = e.ContactPhone,
+            CreatedAt = e.CreatedAt,
+            AccreditationStatus = e.AccreditationStatus,
+            Name = e.Name,
+            Description = e.Description,
+            Website = e.Website,
+            Specialization = e.Specialization,
+            VacancyIds = e.Vacancies.Select(v => v.Id).ToList()
+        })
+        .ToListAsync();
     }
 
     public async Task<EmployerDto?> GetEmployerAsync(Guid id)
     {
         var employer = await _context.Employers
-            .Include(e => e.Vacancies)
-            .FirstOrDefaultAsync(e => e.Id == id);
+        .Include(e => e.Vacancies)
+        .FirstOrDefaultAsync(e => e.Id == id);
 
         if (employer == null)
             return null;
@@ -78,20 +78,13 @@ public class AdministratorEmployerService(StudHunterDbContext context) : BaseAdm
             employer.Specialization = dto.Specialization;
         employer.AccreditationStatus = dto.AccreditationStatus;
 
-        try
-        {
-            await _context.SaveChangesAsync();
-        }
-        catch (DbUpdateException ex)
-        {
-            return (false, $"Failed to update employer: {ex.InnerException?.Message}");
-        }
-
-        return (true, null);
+        return await SaveChangesAsync("update", "Employer");
     }
 
-    public async Task<(bool Success, string? Error)> DeleteEmployerAsync(Guid id)
+    public async Task<(bool Success, string? Error)> DeleteEmployerAsync(Guid id, bool hardDelete = false)
     {
-        return await DeleteEntityAsync<Employer>(id);
+        return hardDelete
+        ? await HardDeleteEntityAsync<Employer>(id)
+        : await SoftDeleteEntityAsync<Employer>(id);
     }
 }

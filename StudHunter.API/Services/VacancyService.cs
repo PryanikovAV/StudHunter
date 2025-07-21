@@ -21,7 +21,7 @@ public class VacancyService(StudHunterDbContext context) : BaseEntityService(con
             UpdatedAt = v.UpdatedAt,
             Type = v.Type.ToString()
         })
-            .ToListAsync();
+        .ToListAsync();
     }
 
     public async Task<VacancyDto?> GetVacancyAsync(Guid id)
@@ -42,6 +42,24 @@ public class VacancyService(StudHunterDbContext context) : BaseEntityService(con
             UpdatedAt = vacancy.UpdatedAt,
             Type = vacancy.Type.ToString()
         };
+    }
+
+    public async Task<IEnumerable<VacancyDto>> GetVacanciesByEmployerAsync(Guid id)
+    {
+        return await _context.Vacancies
+        .Where(e => e.EmployerId == id)
+        .Select(v => new VacancyDto
+        {
+            Id = v.Id,
+            EmployerId = v.EmployerId,
+            Title = v.Title,
+            Description = v.Description,
+            Salary = v.Salary,
+            CreatedAt = v.CreatedAt,
+            UpdatedAt = v.UpdatedAt,
+            Type = v.Type.ToString()
+        })
+        .ToListAsync();
     }
 
     public async Task<(VacancyDto? Vacancy, string? Error)> CreateVacancyAsync(CreateVacancyDto dto)
@@ -68,14 +86,9 @@ public class VacancyService(StudHunterDbContext context) : BaseEntityService(con
 
         _context.Vacancies.Add(vacancy);
 
-        try
-        {
-            await _context.SaveChangesAsync();
-        }
-        catch (DbUpdateException ex)
-        {
-            return (null, $"Failed to create vacancy: {ex.InnerException?.Message}");
-        }
+        var (success, error) = await SaveChangesAsync("create", "vacancy");
+        if (!success)
+            return (null, error);
 
         return (new VacancyDto
         {
@@ -108,15 +121,7 @@ public class VacancyService(StudHunterDbContext context) : BaseEntityService(con
             vacancy.Type = Enum.Parse<Vacancy.VacancyType>(dto.Type);
         vacancy.UpdatedAt = DateTime.UtcNow;
 
-        try
-        {
-            await _context.SaveChangesAsync();
-        }
-        catch (DbUpdateException ex)
-        {
-            return (false, $"Failed to update vacancy: {ex.InnerException?.Message}");
-        }
-        return (true, null);
+        return await SaveChangesAsync("update", "vacancy");
     }
 
     public async Task<(bool Success, string? Error)> AddCourseToVacancyAsync(Guid vacancyId, Guid courseId)
@@ -138,15 +143,7 @@ public class VacancyService(StudHunterDbContext context) : BaseEntityService(con
 
         _context.VacancyCourses.Add(vacancyCourse);
 
-        try
-        {
-            await _context.SaveChangesAsync();
-        }
-        catch (DbUpdateException ex)
-        {
-            return (false, $"Failed to add course to vacancy: {ex.InnerException?.Message}");
-        }
-        return (true, null);
+        return await SaveChangesAsync("add course to vacancy", "vacancy");
     }
 
     public async Task<(bool Success, string? Error)> RemoveCourseFromVacancyAsync(Guid vacancyId, Guid courseId)
@@ -158,14 +155,18 @@ public class VacancyService(StudHunterDbContext context) : BaseEntityService(con
 
         _context.VacancyCourses.Remove(vacancyCourse);
 
-        try
-        {
-            await _context.SaveChangesAsync();
-        }
-        catch (DbUpdateException ex)
-        {
-            return (false, $"Failed to remove course from vacancy: {ex.InnerException?.Message}");
-        }
-        return (true, null);
+        return await SaveChangesAsync("remove course from vacancy", "vacancy");
+    }
+
+    public async Task<(bool Success, string? Error)> SoftDeleteVacancyAsync(Guid id)
+    {
+        var vacancy = await _context.Vacancies.FirstOrDefaultAsync(v => v.Id == id);
+
+        if (vacancy == null)
+            return (false, "Vacancy not found");
+
+        vacancy.IsDeleted = true;
+
+        return await SaveChangesAsync("soft delete", "Vacancy");
     }
 }

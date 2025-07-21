@@ -33,11 +33,13 @@ public class MessageConfiguration : IEntityTypeConfiguration<Message>
         builder.HasOne(m => m.Sender)
                .WithMany(u => u.SentMessages)
                .HasForeignKey(m => m.SenderId)
+               .OnDelete(DeleteBehavior.Restrict)
                .IsRequired();
 
         builder.HasOne(m => m.Receiver)
                .WithMany(u => u.ReceivedMessages)
                .HasForeignKey(m => m.ReceiverId)
+               .OnDelete(DeleteBehavior.Restrict)
                .IsRequired();
 
         builder.HasIndex(m => m.SenderId);

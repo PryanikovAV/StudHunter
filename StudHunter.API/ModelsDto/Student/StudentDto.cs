@@ -8,7 +8,7 @@ public class StudentDto
     public Guid Id { get; set; }
 
     [Required]
-    public string Role => "Student";
+    public string Role = "Student";
 
     [Required, EmailAddress, MaxLength(100)]
     public string Email { get; set; } = string.Empty;
@@ -21,13 +21,15 @@ public class StudentDto
 
     public DateTime CreatedAt { get; set; }
 
+    public bool IsDeleted { get; set; }
+
     [Required, MaxLength(50)]
     public string FirstName { get; set; } = string.Empty;
 
     [Required, MaxLength(50)]
     public string LastName { get; set; } = string.Empty;
 
-    [Required, RegularExpression("Male|Female", ErrorMessage = "Gender must be 'Male' or 'Female'")]
+    [Required, RegularExpression("Male|Female")]
     public string Gender { get; set; } = string.Empty;
 
     public DateOnly BirthDate { get; set; }
@@ -49,7 +51,7 @@ public class StudentDto
 
     public Guid SpecialityId { get; set; }
 
-    [RegularExpression("fulltime|parttime|correspondence", ErrorMessage = "StudyForm must be 'fulltime', 'parttime', or 'correspondence'")]
+    [RegularExpression("fulltime|parttime|correspondence")]
     public string StudyForm { get; set; } = string.Empty;
 
     public DateOnly BeginYear { get; set; }

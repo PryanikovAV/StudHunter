@@ -14,6 +14,8 @@ public abstract class User
 
     public DateTime CreatedAt { get; set; }
 
+    public bool IsDeleted { get; set; } = false;
+
     public virtual ICollection<UserAchievement> Achievements { get; set; } = new List<UserAchievement>();
     public virtual ICollection<Favorite> Favorites { get; set; } = new List<Favorite>();
     public virtual ICollection<Invitation> SentInvitations { get; set; } = new List<Invitation>();

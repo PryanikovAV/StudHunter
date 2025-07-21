@@ -1,19 +1,18 @@
 ﻿using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using StudHunter.API.ModelsDto.Resume;
-using StudHunter.API.Services;
 using StudHunter.API.Services.AdministratorServices;
 
 namespace StudHunter.API.Controllers.v1.AdministratorControllers;
 
 [Route("api/v1/admin/[controller]")]
 [ApiController]
+[Authorize(Roles = "Administrator")]
 public class AdministratorResumeController(AdministratorResumeService administratorResumeService) : ControllerBase
 {
     private readonly AdministratorResumeService _administratorResumeService = administratorResumeService;
 
     [HttpGet]
-    [Authorize(Roles = "Administrator")]
     public async Task<IActionResult> GetAllResumes()
     {
         var resumes = await _administratorResumeService.GetAllResumesAsync();
@@ -21,7 +20,6 @@ public class AdministratorResumeController(AdministratorResumeService administra
     }
 
     [HttpGet("{id}")]
-    [Authorize(Roles = "Administrator")]
     public async Task<ActionResult> GetResume(Guid id)
     {
         var resume = await _administratorResumeService.GetResumeAsync(id);
@@ -31,9 +29,11 @@ public class AdministratorResumeController(AdministratorResumeService administra
     }
 
     [HttpPut("{id}")]
-    [Authorize(Roles = "Administrator")]
     public async Task<IActionResult> UpdateResume(Guid id, [FromBody] UpdateResumeDto dto)
     {
+        if (!ModelState.IsValid)
+            return BadRequest(ModelState);
+
         var (success, error) = await _administratorResumeService.UpdateResumeAsync(id, dto);
         if (!success)
             return error == null ? NotFound() : Conflict(new { error });
@@ -41,7 +41,6 @@ public class AdministratorResumeController(AdministratorResumeService administra
     }
 
     [HttpDelete("{id}")]
-    [Authorize(Roles = "Administrator")]
     public async Task<IActionResult> DeleteResume(Guid id)
     {
         var (success, error) = await _administratorResumeService.DeleteResumeAsync(id);

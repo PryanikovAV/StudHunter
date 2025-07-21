@@ -58,6 +58,13 @@ public class UserConfiguration : IEntityTypeConfiguration<User>
                .HasForeignKey(m => m.ReceiverId)
                .IsRequired();
 
+        builder.Property(u => u.IsDeleted)
+               .HasColumnType("BOOLEAN")
+               .HasDefaultValue(false)
+               .IsRequired();
+
+        builder.HasQueryFilter(u => u.IsDeleted);
+
         builder.HasIndex(u => u.Email)
                .IsUnique();
     }

@@ -1,6 +1,8 @@
-﻿using Microsoft.AspNetCore.Mvc;
+﻿using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Mvc;
 using StudHunter.API.ModelsDto.Vacancy;
 using StudHunter.API.Services;
+using StudHunter.API.Services.AdministratorServices;
 
 namespace StudHunter.API.Controllers.v1;
 
@@ -11,7 +13,7 @@ public class VacancyController(VacancyService vacancyService) : ControllerBase
     private readonly VacancyService _vacancyService = vacancyService;
 
     [HttpGet]
-    public async Task<IActionResult> GetVacancies()
+    public async Task<IActionResult> GetAllVacancies()
     {
         var vacancies = await _vacancyService.GetAllVacanciesAsync();
         return Ok(vacancies);
@@ -26,9 +28,24 @@ public class VacancyController(VacancyService vacancyService) : ControllerBase
         return Ok(vacancy);
     }
 
+    /// <summary>
+    /// Retrieves all vacancies for a specific employer.
+    /// </summary>
+    /// <param name="id">The unique identifier (GUID) of the employer.</param>
+    /// <returns>A collection of vacancies associated with the employer.</returns>
+    [HttpGet("employer/{employerId}/vacancies")]
+    public async Task<IActionResult> GetVacanciesByEmployer(Guid employerId)
+    {
+        var vacancies = await _vacancyService.GetVacanciesByEmployerAsync(employerId);
+        return Ok(vacancies);
+    }
+
     [HttpPost]
     public async Task<IActionResult> CreateVacancy([FromBody] CreateVacancyDto dto)
     {
+        if (!ModelState.IsValid)
+            return BadRequest(ModelState);
+
         var (vacancy, error) = await _vacancyService.CreateVacancyAsync(dto);
         if (error != null)
             return Conflict(new { error });
@@ -38,6 +55,9 @@ public class VacancyController(VacancyService vacancyService) : ControllerBase
     [HttpPut("{id}")]
     public async Task<IActionResult> UpdateVacancy(Guid id, [FromBody] UpdateVacancyDto dto)
     {
+        if (!ModelState.IsValid)
+            return BadRequest(ModelState);
+
         var (success, error) = await _vacancyService.UpdateVacancyAsync(id, dto);
         if (!success)
             return error == null ? NotFound() : Conflict(new { error });
@@ -47,16 +67,31 @@ public class VacancyController(VacancyService vacancyService) : ControllerBase
     [HttpPost("{id}/courses")]
     public async Task<IActionResult> AddCourseToVacancy(Guid id, [FromBody] Guid courseId)
     {
+        if (!ModelState.IsValid)
+            return BadRequest(ModelState);
+
         var (success, error) = await _vacancyService.AddCourseToVacancyAsync(id, courseId);
         if (!success)
             return error == null ? NotFound() : Conflict(new { error });
         return NoContent();
     }
 
-    [HttpDelete("{id}/courses/{courseId}")]
+    [HttpPost("{id}/courses/{courseId}")]
     public async Task<IActionResult> RemoveCourseFromVacancy(Guid id, Guid courseId)
     {
+        if (!ModelState.IsValid)
+            return BadRequest(ModelState);
+
         var (success, error) = await _vacancyService.RemoveCourseFromVacancyAsync(id, courseId);
+        if (!success)
+            return error == null ? NotFound() : Conflict(new { error });
+        return NoContent();
+    }
+
+    [HttpDelete("{id}")]
+    public async Task<IActionResult> DeleteAdministrator(Guid id)
+    {
+        var (success, error) = await _vacancyService.SoftDeleteVacancyAsync(id);
         if (!success)
             return error == null ? NotFound() : Conflict(new { error });
         return NoContent();

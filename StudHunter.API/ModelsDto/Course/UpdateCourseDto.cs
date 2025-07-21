@@ -4,9 +4,9 @@ namespace StudHunter.API.ModelsDto.Course;
 
 public class UpdateCourseDto
 {
-    [MaxLength(255)]
+    [StringLength(255, ErrorMessage = "{0} cannot exceed {1} characters")]
     public string? Name { get; set; }
 
-    [MaxLength(1000)]
+    [StringLength(1000, ErrorMessage = "{0} cannot exceed {1} characters")]
     public string? Description { get; set; }
 }

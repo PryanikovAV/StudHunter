@@ -14,6 +14,8 @@ public class Resume
 
     public DateTime UpdatedAt { get; set; }
 
+    public bool IsDeleted { get; set; }
+
     public virtual Student Student { get; set; } = null!;
     public virtual ICollection<Favorite> Favorites { get; set; } = new List<Favorite>();
     public virtual ICollection<Invitation> Invitations { get; set; } = new List<Invitation>();

@@ -7,7 +7,7 @@ using StudHunter.DB.Postgres.Models;
 
 namespace StudHunter.API.Services.AdministratorServices;
 
-public class AdministratorStudentService(StudHunterDbContext context) : BaseAdministratorService(context)
+public class AdministratorStudentService(StudHunterDbContext context) : BaseEntityService(context)
 {
     public async Task<IEnumerable<StudentDto>> GetAllStudentsAsync()
     {
@@ -32,17 +32,17 @@ public class AdministratorStudentService(StudHunterDbContext context) : BaseAdmi
             StudyForm = s.StudyPlan.StudyForm.ToString(),
             BeginYear = s.StudyPlan.BeginYear
         })
-            .ToListAsync();
+        .ToListAsync();
     }
 
     public async Task<StudentDto?> GetStudentAsync(Guid id)
     {
         var student = await _context.Students
-            .Include(s => s.Resume)
-            .Include(s => s.StudyPlan)
-            .Include(s => s.Achievements)
-            .ThenInclude(ua => ua.AchievementTemplate)
-            .FirstOrDefaultAsync(s => s.Id == id);
+        .Include(s => s.Resume)
+        .Include(s => s.StudyPlan)
+        .Include(s => s.Achievements)
+        .ThenInclude(ua => ua.AchievementTemplate)
+        .FirstOrDefaultAsync(s => s.Id == id);
 
         if (student == null)
             return null;
@@ -81,8 +81,8 @@ public class AdministratorStudentService(StudHunterDbContext context) : BaseAdmi
     public async Task<(bool Success, string? Error)> UpdateStudentAsync(Guid id, UpdateStudentByAdministratorDto dto)
     {
         var student = await _context.Students
-            .Include(s => s.StudyPlan)
-            .FirstOrDefaultAsync(s => s.Id == id);
+        .Include(s => s.StudyPlan)
+        .FirstOrDefaultAsync(s => s.Id == id);
 
         if (student == null)
             return (false, "Student not found");
@@ -116,7 +116,7 @@ public class AdministratorStudentService(StudHunterDbContext context) : BaseAdmi
             student.IsForeign = dto.IsForeign.Value;
 
         if (dto.CourseNumber.HasValue || dto.FacultyId.HasValue ||
-            dto.SpecialityId.HasValue || dto.StudyForm != null || dto.BeginYear.HasValue)
+        dto.SpecialityId.HasValue || dto.StudyForm != null || dto.BeginYear.HasValue)
         {
             var studyPlan = student.StudyPlan;
             if (dto.CourseNumber.HasValue)
@@ -131,19 +131,13 @@ public class AdministratorStudentService(StudHunterDbContext context) : BaseAdmi
                 studyPlan.BeginYear = dto.BeginYear.Value;
         }
 
-        try
-        {
-            await _context.SaveChangesAsync();
-        }
-        catch (DbUpdateException ex)
-        {
-            return (false, $"Failed to update student: {ex.InnerException?.Message}");
-        }
-        return (true, null);
+        return await SaveChangesAsync("update", "Student");
     }
 
-    public async Task<(bool Success, string? Error)> DeleteStudentAsync(Guid id)
+    public async Task<(bool Success, string? Error)> DeleteStudentAsync(Guid id, bool hardDelete = false)
     {
-        return await DeleteEntityAsync<Student>(id);
+        return hardDelete
+        ? await HardDeleteEntityAsync<Student>(id)
+        : await SoftDeleteEntityAsync<Student>(id);
     }
 }

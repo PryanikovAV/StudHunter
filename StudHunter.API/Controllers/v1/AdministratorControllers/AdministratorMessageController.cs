@@ -1,18 +1,17 @@
 ﻿using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using StudHunter.API.Services;
 using StudHunter.API.Services.AdministratorServices;
 
 namespace StudHunter.API.Controllers.v1.AdministratorControllers;
 
 [Route("api/v1/admin/[controller]")]
 [ApiController]
+[Authorize(Roles = "Administrator")]
 public class AdministratorMessageController(AdministratorMessagesService administratorMessagesService) : ControllerBase
 {
     private readonly AdministratorMessagesService _administratorMessagesService = administratorMessagesService;
 
     [HttpGet("messages")]
-    [Authorize(Roles = "Administrator")]
     public async Task<IActionResult> GetAllMessages()
     {
         var messages = await _administratorMessagesService.GetAllMessageAsync();
@@ -34,7 +33,6 @@ public class AdministratorMessageController(AdministratorMessagesService adminis
     }
 
     [HttpDelete("message/{id}")]
-    [Authorize(Roles = "Administrator")]
     public async Task<IActionResult> DeleteMessage(Guid id)
     {
         var (success, error) = await _administratorMessagesService.DeleteMessageAsync(id);

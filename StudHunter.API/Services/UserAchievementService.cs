@@ -11,18 +11,18 @@ public class UserAchievementService(StudHunterDbContext context) : BaseEntitySer
     public async Task<IEnumerable<UserAchievementDto>> GetUserAchievementsAsync(Guid userId)
     {
         return await _context.UserAchievements
-            .Where(ua => ua.UserId == userId)
-            .Include(ua => ua.AchievementTemplate)
-            .Select(ua => new UserAchievementDto
-            {
-                UserId = ua.UserId,
-                AchievementTemplateId = ua.AchievementTemplateId,
-                AchievementAt = ua.AchievementAt,
-                AchievementName = ua.AchievementTemplate.Name,
-                AchievementDescription = ua.AchievementTemplate.Description,
-            })
-            .OrderBy(ua => ua.AchievementAt)
-            .ToListAsync();
+        .Where(ua => ua.UserId == userId)
+        .Include(ua => ua.AchievementTemplate)
+        .Select(ua => new UserAchievementDto
+        {
+            UserId = ua.UserId,
+            AchievementTemplateId = ua.AchievementTemplateId,
+            AchievementAt = ua.AchievementAt,
+            AchievementName = ua.AchievementTemplate.Name,
+            AchievementDescription = ua.AchievementTemplate.Description,
+        })
+        .OrderBy(ua => ua.AchievementAt)
+        .ToListAsync();
     }
 
     public async Task<(bool Success, string? Error)> GrantAchievementAync(Guid userId, int achievementTemplateId)
@@ -45,14 +45,6 @@ public class UserAchievementService(StudHunterDbContext context) : BaseEntitySer
 
         _context.UserAchievements.Add(userAchievement);
 
-        try
-        {
-            await _context.SaveChangesAsync();
-        }
-        catch (DbUpdateException ex)
-        {
-            return (false, $"Failed to grant achievement: {ex.InnerException?.Message}");
-        }
-        return (true, null);
+        return await SaveChangesAsync("grant achievement", "achievement");
     }
 }

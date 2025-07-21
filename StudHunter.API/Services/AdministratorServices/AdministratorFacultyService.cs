@@ -6,8 +6,23 @@ using StudHunter.DB.Postgres.Models;
 
 namespace StudHunter.API.Services.AdministratorServices;
 
-public class AdministratorFacultyService(StudHunterDbContext context) : BaseAdministratorService(context)
+public class AdministratorFacultyService(StudHunterDbContext context) : BaseEntityService(context)
 {
+    public async Task<FacultyDto?> GetFacultyAsync(Guid id)
+    {
+        var faculty = await _context.Faculties.FirstOrDefaultAsync(f => f.Id == id);
+
+        if (faculty == null)
+            return null;
+
+        return new FacultyDto
+        {
+            Id = faculty.Id,
+            Name = faculty.Name,
+            Description = faculty.Description
+        };
+    }
+
     public async Task<(FacultyDto? Faculty, string? Error)> CreateFacultyAsync(CreateFacultyDto dto)
     {
         if (await _context.Faculties.AnyAsync(f => f.Name == dto.Name))
@@ -22,14 +37,9 @@ public class AdministratorFacultyService(StudHunterDbContext context) : BaseAdmi
 
         _context.Faculties.Add(faculty);
 
-        try
-        {
-            await _context.SaveChangesAsync();
-        }
-        catch (DbUpdateException ex)
-        {
-            return (null, $"Failed to create faculty: {ex.InnerException?.Message}");
-        }
+        var (success, error) = await SaveChangesAsync("create", "Faculty");
+        if (!success)
+            return (null, error);
 
         return (new FacultyDto
         {
@@ -54,15 +64,7 @@ public class AdministratorFacultyService(StudHunterDbContext context) : BaseAdmi
         if (dto.Description != null)
             faculty.Description = dto.Description;
 
-        try
-        {
-            await _context.SaveChangesAsync();
-        }
-        catch (DbUpdateException ex)
-        {
-            return (false, $"Failed to update faculty: {ex.InnerException?.Message}");
-        }
-        return (true, null);
+        return await SaveChangesAsync("update", "Faculty");
     }
 
     public async Task<(bool Success, string? Error)> DeleteFacultyAsync(Guid id)
@@ -74,15 +76,6 @@ public class AdministratorFacultyService(StudHunterDbContext context) : BaseAdmi
         if (await _context.StudyPlans.AnyAsync(sp => sp.FacultyId == id))
             return (false, "Cannot delete faculty associated with study plans");
 
-        _context.Faculties.Remove(faculty);
-        try
-        {
-            await _context.SaveChangesAsync();
-        }
-        catch (DbUpdateException ex)
-        {
-            return (false, $"Failed to delete faculty: {ex.InnerException?.Message}");
-        }
-        return (true, null);
+        return await HardDeleteEntityAsync<Faculty>(id);
     }
 }

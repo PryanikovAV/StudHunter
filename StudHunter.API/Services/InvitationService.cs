@@ -11,8 +11,8 @@ public class InvitationService(StudHunterDbContext context) : BaseEntityService(
     public async Task<IEnumerable<InvitationDto>> GetInvitationsByUserAsync(Guid userId, bool sent = false)
     {
         var query = sent
-            ? _context.Invitations.Where(i => i.SenderId == userId)
-            : _context.Invitations.Where(i => i.ReceiverId == userId);
+        ? _context.Invitations.Where(i => i.SenderId == userId).Include(i => i.Vacancy).Include(r => r.Resume)
+        : _context.Invitations.Where(i => i.ReceiverId == userId).Include(i => i.Vacancy).Include(r => r.Resume);
 
         return await _context.Invitations.Select(i => new InvitationDto
         {
@@ -25,10 +25,12 @@ public class InvitationService(StudHunterDbContext context) : BaseEntityService(
             Message = i.Message,
             Status = i.Status.ToString(),
             CreatedAt = i.CreatedAt,
-            UpdatedAt = i.UpdatedAt
+            UpdatedAt = i.UpdatedAt,
+            VacancyStatus = i.Vacancy != null ? (i.Vacancy.IsDeleted ? "Deleted" : "Active") : null,
+            ResumeStatus = i.Resume != null ? (i.Resume.IsDeleted ? "Deleted" : "Active") : null,
         })
-            .OrderByDescending(i => i.CreatedAt)
-            .ToListAsync();
+        .OrderByDescending(i => i.CreatedAt)
+        .ToListAsync();
     }
 
     public async Task<(InvitationDto? Invitation, string? Error)> CreateInvitationAsync(Guid senderId, CreateInvitationDto dto)
@@ -74,7 +76,7 @@ public class InvitationService(StudHunterDbContext context) : BaseEntityService(
         }
 
         if (await _context.Invitations.AnyAsync(i => i.SenderId == senderId && i.ReceiverId == dto.ReceiverId
-            && (i.VacancyId == dto.VacancyId || i.ResumeId == dto.ResumeId)))
+        && (i.VacancyId == dto.VacancyId || i.ResumeId == dto.ResumeId)))
             return (null, "Invitation already exists");
 
         var invitation = new Invitation
@@ -93,14 +95,9 @@ public class InvitationService(StudHunterDbContext context) : BaseEntityService(
 
         _context.Invitations.Add(invitation);
 
-        try
-        {
-            await _context.SaveChangesAsync();
-        }
-        catch (DbUpdateException ex)
-        {
-            return (null, $"Failed to create invitation: {ex.InnerException?.Message}");
-        }
+        var (success, error) = await SaveChangesAsync("create", "invitation");
+        if (!success)
+            return (null, error);
 
         return (new InvitationDto
         {
@@ -130,14 +127,6 @@ public class InvitationService(StudHunterDbContext context) : BaseEntityService(
         invitation.Status = Enum.Parse<Invitation.InvitationStatus>(dto.Status);
         invitation.UpdatedAt = DateTime.UtcNow;
 
-        try
-        {
-            await _context.SaveChangesAsync();
-        }
-        catch (DbUpdateException ex)
-        {
-            return (false, $"Failed to update invitation: {ex.InnerException?.Message}");
-        }
-        return (true, null);
+        return await SaveChangesAsync("update", "invitation");
     }
 }

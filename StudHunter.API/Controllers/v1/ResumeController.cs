@@ -1,6 +1,8 @@
-﻿using Microsoft.AspNetCore.Mvc;
+﻿using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Mvc;
 using StudHunter.API.ModelsDto.Resume;
 using StudHunter.API.Services;
+using StudHunter.API.Services.AdministratorServices;
 
 namespace StudHunter.API.Controllers.v1;
 
@@ -29,6 +31,9 @@ public class ResumeController(ResumeService resumeService) : ControllerBase
     [HttpPost]
     public async Task<IActionResult> CreateResume([FromBody] CreateResumeDto dto)
     {
+        if (!ModelState.IsValid)
+            return BadRequest(ModelState);
+
         var (resume, error) = await _resumeService.CreateResumeAsync(dto);
         if (error != null)
             return Conflict(new { error });
@@ -38,7 +43,19 @@ public class ResumeController(ResumeService resumeService) : ControllerBase
     [HttpPut("{id}")]
     public async Task<IActionResult> UpdateResume(Guid id, [FromBody] UpdateResumeDto dto)
     {
+        if (!ModelState.IsValid)
+            return BadRequest(ModelState);
+
         var (success, error) = await _resumeService.UpdateResumeAsync(id, dto);
+        if (!success)
+            return error == null ? NotFound() : Conflict(new { error });
+        return NoContent();
+    }
+
+    [HttpDelete("{id}")]
+    public async Task<IActionResult> SoftDeleteResume(Guid id)
+    {
+        var (success, error) = await _resumeService.SoftDeleteResumeAsync(id);
         if (!success)
             return error == null ? NotFound() : Conflict(new { error });
         return NoContent();

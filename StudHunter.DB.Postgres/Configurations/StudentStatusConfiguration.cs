@@ -23,6 +23,6 @@ public class StudentStatusConfiguration : IEntityTypeConfiguration<StudentStatus
             new StudentStatus { Id = 3, Name = "В поисках работы" },
             new StudentStatus { Id = 4, Name = "Стажируюсь" },
             new StudentStatus { Id = 5, Name = "Работаю" }
-            );
+        );
     }
 }

@@ -4,25 +4,29 @@ namespace StudHunter.API.ModelsDto.Employer;
 
 public class UpdateEmployerByAdministratorDto
 {
-    [EmailAddress, MaxLength(100)]
+    [StringLength(100, ErrorMessage = "{0} cannot exceed {1} characters")]
+    [EmailAddress(ErrorMessage = "Invalid {0} format")]
     public string? Email { get; set; }
 
-    [EmailAddress, MaxLength(100)]
+    [StringLength(100, ErrorMessage = "{0} cannot exceed {1} characters")]
+    [EmailAddress(ErrorMessage = "Invalid {0} format")]
     public string? ContactEmail { get; set; }
 
-    [Phone, MaxLength(20)]
+    [StringLength(20, ErrorMessage = "{0} cannot exceed {1} characters")]
+    [Phone(ErrorMessage = "Invalid {0} format")]
     public string? ContactPhone { get; set; }
 
-    [MaxLength(255)]
+    [StringLength(255, ErrorMessage = "{0} cannot exceed {1} characters")]
     public string? Name { get; set; }
 
-    [MaxLength(1000)]
+    [StringLength(1000, ErrorMessage = "{0} cannot exceed {1} characters")]
     public string? Description { get; set; }
 
-    [Url, MaxLength(255)]
+    [StringLength(255, ErrorMessage = "{0} cannot exceed {1} characters")]
+    [Url(ErrorMessage = "Invalid {0} format")]
     public string? Website { get; set; }
 
-    [MaxLength(255)]
+    [StringLength(255, ErrorMessage = "{0} cannot exceed {1} characters")]
     public string? Specialization { get; set; }
 
     public bool AccreditationStatus { get; set; }

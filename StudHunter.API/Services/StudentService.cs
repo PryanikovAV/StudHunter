@@ -11,14 +11,19 @@ public class StudentService(StudHunterDbContext context, IPasswordHasher passwor
 {
     private readonly IPasswordHasher _passwordHasher = passwordHasher;
 
+    /// <summary>
+    /// Retrieves a student by their ID, including related resume, study plan and achievements.
+    /// </summary>
+    /// <param name="id">The unique identifier (GUID) of the student.</param>
+    /// <returns>The student's detaild or null if not found.</returns>
     public async Task<StudentDto?> GetStudentAsync(Guid id)
     {
         var student = await _context.Students
-            .Include(s => s.Resume)
-            .Include(s => s.StudyPlan)
-            .Include(s => s.Achievements)
-            .ThenInclude(ua => ua.AchievementTemplate)
-            .FirstOrDefaultAsync(s => s.Id == id);
+        .Include(s => s.Resume)
+        .Include(s => s.StudyPlan)
+        .Include(s => s.Achievements)
+        .ThenInclude(ua => ua.AchievementTemplate)
+        .FirstOrDefaultAsync(s => s.Id == id);
 
         if (student == null)
             return null;
@@ -54,15 +59,24 @@ public class StudentService(StudHunterDbContext context, IPasswordHasher passwor
         };
     }
 
+    /// <summary>
+    /// Creates a new student with associated study plan.
+    /// </summary>
+    /// <param name="dto">The student data to create, including study plan details.</param>
+    /// <returns>A tuple containing the created student's details or null and an error message if creation fails.</returns>
     public async Task<(StudentDto? Student, string? Error)> CreateStudentAsync(CreateStudentDto dto)
     {
-        if (await _context.Students.AnyAsync(s => s.Email == dto.Email))
+        var checks = await Task.WhenAll(
+        _context.Students.AnyAsync(s => s.Email == dto.Email),
+        _context.Faculties.AnyAsync(f => f.Id == dto.FacultyId),
+        _context.Specialities.AnyAsync(s => s.Id == dto.SpecialityId)
+        );
+
+        if (checks[0])
             return (null, "Student with this email already exists");
-
-        if (!await _context.Faculties.AnyAsync(f => f.Id == dto.FacultyId))
+        if (!checks[1])
             return (null, "Faculty not found");
-
-        if (!await _context.Specialities.AnyAsync(s => s.Id == dto.SpecialityId))
+        if (!checks[2])
             return (null, "Speciality not found");
 
         var student = new Student
@@ -97,14 +111,9 @@ public class StudentService(StudHunterDbContext context, IPasswordHasher passwor
         _context.Students.Add(student);
         _context.StudyPlans.Add(studyPlan);
 
-        try
-        {
-            await _context.SaveChangesAsync();
-        }
-        catch (DbUpdateException ex)
-        {
-            return (null, $"Failed to create student: {ex.InnerException?.Message}");
-        }
+        var (success, error) = await SaveChangesAsync("create", "Student");
+        if (!success)
+            return (null, error);
 
         return (new StudentDto
         {
@@ -129,23 +138,44 @@ public class StudentService(StudHunterDbContext context, IPasswordHasher passwor
         }, null);
     }
 
+    /// <summary>
+    /// Updates an existing student's data, including studt plan details.
+    /// </summary>
+    /// <param name="id">The unique identifier (GUID) of the student to update.</param>
+    /// <param name="dto">The updated student data.</param>
+    /// <returns>A tuple indicating whether the update was successful and an optional error message.</returns>
     public async Task<(bool Success, string? Error)> UpdateStudentAsync(Guid id, UpdateStudentDto dto)
     {
         var student = await _context.Students
-            .Include(s => s.StudyPlan)
-            .FirstOrDefaultAsync(s => s.Id == id);
+        .Include(s => s.StudyPlan)
+        .FirstOrDefaultAsync(s => s.Id == id);
 
         if (student == null)
             return (false, "Student not found");
 
-        if (dto.Email != null && await _context.Students.AnyAsync(s => s.Email == dto.Email && s.Id != id))
-            return (false, "Another student with this email already exists");
+        if (dto.Email != null)
+        {
+            var emailExists = await _context.Students.AnyAsync(s => s.Email == dto.Email && s.Id != id);
+            if (emailExists)
+                return (false, "Another student with this email already exists");
+        }
 
-        if (dto.FacultyId.HasValue && !await _context.Faculties.AnyAsync(f => f.Id == dto.FacultyId.Value))
-            return (false, "Faculty not found");
+        Guid? facultyId = dto.FacultyId;
+        Guid? specialityId = dto.SpecialityId;
 
-        if (dto.SpecialityId.HasValue && !await _context.Specialities.AnyAsync(s => s.Id == dto.SpecialityId.Value))
-            return (false, "Speciality not found");
+        if (facultyId.HasValue || specialityId.HasValue)
+        {
+            var checks = await Task.WhenAll(
+            facultyId.HasValue ? _context.Faculties.AnyAsync(f => f.Id == facultyId.Value) : Task.FromResult(true),
+            specialityId.HasValue ? _context.Specialities.AnyAsync(s => s.Id == specialityId.Value) : Task.FromResult(true)
+            );
+
+            if (facultyId.HasValue && !checks[0])
+                return (false, "Faculty not found");
+
+            if (specialityId.HasValue && !checks[1])
+                return (false, "Speciality not found");
+        }
 
         if (dto.FirstName != null)
             student.FirstName = dto.FirstName;
@@ -185,19 +215,11 @@ public class StudentService(StudHunterDbContext context, IPasswordHasher passwor
                 studyPlan.BeginYear = dto.BeginYear.Value;
         }
 
-        try
-        {
-            await _context.SaveChangesAsync();
-        }
-        catch (DbUpdateException ex)
-        {
-            return (false, $"Failed to update student: {ex.InnerException?.Message}");
-        }
-        return (true, null);
+        return await SaveChangesAsync("update", "Student");
     }
 
-    public async Task<(bool Success, string? Error)> DeleteStudentAsync(Guid id)
+    public async Task<(bool Success, string? Error)> SoftDeleteStudentAsync(Guid id)
     {
-        return await DeleteEntityAsync<Student>(id);
+        return await SoftDeleteEntityAsync<Student>(id);
     }
 }

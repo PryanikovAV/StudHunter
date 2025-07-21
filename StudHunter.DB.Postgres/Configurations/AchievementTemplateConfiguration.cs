@@ -58,7 +58,5 @@ public class AchievementTemplateConfiguration : IEntityTypeConfiguration<Achieve
 
         builder.HasIndex(a => a.Name)
                .IsUnique();
-
-        builder.HasIndex(a => a.Target);
     }
 }

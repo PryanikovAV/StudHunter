@@ -11,21 +11,25 @@ public class MessageService(StudHunterDbContext context) : BaseEntityService(con
     public async Task<IEnumerable<MessageDto>> GetMessagesByUserAsync(Guid userId, bool sent = false)
     {
         var query = sent
-            ? _context.Messages.Where(m => m.SenderId == userId)
-            : _context.Messages.Where(m => m.ReceiverId == userId);
+        ? _context.Messages.Where(m => m.SenderId == userId)
+        : _context.Messages.Where(m => m.ReceiverId == userId);
 
-        return await query.Select(m => new MessageDto
+        return await query
+        .Include(m => m.Sender)
+        .Include(m => m.Receiver)
+        .Select(m => new MessageDto
         {
             Id = m.Id,
             SenderId = m.SenderId,
+            SenderEmail = m.Sender.IsDeleted ? "[Удалённый аккаунт]" : m.Sender.Email,
             ReceiverId = m.ReceiverId,
+            ReceiverEmail = m.Receiver.IsDeleted ? "[Удалённый аккаунт]" : m.Receiver.Email,
             Context = m.Context,
             SentAt = m.SentAt
         })
-            .OrderByDescending(m => m.SentAt)
-            .ToListAsync();
+        .OrderByDescending(m => m.SentAt)
+        .ToListAsync();
     }
-
 
     public async Task<(MessageDto? Message, string? Error)> CreateMessageAsync(Guid senderId, CreateMessageDto dto)
     {
@@ -48,14 +52,10 @@ public class MessageService(StudHunterDbContext context) : BaseEntityService(con
         };
 
         _context.Messages.Add(message);
-        try
-        {
-            await _context.SaveChangesAsync();
-        }
-        catch (DbUpdateException ex)
-        {
-            return (null, $"Failed to create message: {ex.InnerException?.Message}");
-        }
+
+        var (success, error) = await SaveChangesAsync("create", "Message");
+        if (!success)
+            return (null, error);
 
         return (new MessageDto
         {

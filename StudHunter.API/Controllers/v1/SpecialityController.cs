@@ -25,4 +25,5 @@ public class SpecialityController(SpecialityService specialityService) : Control
             return NotFound();
         return Ok(speciality);
     }
+    // TODO: add Create, Update, Delete
 }

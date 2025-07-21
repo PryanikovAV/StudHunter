@@ -48,6 +48,8 @@ public class FavoriteConfiguration : IEntityTypeConfiguration<Favorite>
 
         builder.HasIndex(f => f.ResumeId);
 
+        builder.HasIndex(v => v.VacancyId);
+
         builder.HasIndex(f => new { f.UserId, f.ResumeId })
                .IsUnique()
                .HasFilter("\"ResumeId\" IS NOT NULL");

@@ -13,29 +13,29 @@ public class EmployerService(StudHunterDbContext context, IPasswordHasher passwo
     public async Task<IEnumerable<EmployerDto>> GetAllEmployersAsync()
     {
         return await _context.Employers
-            .Include(e => e.Vacancies)
-            .Select(e => new EmployerDto
-            {
-                Id = e.Id,
-                Email = e.Email,
-                ContactEmail = e.ContactEmail,
-                ContactPhone = e.ContactPhone,
-                CreatedAt = e.CreatedAt,
-                AccreditationStatus = e.AccreditationStatus,
-                Name = e.Name,
-                Description = e.Description,
-                Website = e.Website,
-                Specialization = e.Specialization,
-                VacancyIds = e.Vacancies.Select(v => v.Id).ToList()
-            })
-            .ToListAsync();
+        .Include(e => e.Vacancies)
+        .Select(e => new EmployerDto
+        {
+            Id = e.Id,
+            Email = e.Email,
+            ContactEmail = e.ContactEmail,
+            ContactPhone = e.ContactPhone,
+            CreatedAt = e.CreatedAt,
+            AccreditationStatus = e.AccreditationStatus,
+            Name = e.Name,
+            Description = e.Description,
+            Website = e.Website,
+            Specialization = e.Specialization,
+            VacancyIds = e.Vacancies.Select(v => v.Id).ToList()
+        })
+        .ToListAsync();
     }
 
     public async Task<EmployerDto?> GetEmployerAsync(Guid id)
     {
         var employer = await _context.Employers
-            .Include(e => e.Vacancies)
-            .FirstOrDefaultAsync(e => e.Id == id);
+        .Include(e => e.Vacancies)
+        .FirstOrDefaultAsync(e => e.Id == id);
 
         if (employer == null)
             return null;
@@ -78,14 +78,9 @@ public class EmployerService(StudHunterDbContext context, IPasswordHasher passwo
 
         _context.Employers.Add(employer);
 
-        try
-        {
-            await _context.SaveChangesAsync();
-        }
-        catch (DbUpdateException ex)
-        {
-            return (null, $"Failed to create employer: {ex.InnerException?.Message}");
-        }
+        var (success, error) = await SaveChangesAsync("create", "employer");
+        if (!success)
+            return (null, error);
 
         return (new EmployerDto
         {
@@ -128,20 +123,12 @@ public class EmployerService(StudHunterDbContext context, IPasswordHasher passwo
             employer.Website = dto.Website;
         if (dto.Specialization != null)
             employer.Specialization = dto.Specialization;
-        try
-        {
-            await _context.SaveChangesAsync();
-        }
-        catch (DbUpdateException ex)
-        {
-            return (false, $"Failed to update employer: {ex.InnerException?.Message}");
-        }
 
-        return (true, null);
+        return await SaveChangesAsync("update", "employer");
     }
 
     public async Task<(bool Success, string? Error)> DeleteEmployerAsync(Guid id)
     {
-        return await DeleteEntityAsync<Employer>(id);
+        return await SoftDeleteEntityAsync<Employer>(id);
     }
 }

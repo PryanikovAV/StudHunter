@@ -15,7 +15,7 @@ public class SpecialityService(StudHunterDbContext context) : BaseEntityService(
             Name = s.Name,
             Description = s.Description
         })
-            .ToListAsync();
+        .ToListAsync();
     }
 
     public async Task<SpecialityDto?> GetSpecialityAsync(Guid id)

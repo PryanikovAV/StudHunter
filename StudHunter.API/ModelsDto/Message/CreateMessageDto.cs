@@ -4,10 +4,10 @@ namespace StudHunter.API.ModelsDto.Message;
 
 public class CreateMessageDto
 {
-    [Required]
+    [Required(ErrorMessage = "{0} is required")]
     public Guid ReceiverId { get; set; }
 
-    [Required]
-    [StringLength(1000, ErrorMessage = "Maximum length 1000 characters")]
+    [Required(ErrorMessage = "{0} is required")]
+    [StringLength(1000, ErrorMessage = "{0} cannot exceed {1} characters")]
     public string Context { get; set; } = string.Empty;
 }

@@ -11,16 +11,16 @@ public class FavoriteService(StudHunterDbContext context) : BaseEntityService(co
     public async Task<IEnumerable<FavoriteDto>> GetFavoritesAsync(Guid userId)
     {
         return await _context.Favorites
-            .Where(f => f.UserId == userId)
-            .Select(f => new FavoriteDto
-            {
-                Id = f.Id,
-                UserId = f.UserId,
-                VacancyId = f.VacancyId,
-                ResumeId = f.ResumeId,
-                AddedAt = f.AddedAt
-            })
-            .ToListAsync();
+        .Where(f => f.UserId == userId)
+        .Select(f => new FavoriteDto
+        {
+            Id = f.Id,
+            UserId = f.UserId,
+            VacancyId = f.VacancyId,
+            ResumeId = f.ResumeId,
+            AddedAt = f.AddedAt
+        })
+        .ToListAsync();
     }
 
     public async Task<(FavoriteDto? Favorite, string? Error)> CreateFavoriteAsync(Guid userId, CreateFavoriteDto dto)
@@ -51,14 +51,9 @@ public class FavoriteService(StudHunterDbContext context) : BaseEntityService(co
 
         _context.Favorites.Add(favorite);
 
-        try
-        {
-            await _context.SaveChangesAsync();
-        }
-        catch (DbUpdateException ex)
-        {
-            return (null, $"Failed to create favorite: {ex.InnerException?.Message}");
-        }
+        var (success, error) = await SaveChangesAsync("create", "favorite");
+        if (!success)
+            return (null, error);
 
         return (new FavoriteDto
         {
@@ -72,6 +67,6 @@ public class FavoriteService(StudHunterDbContext context) : BaseEntityService(co
 
     public async Task<(bool Success, string? Error)> DeleteFavoriteAsync(Guid id)
     {
-        return await DeleteEntityAsync<Favorite>(id);
+        return await HardDeleteEntityAsync<Favorite>(id);
     }
 }

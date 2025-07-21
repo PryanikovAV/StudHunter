@@ -36,6 +36,11 @@ public class ResumeConfiguration : IEntityTypeConfiguration<Resume>
                .HasDefaultValueSql("CURRENT_TIMESTAMP")
                .IsRequired();
 
+        builder.Property(r => r.IsDeleted)
+               .HasColumnType("BOOLEAN")
+               .HasDefaultValue(false)
+               .IsRequired();
+
         builder.HasOne(r => r.Student)
                .WithOne(s => s.Resume)
                .HasForeignKey<Resume>(r => r.StudentId)
@@ -55,5 +60,7 @@ public class ResumeConfiguration : IEntityTypeConfiguration<Resume>
                .IsUnique();
 
         builder.HasIndex(r => r.CreatedAt);
+
+        builder.HasQueryFilter(r => !r.IsDeleted);
     }
 }

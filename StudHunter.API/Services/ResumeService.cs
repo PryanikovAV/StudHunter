@@ -10,8 +10,7 @@ public class ResumeService(StudHunterDbContext context) : BaseEntityService(cont
 {
     public async Task<IEnumerable<ResumeDto>> GetAllResumesAsync()
     {
-        return await _context.Resumes
-            .Select(r => new ResumeDto
+        return await _context.Resumes.Select(r => new ResumeDto
         {
             Id = r.Id,
             StudentId = r.StudentId,
@@ -20,16 +19,16 @@ public class ResumeService(StudHunterDbContext context) : BaseEntityService(cont
             CreatedAt = r.CreatedAt,
             UpdatedAt = r.UpdatedAt
         })
-            .ToListAsync();
+        .ToListAsync();
     }
 
     public async Task<ResumeDto?> GetResumeAsync(Guid id)
     {
         var resume = await _context.Resumes.FirstOrDefaultAsync(r => r.Id == id);
-        
+
         if (resume == null)
             return null;
-        
+
         return new ResumeDto
         {
             Id = resume.Id,
@@ -61,14 +60,9 @@ public class ResumeService(StudHunterDbContext context) : BaseEntityService(cont
 
         _context.Resumes.Add(resume);
 
-        try
-        {
-            await _context.SaveChangesAsync();
-        }
-        catch (DbUpdateException ex)
-        {
-            return (null, $"Failed to create resume: {ex.InnerException?.Message}");
-        }
+        var (success, error) = await SaveChangesAsync("create", "resume");
+        if (!success)
+            return (null, error);
 
         return (new ResumeDto
         {
@@ -84,7 +78,7 @@ public class ResumeService(StudHunterDbContext context) : BaseEntityService(cont
     public async Task<(bool Success, string? Error)> UpdateResumeAsync(Guid id, UpdateResumeDto dto)
     {
         var resume = await _context.Resumes.FirstOrDefaultAsync(r => r.Id == id);
-        
+
         if (resume == null)
             return (false, "Resume not found.");
 
@@ -93,15 +87,19 @@ public class ResumeService(StudHunterDbContext context) : BaseEntityService(cont
         if (dto.Description != null)
             resume.Description = dto.Description;
         resume.UpdatedAt = DateTime.UtcNow;
-        
-        try
-        {
-            await _context.SaveChangesAsync();
-        }
-        catch (DbUpdateException ex)
-        {
-            return (false, $"Failed to update resume: {ex.InnerException?.Message}");
-        }
-        return (true, null);
+
+        return await SaveChangesAsync("update", "resume");
+    }
+
+    public async Task<(bool Success, string? Error)> SoftDeleteResumeAsync(Guid id)
+    {
+        var resume = await _context.Resumes.FirstOrDefaultAsync(r => r.Id == id);
+
+        if (resume == null)
+            return (false, "Resume not found");
+
+        resume.IsDeleted = true;
+
+        return await SaveChangesAsync("soft delete", "Resume");
     }
 }

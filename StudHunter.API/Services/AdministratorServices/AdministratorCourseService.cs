@@ -6,12 +6,27 @@ using StudHunter.DB.Postgres.Models;
 
 namespace StudHunter.API.Services.AdministratorServices;
 
-public class AdministratorCourseService(StudHunterDbContext context) : BaseAdministratorService(context)
+public class AdministratorCourseService(StudHunterDbContext context) : BaseEntityService(context)
 {
+    public async Task<CourseDto?> GetCourseAsync(Guid id)
+    {
+        var course = await _context.Courses.FirstOrDefaultAsync(c => c.Id == id);
+
+        if (course == null)
+            return null;
+
+        return new CourseDto
+        {
+            Id = course.Id,
+            Name = course.Name,
+            Description = course.Description
+        };
+    }
+
     public async Task<(CourseDto? Course, string? Error)> CreateCourseAsync(CreateCourseDto dto)
     {
         if (await _context.Courses
-            .AnyAsync(c => c.Name == dto.Name))
+        .AnyAsync(c => c.Name == dto.Name))
             return (null, "Course with this name already exists.");
 
         var course = new Course
@@ -23,14 +38,9 @@ public class AdministratorCourseService(StudHunterDbContext context) : BaseAdmin
 
         _context.Courses.Add(course);
 
-        try
-        {
-            await _context.SaveChangesAsync();
-        }
-        catch (DbUpdateException ex)
-        {
-            return (null, $"Failed to create course: {ex.InnerException?.Message}");
-        }
+        var (success, error) = await SaveChangesAsync("create", "Course");
+        if (!success)
+            return (null, error);
 
         return (new CourseDto
         {
@@ -55,21 +65,13 @@ public class AdministratorCourseService(StudHunterDbContext context) : BaseAdmin
         if (dto.Description != null)
             course.Description = dto.Description;
 
-        try
-        {
-            await _context.SaveChangesAsync();
-        }
-        catch (DbUpdateException ex)
-        {
-            return (false, $"Failed to update course: {ex.InnerException?.Message}");
-        }
-
-        return (true, null);
+        return await SaveChangesAsync("update", "Course");
     }
 
     public async Task<(bool Success, string? Error)> DeleteCourseAsync(Guid id)
     {
         var course = await _context.Courses.FirstOrDefaultAsync(c => c.Id == id);
+
         if (course == null)
             return (false, "Course not found");
 
@@ -78,15 +80,6 @@ public class AdministratorCourseService(StudHunterDbContext context) : BaseAdmin
         if (await _context.StudyPlanCourses.AnyAsync(spc => spc.CourseId == id))
             return (false, "Cannot delete course associated with study plans");
 
-        _context.Courses.Remove(course);
-        try
-        {
-            await _context.SaveChangesAsync();
-        }
-        catch (DbUpdateException ex)
-        {
-            return (false, $"Failed to delete course: {ex.InnerException?.Message}");
-        }
-        return (true, null);
+        return await HardDeleteEntityAsync<Course>(id);
     }
 }

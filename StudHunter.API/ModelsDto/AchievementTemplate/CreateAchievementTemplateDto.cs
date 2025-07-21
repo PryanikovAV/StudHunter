@@ -4,12 +4,14 @@ namespace StudHunter.API.ModelsDto.AchievementTemplate;
 
 public class CreateAchievementTemplateDto
 {
-    [Required, MaxLength(255)]
+    [Required(ErrorMessage = "{0} is required")]
+    [StringLength(255, ErrorMessage = "{0} cannot exceed {1} characters")]
     public string Name { get; set; } = string.Empty;
 
-    [MaxLength(1000)]
+    [StringLength(1000, ErrorMessage = "{0} cannot exceed {1} characters")]
     public string Description { get; set; } = string.Empty;
 
-    [Required, RegularExpression("Student|Employer", ErrorMessage = "Target must be 'Student' or 'Employer'")]
+    [Required(ErrorMessage = "{0} is required")]
+    [RegularExpression("Student|Employer", ErrorMessage = "{0} must be 'Student' or 'Employer'")]
     public string Target { get; set; } = string.Empty;
 }

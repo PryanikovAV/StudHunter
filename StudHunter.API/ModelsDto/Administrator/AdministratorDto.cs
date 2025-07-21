@@ -19,13 +19,14 @@ public class AdministratorDto
 
     public DateTime CreatedAt { get; set; }
 
+    public bool IsDeleted { get; set; }
+
     [Required, MaxLength(50)]
     public string FirstName { get; set; } = string.Empty;
 
     [Required, MaxLength(50)]
     public string LastName { get; set; } = string.Empty;
 
-    [Required, RegularExpression("SuperAdmin|Moderator",
-        ErrorMessage = "AdminLevel must be 'SuperAdmin' or 'Moderator'")]
+    [Required, RegularExpression("SuperAdmin|Moderator", ErrorMessage = "AdminLevel must be 'SuperAdmin' or 'Moderator'")]
     public string AdminLevel { get; set; } = string.Empty;
 }

@@ -6,9 +6,24 @@ using StudHunter.DB.Postgres.Models;
 
 namespace StudHunter.API.Services.AdministratorServices;
 
-public class AdministratorSpecialityService(StudHunterDbContext context) : BaseAdministratorService(context)
+public class AdministratorSpecialityService(StudHunterDbContext context) : BaseEntityService(context)
 {
-    public async Task<(SpecialityDto? Speciality, string? Error)> CreateSpecialityAsync(SpecialityDto dto)
+    public async Task<SpecialityDto?> GetSpecialityAsync(Guid id)
+    {
+        var speciality = await _context.Specialities.FirstOrDefaultAsync(s => s.Id == id);
+
+        if (speciality == null)
+            return null;
+
+        return new SpecialityDto
+        {
+            Id = speciality.Id,
+            Name = speciality.Name,
+            Description = speciality.Description
+        };
+    }
+
+    public async Task<(SpecialityDto? Speciality, string? Error)> CreateSpecialityAsync(CreateSpecialityDto dto)
     {
         if (await _context.Specialities.AnyAsync(s => s.Name == dto.Name))
             return (null, "Speciality with this name already exists.");
@@ -22,14 +37,9 @@ public class AdministratorSpecialityService(StudHunterDbContext context) : BaseA
 
         _context.Specialities.Add(speciality);
 
-        try
-        {
-            await _context.SaveChangesAsync();
-        }
-        catch (DbUpdateException ex)
-        {
-            return (null, $"Failed to create speciality: {ex.InnerException?.Message}");
-        }
+        var (success, error) = await SaveChangesAsync("create", "Speciality");
+        if (!success)
+            return (null, error);
 
         return (new SpecialityDto
         {
@@ -39,9 +49,9 @@ public class AdministratorSpecialityService(StudHunterDbContext context) : BaseA
         }, null);
     }
 
-    public async Task<(bool Success, string? Error)> UpdateSpecialityAsync(Guid id, SpecialityDto dto)
+    public async Task<(bool Success, string? Error)> UpdateSpecialityAsync(Guid id, UpdateSpecialityDto dto)
     {
-        var speciality = await _context.Specialities.FirstOrDefaultAsync(s => s.Id == dto.Id);
+        var speciality = await _context.Specialities.FirstOrDefaultAsync(s => s.Id == id);
 
         if (speciality == null)
             return (false, "Speciality not found.");
@@ -54,36 +64,19 @@ public class AdministratorSpecialityService(StudHunterDbContext context) : BaseA
         if (dto.Description != null)
             speciality.Description = dto.Description;
 
-        try
-        {
-            await _context.SaveChangesAsync();
-        }
-        catch (DbUpdateException ex)
-        {
-            return (false, $"Failed to update speciality: {ex.InnerException?.Message}");
-        }
-
-        return (true, null);
+        return await SaveChangesAsync("update", "Speciality");
     }
 
     public async Task<(bool Success, string? Error)> DeleteSpecialityAsync(Guid id)
     {
         var speciality = await _context.Specialities.FirstOrDefaultAsync(s => s.Id == id);
+
         if (speciality == null)
             return (false, "Speciality not found");
 
         if (await _context.StudyPlans.AnyAsync(sp => sp.SpecialityId == id))
             return (false, "Cannot delete speciality associated with study plans");
 
-        _context.Specialities.Remove(speciality);
-        try
-        {
-            await _context.SaveChangesAsync();
-        }
-        catch (DbUpdateException ex)
-        {
-            return (false, $"Failed to delete speciality: {ex.InnerException?.Message}");
-        }
-        return (true, null);
+        return await HardDeleteEntityAsync<Speciality>(id);
     }
 }
