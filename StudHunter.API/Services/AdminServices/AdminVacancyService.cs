@@ -4,12 +4,10 @@ using StudHunter.API.Services.CommonService;
 using StudHunter.DB.Postgres;
 using StudHunter.DB.Postgres.Models;
 
-namespace StudHunter.API.Services;
+namespace StudHunter.API.Services.AdminServices;
 
-public class VacancyService(StudHunterDbContext context, UserAchievementService userAchievementService) : BaseService(context)
+public class AdminVacancyService(StudHunterDbContext context) : BaseService(context)
 {
-    public UserAchievementService _userAchievementService = userAchievementService;
-
     public async Task<IEnumerable<VacancyDto>> GetAllVacanciesAsync()
     {
         return await _context.Vacancies.Select(v => new VacancyDto
@@ -30,7 +28,7 @@ public class VacancyService(StudHunterDbContext context, UserAchievementService 
     {
         var vacancy = await _context.Vacancies.FirstOrDefaultAsync(v => v.Id == id);
 
-        if (vacancy == null || vacancy.IsDeleted)
+        if (vacancy == null)
             return null;
 
         return new VacancyDto
@@ -42,74 +40,8 @@ public class VacancyService(StudHunterDbContext context, UserAchievementService 
             Salary = vacancy.Salary,
             CreatedAt = vacancy.CreatedAt,
             UpdatedAt = vacancy.UpdatedAt,
-            Type = vacancy.Type.ToString(),
-            IsDeleted = vacancy.IsDeleted
+            Type = vacancy.Type.ToString()
         };
-    }
-
-    public async Task<IEnumerable<VacancyDto>> GetVacanciesByEmployerAsync(Guid id)
-    {
-        return await _context.Vacancies
-        .Where(e => e.EmployerId == id)
-        .Select(v => new VacancyDto
-        {
-            Id = v.Id,
-            EmployerId = v.EmployerId,
-            Title = v.Title,
-            Description = v.Description,
-            Salary = v.Salary,
-            CreatedAt = v.CreatedAt,
-            UpdatedAt = v.UpdatedAt,
-            Type = v.Type.ToString()
-        })
-        .ToListAsync();
-    }
-
-    public async Task<(VacancyDto? Vacancy, string? Error)> CreateVacancyAsync(Guid employerId, CreateVacancyDto dto)
-    {
-        var employer = await _context.Employers.FirstOrDefaultAsync(e => e.Id == employerId);
-
-        if (employer == null)
-            return (null, "Employer not found");
-
-        if (!employer.AccreditationStatus)
-            return (null, "Employer is not accredited");
-
-        var vacancy = new Vacancy
-        {
-            Id = Guid.NewGuid(),
-            EmployerId = employerId,
-            Title = dto.Title,
-            Description = dto.Description,
-            Salary = dto.Salary,
-            CreatedAt = DateTime.UtcNow,
-            UpdatedAt = DateTime.UtcNow,
-            Type = Enum.Parse<Vacancy.VacancyType>(dto.Type),
-            IsDeleted = false
-        };
-
-        _context.Vacancies.Add(vacancy);
-
-        var (success, error) = await SaveChangesAsync("create", "vacancy");
-        if (!success)
-            return (null, error);
-
-        // ===== Achievement =====
-        await _userAchievementService.CheckAndGrantVacancyAchievementsAsync(employerId);
-        // ===== Achievement =====
-
-        return (new VacancyDto
-        {
-            Id = vacancy.Id,
-            EmployerId = vacancy.EmployerId,
-            Title = vacancy.Title,
-            Description = vacancy.Description,
-            Salary = vacancy.Salary,
-            CreatedAt = vacancy.CreatedAt,
-            UpdatedAt = vacancy.UpdatedAt,
-            Type = vacancy.Type.ToString(),
-            IsDeleted = vacancy.IsDeleted
-        }, null);
     }
 
     public async Task<(bool Success, string? Error)> UpdateVacancyAsync(Guid id, UpdateVacancyDto dto)
@@ -130,7 +62,12 @@ public class VacancyService(StudHunterDbContext context, UserAchievementService 
             vacancy.Type = Enum.Parse<Vacancy.VacancyType>(dto.Type);
         vacancy.UpdatedAt = DateTime.UtcNow;
 
-        return await SaveChangesAsync("update", "vacancy");
+        return await SaveChangesAsync("update", "Vacancy");
+    }
+
+    public async Task<(bool Success, string? Error)> DeleteVacancyAsync(Guid id)
+    {
+        return await HardDeleteEntityAsync<Vacancy>(id);
     }
 
     public async Task<(bool Success, string? Error)> AddCourseToVacancyAsync(Guid vacancyId, Guid courseId)

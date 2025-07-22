@@ -7,7 +7,7 @@ using StudHunter.DB.Postgres.Models;
 
 namespace StudHunter.API.Services;
 
-public class StudentService(StudHunterDbContext context, IPasswordHasher passwordHasher) : BaseEntityService(context)
+public class StudentService(StudHunterDbContext context, IPasswordHasher passwordHasher) : BaseService(context)
 {
     private readonly IPasswordHasher _passwordHasher = passwordHasher;
 

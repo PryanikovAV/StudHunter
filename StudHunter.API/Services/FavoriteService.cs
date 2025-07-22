@@ -6,7 +6,7 @@ using StudHunter.DB.Postgres.Models;
 
 namespace StudHunter.API.Services;
 
-public class FavoriteService(StudHunterDbContext context) : BaseEntityService(context)
+public class FavoriteService(StudHunterDbContext context) : BaseService(context)
 {
     public async Task<IEnumerable<FavoriteDto>> GetFavoritesAsync(Guid userId)
     {

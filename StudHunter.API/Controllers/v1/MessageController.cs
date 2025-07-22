@@ -1,4 +1,5 @@
-﻿using Microsoft.AspNetCore.Mvc;
+﻿using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Mvc;
 using StudHunter.API.ModelsDto.Message;
 using StudHunter.API.Services;
 
@@ -6,6 +7,7 @@ namespace StudHunter.API.Controllers.v1;
 
 [Route("api/v1/[controller]")]
 [ApiController]
+[Authorize]
 public class MessageController(MessageService messageService) : ControllerBase
 {
     private readonly MessageService _messageService = messageService;
@@ -23,18 +25,17 @@ public class MessageController(MessageService messageService) : ControllerBase
         var messages = await _messageService.GetMessagesByUserAsync(userId, sent: false);
         return Ok(messages);
     }
-    // TODO: add jwt
-    // TODO: check/fix 'return nameof(GetSentMessages)'
+    // TODO: Replace Guid.NewGuid(); with User.FindFirstValue(ClaimTypes.NameIdentifier) after implementing JWT
     [HttpPost]
     public async Task<IActionResult> CreateMessage([FromBody] CreateMessageDto dto)
     {
         if (!ModelState.IsValid)
             return BadRequest(ModelState);
 
-        var senderId = Guid.NewGuid();  // <- Change this !!! (get from Jwt token)
+        var senderId = Guid.NewGuid();
         var (message, error) = await _messageService.CreateMessageAsync(senderId, dto);
-        if (error != null)
-            return Conflict(new { error });
-        return CreatedAtAction(nameof(GetSentMessages), new { userId = message!.SenderId }, message);
+        if (message == null)
+            return error == null ? NotFound() : BadRequest(new { error });
+        return CreatedAtAction(nameof(GetSentMessages), new { userId = message.SenderId }, message);
     }
 }

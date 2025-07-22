@@ -1,6 +1,6 @@
 using Microsoft.EntityFrameworkCore;
 using StudHunter.API.Services;
-using StudHunter.API.Services.AdministratorServices;
+using StudHunter.API.Services.AdminServices;
 using StudHunter.DB.Postgres;
 using System.Reflection;
 using Microsoft.OpenApi.Models;
@@ -31,19 +31,19 @@ builder.Services.AddDbContext<StudHunterDbContext>(options =>
 
 //builder.Services.AddAuthorization();
 
-builder.Services.AddScoped<AdministratorAchievementTemplateService>();
-builder.Services.AddScoped<AdministratorCourseService>();
-builder.Services.AddScoped<AdministratorEmployerService>();
-builder.Services.AddScoped<AdministratorFacultyService>();
-builder.Services.AddScoped<AdministratorFavoriteService>();
-builder.Services.AddScoped<AdministratorInvitationService>();
-builder.Services.AddScoped<AdministratorMessagesService>();
-builder.Services.AddScoped<AdministratorResumeService>();
-builder.Services.AddScoped<AdministratorService>();
-builder.Services.AddScoped<AdministratorSpecialityService>();
-builder.Services.AddScoped<AdministratorStudentService>();
-builder.Services.AddScoped<AdministratorUserAchievementService>();
-builder.Services.AddScoped<AdministratorVacancyService>();
+builder.Services.AddScoped<AdminAchievementTemplateService>();
+builder.Services.AddScoped<AdminCourseService>();
+builder.Services.AddScoped<AdminEmployerService>();
+builder.Services.AddScoped<AdminFacultyService>();
+builder.Services.AddScoped<AdminFavoriteService>();
+builder.Services.AddScoped<AdminInvitationService>();
+builder.Services.AddScoped<AdminMessagesService>();
+builder.Services.AddScoped<AdminResumeService>();
+builder.Services.AddScoped<AdminService>();
+builder.Services.AddScoped<AdminSpecialityService>();
+builder.Services.AddScoped<AdminStudentService>();
+builder.Services.AddScoped<AdminUserAchievementService>();
+builder.Services.AddScoped<AdminVacancyService>();
 builder.Services.AddScoped<CourseService>();
 builder.Services.AddScoped<EmployerService>();
 builder.Services.AddScoped<FacultyService>();

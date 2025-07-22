@@ -6,7 +6,7 @@ using StudHunter.DB.Postgres.Models;
 
 namespace StudHunter.API.Services;
 
-public class UserAchievementService(StudHunterDbContext context) : BaseEntityService(context)
+public class UserAchievementService(StudHunterDbContext context) : BaseService(context)
 {
     public async Task<IEnumerable<UserAchievementDto>> GetUserAchievementsAsync(Guid userId)
     {
@@ -25,7 +25,7 @@ public class UserAchievementService(StudHunterDbContext context) : BaseEntitySer
         .ToListAsync();
     }
 
-    public async Task<(bool Success, string? Error)> GrantAchievementAync(Guid userId, int achievementTemplateId)
+    public async Task<(bool Success, string? Error)> GrantAchievementAsync(Guid userId, int achievementTemplateId)
     {
         if (!await _context.Users.AnyAsync(u => u.Id == userId))
             return (false, "User not found");
@@ -34,17 +34,58 @@ public class UserAchievementService(StudHunterDbContext context) : BaseEntitySer
             return (false, "Achievement template not found");
 
         if (await _context.UserAchievements.AnyAsync(ua => ua.UserId == userId && ua.AchievementTemplateId == achievementTemplateId))
-            return (false, "User already has tgis achievement");
+            return (false, "User already has this achievement");
 
         var userAchievement = new UserAchievement
         {
             UserId = userId,
             AchievementTemplateId = achievementTemplateId,
-            AchievementAt = DateTime.Now
+            AchievementAt = DateTime.UtcNow
         };
 
         _context.UserAchievements.Add(userAchievement);
 
-        return await SaveChangesAsync("grant achievement", "achievement");
+        return await SaveChangesAsync("grant achievement", "UserAchievement");
     }
+
+    // ===== Achievements =====
+    // TODO: Check and fix all Id's and count of achievement elements
+    public async Task CheckAndGrantVacancyAchievementsAsync(Guid userId)
+    {
+        int vacancyCount = await _context.Vacancies.CountAsync(v => v.EmployerId == userId && !v.IsDeleted);
+
+        var userAchievements = await _context.UserAchievements
+            .Where(ua => ua.UserId == userId)
+            .Select(ua => ua.AchievementTemplateId)
+            .ToListAsync();
+
+        if (vacancyCount >= 15 && !userAchievements.Contains(3))
+        {
+            await GrantAchievementAsync(userId, 3);
+        }
+        else if (vacancyCount >= 10 && !userAchievements.Contains(2))
+        {
+            await GrantAchievementAsync(userId, 2);
+        }
+        else if (vacancyCount >= 5 && !userAchievements.Contains(1))
+        {
+            await GrantAchievementAsync(userId, 1);
+        }
+    }
+
+    public async Task CheckAndGrantInvitationAchievementAsync(Guid userId)
+    {
+        int invitationCount = await _context.Invitations.CountAsync(i => i.SenderId == userId);
+
+        var userAchievements = await _context.UserAchievements
+            .Where(ua => ua.UserId == userId)
+            .Select(ua => ua.AchievementTemplateId)
+            .ToListAsync();
+
+        if (invitationCount >= 10 && !userAchievements.Contains(2))
+        {
+            await GrantAchievementAsync(userId, 2);
+        }
+    }
+    // ===== Achievements =====
 }

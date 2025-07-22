@@ -6,8 +6,10 @@ using StudHunter.DB.Postgres.Models;
 
 namespace StudHunter.API.Services;
 
-public class InvitationService(StudHunterDbContext context) : BaseEntityService(context)
+public class InvitationService(StudHunterDbContext context, UserAchievementService userAchievementService) : BaseService(context)
 {
+    public UserAchievementService _userAchievementService = userAchievementService;
+
     public async Task<IEnumerable<InvitationDto>> GetInvitationsByUserAsync(Guid userId, bool sent = false)
     {
         var query = sent
@@ -27,7 +29,7 @@ public class InvitationService(StudHunterDbContext context) : BaseEntityService(
             CreatedAt = i.CreatedAt,
             UpdatedAt = i.UpdatedAt,
             VacancyStatus = i.Vacancy != null ? (i.Vacancy.IsDeleted ? "Deleted" : "Active") : null,
-            ResumeStatus = i.Resume != null ? (i.Resume.IsDeleted ? "Deleted" : "Active") : null,
+            ResumeStatus = i.Resume != null ? (i.Resume.IsDeleted ? "Deleted" : "Active") : null
         })
         .OrderByDescending(i => i.CreatedAt)
         .ToListAsync();
@@ -99,6 +101,10 @@ public class InvitationService(StudHunterDbContext context) : BaseEntityService(
         if (!success)
             return (null, error);
 
+        // ===== Achievement =====
+        await _userAchievementService.CheckAndGrantInvitationAchievementAsync(senderId);
+        // ===== Achievement =====
+
         return (new InvitationDto
         {
             Id = invitation.Id,
@@ -110,7 +116,11 @@ public class InvitationService(StudHunterDbContext context) : BaseEntityService(
             Message = invitation.Message,
             Status = invitation.Status.ToString(),
             CreatedAt = invitation.CreatedAt,
-            UpdatedAt = invitation.UpdatedAt
+            UpdatedAt = invitation.UpdatedAt,
+            VacancyStatus = invitation.VacancyId.HasValue ?
+                (await _context.Vacancies.AnyAsync(v => v.Id == invitation.VacancyId && !v.IsDeleted) ? "Active" : "Deleted") : null,
+            ResumeStatus = invitation.ResumeId.HasValue ?
+                (await _context.Resumes.AnyAsync(r => r.Id == invitation.ResumeId && !r.IsDeleted) ? "Active" : "Deleted") : null
         }, null);
     }
 

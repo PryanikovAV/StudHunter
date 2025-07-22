@@ -2,7 +2,6 @@
 using Microsoft.AspNetCore.Mvc;
 using StudHunter.API.ModelsDto.Resume;
 using StudHunter.API.Services;
-using StudHunter.API.Services.AdministratorServices;
 
 namespace StudHunter.API.Controllers.v1;
 
@@ -27,20 +26,23 @@ public class ResumeController(ResumeService resumeService) : ControllerBase
             return NotFound();
         return Ok(resume);
     }
-
+    // TODO: Replace Guid.NewGuid(); with User.FindFirstValue(ClaimTypes.NameIdentifier) after implementing JWT
     [HttpPost]
+    [Authorize]
     public async Task<IActionResult> CreateResume([FromBody] CreateResumeDto dto)
     {
         if (!ModelState.IsValid)
             return BadRequest(ModelState);
 
-        var (resume, error) = await _resumeService.CreateResumeAsync(dto);
-        if (error != null)
-            return Conflict(new { error });
+        var studentId = Guid.NewGuid();
+        var (resume, error) = await _resumeService.CreateResumeAsync(studentId, dto);
+        if (resume == null)
+            return error == null ? NotFound() : BadRequest(new { error });
         return CreatedAtAction(nameof(GetResume), new { id = resume!.Id }, resume);
     }
 
     [HttpPut("{id}")]
+    [Authorize]
     public async Task<IActionResult> UpdateResume(Guid id, [FromBody] UpdateResumeDto dto)
     {
         if (!ModelState.IsValid)
@@ -48,11 +50,12 @@ public class ResumeController(ResumeService resumeService) : ControllerBase
 
         var (success, error) = await _resumeService.UpdateResumeAsync(id, dto);
         if (!success)
-            return error == null ? NotFound() : Conflict(new { error });
+            return error == null ? NotFound() : BadRequest(new { error });
         return NoContent();
     }
 
     [HttpDelete("{id}")]
+    [Authorize]
     public async Task<IActionResult> SoftDeleteResume(Guid id)
     {
         var (success, error) = await _resumeService.SoftDeleteResumeAsync(id);

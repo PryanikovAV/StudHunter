@@ -1,5 +1,4 @@
-﻿using Microsoft.AspNetCore.Authorization;
-using Microsoft.AspNetCore.Mvc;
+﻿using Microsoft.AspNetCore.Mvc;
 using StudHunter.API.Services;
 
 namespace StudHunter.API.Controllers.v1;
@@ -25,6 +24,4 @@ public class FacultyController(FacultyService facultyService) : ControllerBase
             return NotFound();
         return Ok(faculty);
     }
-
-    // TODO: add Create, Update, Delete
 }

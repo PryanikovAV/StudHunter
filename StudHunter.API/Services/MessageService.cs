@@ -6,7 +6,7 @@ using StudHunter.DB.Postgres.Models;
 
 namespace StudHunter.API.Services;
 
-public class MessageService(StudHunterDbContext context) : BaseEntityService(context)
+public class MessageService(StudHunterDbContext context) : BaseService(context)
 {
     public async Task<IEnumerable<MessageDto>> GetMessagesByUserAsync(Guid userId, bool sent = false)
     {

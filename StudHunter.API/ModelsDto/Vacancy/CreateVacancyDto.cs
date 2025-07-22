@@ -5,9 +5,6 @@ namespace StudHunter.API.ModelsDto.Vacancy;
 public class CreateVacancyDto
 {
     [Required(ErrorMessage = "{0} is required")]
-    public Guid EmployerId { get; set; }
-
-    [Required(ErrorMessage = "{0} is required")]
     [StringLength(255, ErrorMessage = "{0} cannot exceed {1} characters")]
     public string Title { get; set; } = string.Empty;
 

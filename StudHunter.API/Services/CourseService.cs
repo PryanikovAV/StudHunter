@@ -3,7 +3,9 @@ using StudHunter.API.ModelsDto.Course;
 using StudHunter.API.Services.CommonService;
 using StudHunter.DB.Postgres;
 
-public class CourseService(StudHunterDbContext context) : BaseEntityService(context)
+namespace StudHunter.API.Services;
+
+public class CourseService(StudHunterDbContext context) : BaseService(context)
 {
     public async Task<IEnumerable<CourseDto>> GetAllCoursesAsync()
     {

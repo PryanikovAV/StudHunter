@@ -1,4 +1,5 @@
-﻿using Microsoft.AspNetCore.Mvc;
+﻿using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Mvc;
 using StudHunter.API.ModelsDto.Student;
 using StudHunter.API.Services;
 
@@ -6,6 +7,7 @@ namespace StudHunter.API.Controllers.v1;
 
 [Route("api/v1/[controller]")]
 [ApiController]
+[Authorize]
 public class StudentController(StudentService studentService) : ControllerBase
 {
     private readonly StudentService _studentService = studentService;

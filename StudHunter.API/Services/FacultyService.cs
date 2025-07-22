@@ -5,7 +5,7 @@ using StudHunter.DB.Postgres;
 
 namespace StudHunter.API.Services;
 
-public class FacultyService(StudHunterDbContext context) : BaseEntityService(context)
+public class FacultyService(StudHunterDbContext context) : BaseService(context)
 {
     public async Task<IEnumerable<FacultyDto>> GetAllFacultiesAsync()
     {

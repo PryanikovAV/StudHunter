@@ -1,7 +1,7 @@
-﻿using Microsoft.AspNetCore.Mvc;
+﻿using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Mvc;
 using StudHunter.API.ModelsDto.Employer;
 using StudHunter.API.Services;
-using StudHunter.API.Services.AdministratorServices;
 
 namespace StudHunter.API.Controllers.v1;
 
@@ -28,6 +28,7 @@ public class EmployerController(EmployerService employerService) : ControllerBas
     }
 
     [HttpPost]
+    [Authorize]
     public async Task<IActionResult> CreateEmployer([FromBody] CreateEmployerDto dto)
     {
         if (!ModelState.IsValid)
@@ -35,11 +36,12 @@ public class EmployerController(EmployerService employerService) : ControllerBas
 
         var (employer, error) = await _employerService.CreateEmployerAsync(dto);
         if (error != null)
-            return Conflict(new { error });
+            return BadRequest(new { error });
         return CreatedAtAction(nameof(GetEmployer), new { id = employer!.Id }, employer);
     }
 
     [HttpPut("{id}")]
+    [Authorize]
     public async Task<IActionResult> UpdateEmployer(Guid id, [FromBody] UpdateEmployerDto dto)
     {
         if (!ModelState.IsValid)
@@ -47,16 +49,17 @@ public class EmployerController(EmployerService employerService) : ControllerBas
 
         var (success, error) = await _employerService.UpdateEmployerAsync(id, dto);
         if (!success)
-            return error == null ? NotFound() : Conflict(new { error });
+            return error == null ? NotFound() : BadRequest(new { error });
         return NoContent();
     }
 
     [HttpDelete("{id}")]
+    [Authorize]
     public async Task<IActionResult> SoftDeleteEmployer(Guid id)
     {
         var (success, error) = await _employerService.DeleteEmployerAsync(id);
         if (!success)
-            return error == null ? NotFound() : Conflict(new { error });
+            return error == null ? NotFound() : BadRequest(new { error });
         return NoContent();
     }
 }
