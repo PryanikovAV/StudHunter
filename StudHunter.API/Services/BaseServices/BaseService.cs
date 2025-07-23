@@ -1,78 +1,81 @@
 ﻿using Microsoft.EntityFrameworkCore;
+using StudHunter.API.Common;
 using StudHunter.DB.Postgres;
-using StudHunter.DB.Postgres.Models;
+using StudHunter.DB.Postgres.Interfaces;
 
-namespace StudHunter.API.Services.CommonService;
+namespace StudHunter.API.Services.BaseServices;
 
 public class BaseService(StudHunterDbContext context)
 {
     protected readonly StudHunterDbContext _context = context;
 
     /// <summary>
-    /// Saves changes to the database and handles potential errors
+    /// Saves changes to the database and handles potential errors.
     /// </summary>
-    /// <param name="action">The action being performed (e.g. 'create', 'update').</param>
-    /// <param name="entityName">The name of the entity (e.g. 'Student', 'Course').</param>
-    /// <returns>A tuple indicating success and an optional error message.</returns>
-    protected async Task<(bool Success, string? Error)> SaveChangesAsync(string action, string entityName)
+    /// <param name="action">The action being performed (e.g., 'create', 'update').</param>
+    /// <param name="entityName">The name of the entity (e.g., 'Student', 'Course').</param>
+    /// <returns>A tuple indicating success, HTTP status code, and an optional error message.</returns>
+    protected async Task<(bool Success, int? StatusCode, string? ErrorMessage)> SaveChangesAsync(string action, string entityName)
     {
         try
         {
             await _context.SaveChangesAsync();
-            return (true, null);
+            return (true, null, null);
         }
-        catch (DbUpdateException ex)
+        catch (DbUpdateException)
         {
-            return (false, $"Failed to {action} {entityName.ToLower()}: {ex.InnerException?.Message ?? ex.Message}");
+            return (false, StatusCodes.Status400BadRequest, ErrorMessages.InvalidData(entityName));
         }
     }
 
     /// <summary>
-    /// Performs a soft delete on an entity by setting the IsDeleted flag to true. Only applies to entities that inherit from User.
+    /// Performs a soft delete on an entity by setting the IsDeleted flag to true.
     /// </summary>
-    /// <typeparam name="T">Entity type, must inherit from User.</typeparam>
+    /// <typeparam name="T">Entity type implementing ISoftDeletable.</typeparam>
     /// <param name="id">Unique entity identifier (Guid).</param>
-    /// <returns>A tuple containing the result of the operation and an error message, if any.</returns>
-    protected async Task<(bool Success, string? Error)> SoftDeleteEntityAsync<T>(Guid id) where T : User
+    /// <returns>A tuple containing the result of the operation, HTTP status code, and an optional error message.</returns>
+    protected async Task<(bool Success, int? StatusCode, string? ErrorMessage)> SoftDeleteEntityAsync<T>(Guid id) where T : class, ISoftDeletable
     {
-        var entity = await _context.Set<T>().FirstOrDefaultAsync(e => e.Id == id);
+        var entity = await _context.Set<T>().FirstOrDefaultAsync(e => e.Id == id && !e.IsDeleted);
         if (entity == null)
-            return (false, $"{typeof(T).Name} not found");
+            return (false, StatusCodes.Status404NotFound, ErrorMessages.NotFound(typeof(T).Name));
 
         entity.IsDeleted = true;
-
-        return await SaveChangesAsync("soft delete", $"{typeof(T).Name}");
+        var (success, statusCode, errorMessage) = await SaveChangesAsync("soft delete", typeof(T).Name);
+        return (success, statusCode, errorMessage);
     }
 
     /// <summary>
     /// Performs a hard delete of an entity from the database.
     /// </summary>
+    /// <typeparam name="T">Entity type.</typeparam>
     /// <param name="id">Unique entity identifier (Guid).</param>
-    /// <returns>A tuple containing the result and an error message, if any.</returns>
-    protected async Task<(bool Success, string? Error)> HardDeleteEntityAsync<T>(Guid id) where T : class
+    /// <returns>A tuple containing the result of the operation, HTTP status code, and an optional error message.</returns>
+    protected async Task<(bool Success, int? StatusCode, string? ErrorMessage)> HardDeleteEntityAsync<T>(Guid id) where T : class
     {
         var entity = await _context.Set<T>().FindAsync(id);
         if (entity == null)
-            return (false, $"{typeof(T).Name} not found");
+            return (false, StatusCodes.Status404NotFound, ErrorMessages.NotFound(typeof(T).Name));
 
         _context.Set<T>().Remove(entity);
-
-        return await SaveChangesAsync("hard delete", $"{typeof(T).Name}");
+        var (success, statusCode, errorMessage) = await SaveChangesAsync("hard delete", typeof(T).Name);
+        return (success, statusCode, errorMessage);
     }
 
     /// <summary>
     /// Performs a hard delete of an entity from the database.
     /// </summary>
+    /// <typeparam name="T">Entity type.</typeparam>
     /// <param name="id">Unique entity identifier (int).</param>
-    /// <returns>A tuple containing the result and an error message, if any.</returns>
-    protected async Task<(bool Success, string? Error)> HardDeleteEntityAsync<T>(int id) where T : class
+    /// <returns>A tuple containing the result of the operation, HTTP status code, and an optional error message.</returns>
+    protected async Task<(bool Success, int? StatusCode, string? ErrorMessage)> HardDeleteEntityAsync<T>(int id) where T : class
     {
         var entity = await _context.Set<T>().FindAsync(id);
         if (entity == null)
-            return (false, $"{typeof(T).Name} not found");
+            return (false, StatusCodes.Status404NotFound, ErrorMessages.NotFound(typeof(T).Name));
 
         _context.Set<T>().Remove(entity);
-
-        return await SaveChangesAsync("hard delete", $"{typeof(T).Name}");
+        var (success, statusCode, errorMessage) = await SaveChangesAsync("hard delete", typeof(T).Name);
+        return (success, statusCode, errorMessage);
     }
 }

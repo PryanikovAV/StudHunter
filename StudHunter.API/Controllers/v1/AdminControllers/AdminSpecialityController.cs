@@ -28,8 +28,8 @@ public class AdminSpecialityController(AdminSpecialityService adminSpecialitySer
             return BadRequest(ModelState);
 
         var (speciality, error) = await _adminSpecialityService.CreateSpecialityAsync(dto);
-        if (error != null)
-            return Conflict(new { error });
+        if (speciality == null)
+            return error == null ? NotFound() : BadRequest(new { error });
         return CreatedAtAction(nameof(GetSpeciality), new { id = speciality!.Id }, speciality);
     }
 
@@ -41,7 +41,7 @@ public class AdminSpecialityController(AdminSpecialityService adminSpecialitySer
 
         var (success, error) = await _adminSpecialityService.UpdateSpecialityAsync(id, dto);
         if (!success)
-            return error == null ? NotFound() : Conflict(new { error });
+            return error == null ? NotFound() : BadRequest(new { error });
         return NoContent();
     }
 
@@ -50,7 +50,7 @@ public class AdminSpecialityController(AdminSpecialityService adminSpecialitySer
     {
         var (success, error) = await _adminSpecialityService.DeleteSpecialityAsync(id);
         if (!success)
-            return error == null ? NotFound() : Conflict(new { error });
+            return error == null ? NotFound() : BadRequest(new { error });
         return NoContent();
     }
 }

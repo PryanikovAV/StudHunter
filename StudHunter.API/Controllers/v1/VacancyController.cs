@@ -7,6 +7,7 @@ namespace StudHunter.API.Controllers.v1;
 
 [Route("api/v1/[controller]")]
 [ApiController]
+[Authorize]
 public class VacancyController(VacancyService vacancyService) : ControllerBase
 {
     private readonly VacancyService _vacancyService = vacancyService;
@@ -33,7 +34,6 @@ public class VacancyController(VacancyService vacancyService) : ControllerBase
     /// <param name="employerId">The unique identifier (GUID) of the employer.</param>
     /// <returns>A collection of vacancies associated with the employer.</returns>
     [HttpGet("employer/{employerId}/vacancies")]
-    [Authorize]
     public async Task<IActionResult> GetVacanciesByEmployer(Guid employerId)
     {
         var vacancies = await _vacancyService.GetVacanciesByEmployerAsync(employerId);
@@ -42,7 +42,6 @@ public class VacancyController(VacancyService vacancyService) : ControllerBase
 
     // TODO: Replace Guid.NewGuid(); with User.FindFirstValue(ClaimTypes.NameIdentifier) after implementing JWT
     [HttpPost]
-    [Authorize]
     public async Task<IActionResult> CreateVacancy([FromBody] CreateVacancyDto dto)
     {
         if (!ModelState.IsValid)
@@ -56,7 +55,6 @@ public class VacancyController(VacancyService vacancyService) : ControllerBase
     }
 
     [HttpPut("{id}")]
-    [Authorize]
     public async Task<IActionResult> UpdateVacancy(Guid id, [FromBody] UpdateVacancyDto dto)
     {
         if (!ModelState.IsValid)
@@ -69,7 +67,6 @@ public class VacancyController(VacancyService vacancyService) : ControllerBase
     }
 
     [HttpPost("{id}/courses")]
-    [Authorize]
     public async Task<IActionResult> AddCourseToVacancy(Guid id, [FromBody] Guid courseId)
     {
         if (!ModelState.IsValid)
@@ -82,7 +79,6 @@ public class VacancyController(VacancyService vacancyService) : ControllerBase
     }
 
     [HttpPost("{id}/courses/{courseId}")]
-    [Authorize]
     public async Task<IActionResult> RemoveCourseFromVacancy(Guid id, Guid courseId)
     {
         if (!ModelState.IsValid)
@@ -95,7 +91,6 @@ public class VacancyController(VacancyService vacancyService) : ControllerBase
     }
 
     [HttpDelete("{id}")]
-    [Authorize]
     public async Task<IActionResult> DeleteVacancy(Guid id)
     {
         var (success, error) = await _vacancyService.SoftDeleteVacancyAsync(id);

@@ -36,7 +36,7 @@ public class AdminResumeController(AdminResumeService adminResumeService) : Cont
 
         var (success, error) = await _adminResumeService.UpdateResumeAsync(id, dto);
         if (!success)
-            return error == null ? NotFound() : Conflict(new { error });
+            return error == null ? NotFound() : BadRequest(new { error });
         return NoContent();
     }
 
@@ -45,7 +45,7 @@ public class AdminResumeController(AdminResumeService adminResumeService) : Cont
     {
         var (success, error) = await _adminResumeService.DeleteResumeAsync(id);
         if (!success)
-            return error == null ? NotFound() : Conflict(new { error });
+            return error == null ? NotFound() : BadRequest(new { error });
         return NoContent();
     }
 }

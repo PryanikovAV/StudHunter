@@ -28,8 +28,8 @@ public class AdminFacultyController(AdminFacultyService adminFacultyService) : C
             return BadRequest(ModelState);
 
         var (faculty, error) = await _adminFacultyService.CreateFacultyAsync(dto);
-        if (error != null)
-            return Conflict(new { error });
+        if (faculty == null)
+            return error == null ? NotFound() : BadRequest(new { error });
         return CreatedAtAction(nameof(GetFaculty), new { id = faculty!.Id }, faculty);
     }
 
@@ -41,7 +41,7 @@ public class AdminFacultyController(AdminFacultyService adminFacultyService) : C
 
         var (success, error) = await _adminFacultyService.UpdateFacultyAsync(id, dto);
         if (!success)
-            return error == null ? NotFound() : Conflict(new { error });
+            return error == null ? NotFound() : BadRequest(new { error });
         return NoContent();
     }
 
@@ -50,7 +50,7 @@ public class AdminFacultyController(AdminFacultyService adminFacultyService) : C
     {
         var (success, error) = await _adminFacultyService.DeleteFacultyAsync(id);
         if (!success)
-            return error == null ? NotFound() : Conflict(new { error });
+            return error == null ? NotFound() : BadRequest(new { error });
         return NoContent();
     }
 }

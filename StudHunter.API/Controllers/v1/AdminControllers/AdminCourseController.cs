@@ -28,8 +28,8 @@ public class AdminCourseController(AdminCourseService adminCourseService) : Cont
             return BadRequest(ModelState);
 
         var (course, error) = await _adminCourseService.CreateCourseAsync(dto);
-        if (error != null)
-            return Conflict(new { error });
+        if (course == null)
+            return error == null ? NotFound() : BadRequest(new { error });
         return CreatedAtAction(nameof(GetCourse), new { id = course!.Id }, course);
     }
 
@@ -41,7 +41,7 @@ public class AdminCourseController(AdminCourseService adminCourseService) : Cont
 
         var (success, error) = await _adminCourseService.UpdateCourseAsync(id, dto);
         if (!success)
-            return error == null ? NotFound() : Conflict(new { error });
+            return error == null ? NotFound() : BadRequest(new { error });
         return NoContent();
     }
 
@@ -50,7 +50,7 @@ public class AdminCourseController(AdminCourseService adminCourseService) : Cont
     {
         var (success, error) = await _adminCourseService.DeleteCourseAsync(id);
         if (!success)
-            return error == null ? NotFound() : Conflict(new { error });
+            return error == null ? NotFound() : BadRequest(new { error });
         return NoContent();
     }
 }

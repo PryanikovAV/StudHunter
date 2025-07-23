@@ -1,6 +1,8 @@
-﻿namespace StudHunter.DB.Postgres.Models;
+﻿using StudHunter.DB.Postgres.Interfaces;
 
-public class Resume
+namespace StudHunter.DB.Postgres.Models;
+
+public class Resume : ISoftDeletable
 {
     public Guid Id { get; set; }
 

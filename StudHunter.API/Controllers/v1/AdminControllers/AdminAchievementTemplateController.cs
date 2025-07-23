@@ -35,8 +35,8 @@ public class AdminAchievementTemplateController(AdminAchievementTemplateService 
             return BadRequest(ModelState);
 
         var (template, error) = await _administratorAchievementTemplateService.CreateAchievementTemplateAsync(dto);
-        if (error != null)
-            return Conflict(new { error });
+        if (template == null)
+            return error == null ? NotFound() : BadRequest(new { error });
         return CreatedAtAction(nameof(GetAchievementTemplate), new { id = template!.Id }, template);
     }
 
@@ -48,7 +48,7 @@ public class AdminAchievementTemplateController(AdminAchievementTemplateService 
 
         var (success, error) = await _administratorAchievementTemplateService.UpdateAchievementTemplateAsync(id, dto);
         if (!success)
-            return error == null ? NotFound() : Conflict(new { error });
+            return error == null ? NotFound() : BadRequest(new { error });
         return NoContent();
     }
 
@@ -57,7 +57,7 @@ public class AdminAchievementTemplateController(AdminAchievementTemplateService 
     {
         var (success, error) = await _administratorAchievementTemplateService.DeleteAchievementTemplateAsync(id);
         if (!success)
-            return error == null ? NotFound() : Conflict(new { error });
+            return error == null ? NotFound() : BadRequest(new { error });
         return NoContent();
     }
 }

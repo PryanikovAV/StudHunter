@@ -36,7 +36,7 @@ public class AdminEmployerController(AdminEmployerService adminEmployerService) 
 
         var (success, error) = await _adminEmployerService.UpdateEmployerAsync(id, dto);
         if (!success)
-            return error == null ? NotFound() : Conflict(new { error });
+            return error == null ? NotFound() : BadRequest(new { error });
         return NoContent();
     }
 
@@ -45,7 +45,7 @@ public class AdminEmployerController(AdminEmployerService adminEmployerService) 
     {
         var (success, error) = await _adminEmployerService.DeleteEmployerAsync(id, hardDelete);
         if (!success)
-            return error == null ? NotFound() : Conflict(new { error });
+            return error == null ? NotFound() : BadRequest(new { error });
         return NoContent();
     }
 }

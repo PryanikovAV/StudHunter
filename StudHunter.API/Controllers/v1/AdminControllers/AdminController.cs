@@ -35,8 +35,8 @@ public class AdminController(AdminService administratorService) : ControllerBase
             return BadRequest(ModelState);
 
         var (administrator, error) = await _administratorService.CreateAdministratorAsync(dto);
-        if (error != null)
-            return Conflict(new { error });
+        if (administrator == null)
+            return error == null ? NotFound() : BadRequest(new { error });
         return CreatedAtAction(nameof(GetAdministrator), new { id = administrator!.Id }, administrator);
     }
 
@@ -48,7 +48,7 @@ public class AdminController(AdminService administratorService) : ControllerBase
 
         var (success, error) = await _administratorService.UpdateAdministratorAsync(id, dto);
         if (!success)
-            return error == null ? NotFound() : Conflict(new { error });
+            return error == null ? NotFound() : BadRequest(new { error });
         return NoContent();
     }
 
@@ -57,7 +57,7 @@ public class AdminController(AdminService administratorService) : ControllerBase
     {
         var (success, error) = await _administratorService.DeletedministratorAsync(id, hardDelete);
         if (!success)
-            return error == null ? NotFound() : Conflict(new { error });
+            return error == null ? NotFound() : BadRequest(new { error });
         return NoContent();
     }
 }

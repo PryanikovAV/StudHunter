@@ -37,7 +37,7 @@ public class AdminMessageController(AdminMessagesService adminMessagesService) :
     {
         var (success, error) = await _adminMessagesService.DeleteMessageAsync(id);
         if (!success)
-            return error == null ? NotFound() : Conflict(new { error });
+            return error == null ? NotFound() : BadRequest(new { error });
         return NoContent();
     }
 }

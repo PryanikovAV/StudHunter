@@ -1,6 +1,8 @@
-﻿namespace StudHunter.DB.Postgres.Models;
+﻿using StudHunter.DB.Postgres.Interfaces;
 
-public abstract class User
+namespace StudHunter.DB.Postgres.Models;
+
+public abstract class User : ISoftDeletable
 {
     public Guid Id { get; set; }
 
@@ -14,7 +16,7 @@ public abstract class User
 
     public DateTime CreatedAt { get; set; }
 
-    public bool IsDeleted { get; set; } = false;
+    public bool IsDeleted { get; set; }
 
     public virtual ICollection<UserAchievement> Achievements { get; set; } = new List<UserAchievement>();
     public virtual ICollection<Favorite> Favorites { get; set; } = new List<Favorite>();

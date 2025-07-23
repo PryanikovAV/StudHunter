@@ -36,7 +36,7 @@ public class AdminVacancyController(AdminVacancyService adminVacancyService) : C
 
         var (success, error) = await _adminVacancyService.UpdateVacancyAsync(id, dto);
         if (!success)
-            return error == null ? NotFound() : Conflict(new { error });
+            return error == null ? NotFound() : BadRequest(new { error });
         return NoContent();
     }
 
@@ -45,7 +45,7 @@ public class AdminVacancyController(AdminVacancyService adminVacancyService) : C
     {
         var (success, error) = await _adminVacancyService.DeleteVacancyAsync(id);
         if (!success)
-            return error == null ? NotFound() : Conflict(new { error });
+            return error == null ? NotFound() : BadRequest(new { error });
         return NoContent();
     }
 
@@ -57,7 +57,7 @@ public class AdminVacancyController(AdminVacancyService adminVacancyService) : C
 
         var (success, error) = await _adminVacancyService.AddCourseToVacancyAsync(id, courseId);
         if (!success)
-            return error == null ? NotFound() : Conflict(new { error });
+            return error == null ? NotFound() : BadRequest(new { error });
         return NoContent();
     }
 
@@ -69,7 +69,7 @@ public class AdminVacancyController(AdminVacancyService adminVacancyService) : C
 
         var (success, error) = await _adminVacancyService.RemoveCourseFromVacancyAsync(id, courseId);
         if (!success)
-            return error == null ? NotFound() : Conflict(new { error });
+            return error == null ? NotFound() : BadRequest(new { error });
         return NoContent();
     }
 }

@@ -1,7 +1,7 @@
 ﻿using Microsoft.EntityFrameworkCore;
 using StudHunter.API.ModelsDto.Student;
 using StudHunter.API.ModelsDto.UserAchievement;
-using StudHunter.API.Services.CommonService;
+using StudHunter.API.Services.BaseServices;
 using StudHunter.DB.Postgres;
 using StudHunter.DB.Postgres.Models;
 
@@ -9,40 +9,55 @@ namespace StudHunter.API.Services.AdminServices;
 
 public class AdminStudentService(StudHunterDbContext context) : BaseService(context)
 {
-    public async Task<IEnumerable<StudentDto>> GetAllStudentsAsync()
+    public async Task<(List<StudentDto>?, int?, string?)> GetAllStudentsAsync()
     {
-        return await _context.Students.Select(s => new StudentDto
-        {
-            Id = s.Id,
-            FirstName = s.FirstName,
-            LastName = s.LastName,
-            Email = s.Email,
-            Gender = s.Gender.ToString(),
-            BirthDate = s.BirthDate,
-            Photo = s.Photo,
-            ContactPhone = s.ContactPhone,
-            ContactEmail = s.ContactEmail,
-            IsForeign = s.IsForeign,
-            StatusId = s.StatusId,
-            ResumeId = s.Resume != null ? s.Resume.Id : null,
-            CreatedAt = s.CreatedAt,
-            CourseNumber = s.StudyPlan.CourseNumber,
-            FacultyId = s.StudyPlan.FacultyId,
-            SpecialityId = s.StudyPlan.SpecialityId,
-            StudyForm = s.StudyPlan.StudyForm.ToString(),
-            BeginYear = s.StudyPlan.BeginYear
-        })
-        .ToListAsync();
+        var students = await _context.Students
+            .Where(s => !s.IsDeleted)
+            .Include(s => s.Resume)
+            .Include(s => s.StudyPlan)
+            .Include(s => s.Achievements)
+            .ThenInclude(ua => ua.AchievementTemplate)
+            .Select(s => new StudentDto
+            {
+                Id = s.Id,
+                FirstName = s.FirstName,
+                LastName = s.LastName,
+                Email = s.Email,
+                Gender = s.Gender.ToString(),
+                BirthDate = s.BirthDate,
+                Photo = s.Photo,
+                ContactPhone = s.ContactPhone,
+                ContactEmail = s.ContactEmail,
+                IsForeign = s.IsForeign,
+                StatusId = s.StatusId,
+                ResumeId = s.Resume != null ? s.Resume.Id : null,
+                CreatedAt = s.CreatedAt,
+                CourseNumber = s.StudyPlan.CourseNumber,
+                FacultyId = s.StudyPlan.FacultyId,
+                SpecialityId = s.StudyPlan.SpecialityId,
+                StudyForm = s.StudyPlan.StudyForm.ToString(),
+                BeginYear = s.StudyPlan.BeginYear,
+                Achievements = s.Achievements.Select(ua => new UserAchievementDto
+                {
+                    UserId = ua.UserId,
+                    AchievementTemplateId = ua.AchievementTemplateId,
+                    AchievementAt = ua.AchievementAt,
+                    AchievementName = ua.AchievementTemplate.Name,
+                    AchievementDescription = ua.AchievementTemplate.Description
+                }).ToList()
+            }).ToListAsync();
+
+        return (students, null, null);
     }
 
     public async Task<StudentDto?> GetStudentAsync(Guid id)
     {
         var student = await _context.Students
-        .Include(s => s.Resume)
-        .Include(s => s.StudyPlan)
-        .Include(s => s.Achievements)
-        .ThenInclude(ua => ua.AchievementTemplate)
-        .FirstOrDefaultAsync(s => s.Id == id);
+            .Include(s => s.Resume)
+            .Include(s => s.StudyPlan)
+            .Include(s => s.Achievements)
+            .ThenInclude(ua => ua.AchievementTemplate)
+            .FirstOrDefaultAsync(s => s.Id == id);
 
         if (student == null)
             return null;

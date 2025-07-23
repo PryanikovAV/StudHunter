@@ -1,7 +1,8 @@
 ﻿using Microsoft.EntityFrameworkCore;
+using StudHunter.API.Common;
 using StudHunter.API.ModelsDto.Student;
 using StudHunter.API.ModelsDto.UserAchievement;
-using StudHunter.API.Services.CommonService;
+using StudHunter.API.Services.BaseServices;
 using StudHunter.DB.Postgres;
 using StudHunter.DB.Postgres.Models;
 
@@ -16,19 +17,22 @@ public class StudentService(StudHunterDbContext context, IPasswordHasher passwor
     /// </summary>
     /// <param name="id">The unique identifier (GUID) of the student.</param>
     /// <returns>The student's detaild or null if not found.</returns>
-    public async Task<StudentDto?> GetStudentAsync(Guid id)
+    public async Task<(StudentDto? Entity, int? StatusCode, string? ErrorMessage)> GetStudentAsync(Guid id)
     {
         var student = await _context.Students
-        .Include(s => s.Resume)
-        .Include(s => s.StudyPlan)
-        .Include(s => s.Achievements)
-        .ThenInclude(ua => ua.AchievementTemplate)
-        .FirstOrDefaultAsync(s => s.Id == id);
+            .Include(s => s.Resume)
+            .Include(s => s.StudyPlan)
+            .Include(s => s.Achievements)
+            .ThenInclude(ua => ua.AchievementTemplate)
+            .FirstOrDefaultAsync(s => s.Id == id && !s.IsDeleted);
 
         if (student == null)
-            return null;
+            return (null, StatusCodes.Status404NotFound, ErrorMessages.NotFound("Student"));
 
-        return new StudentDto
+        if (student.StudyPlan == null)
+            return (null, StatusCodes.Status404NotFound, ErrorMessages.NotFound("Study plan"));
+
+        return (new StudentDto
         {
             Id = student.Id,
             FirstName = student.FirstName,
@@ -56,7 +60,7 @@ public class StudentService(StudHunterDbContext context, IPasswordHasher passwor
                 AchievementName = userAchievement.AchievementTemplate.Name,
                 AchievementDescription = userAchievement.AchievementTemplate.Description
             }).ToList()
-        };
+        }, StatusCodes.Status200OK, null);
     }
 
     /// <summary>
@@ -64,20 +68,19 @@ public class StudentService(StudHunterDbContext context, IPasswordHasher passwor
     /// </summary>
     /// <param name="dto">The student data to create, including study plan details.</param>
     /// <returns>A tuple containing the created student's details or null and an error message if creation fails.</returns>
-    public async Task<(StudentDto? Student, string? Error)> CreateStudentAsync(CreateStudentDto dto)
-    {
-        var checks = await Task.WhenAll(
-        _context.Students.AnyAsync(s => s.Email == dto.Email),
-        _context.Faculties.AnyAsync(f => f.Id == dto.FacultyId),
-        _context.Specialities.AnyAsync(s => s.Id == dto.SpecialityId)
-        );
+    public async Task<(StudentDto? Entity, int? StatusCode, string? ErrorMessage)> CreateStudentAsync(CreateStudentDto dto)
 
-        if (checks[0])
-            return (null, "Student with this email already exists");
-        if (!checks[1])
-            return (null, "Faculty not found");
-        if (!checks[2])
-            return (null, "Speciality not found");
+    {
+        var emailExists = _context.Students.FirstOrDefaultAsync(s => s.Email == dto.Email);
+        var faculty = _context.Faculties.FirstOrDefaultAsync(f => f.Id == dto.FacultyId);
+        var speciality = _context.Specialities.FirstOrDefaultAsync(s => s.Id == dto.SpecialityId);
+
+        if (emailExists != null)
+            return (null, StatusCodes.Status409Conflict, ErrorMessages.AlreadyExists("Student", "Email"));
+        if (faculty == null)
+            return (null, StatusCodes.Status404NotFound, ErrorMessages.NotFound("Faculty"));
+        if (speciality == null)
+            return (null, StatusCodes.Status404NotFound, ErrorMessages.NotFound("Speciality"));
 
         var student = new Student
         {
@@ -111,9 +114,10 @@ public class StudentService(StudHunterDbContext context, IPasswordHasher passwor
         _context.Students.Add(student);
         _context.StudyPlans.Add(studyPlan);
 
-        var (success, error) = await SaveChangesAsync("create", "Student");
+        var (success, statusCode, errorMessage) = await SaveChangesAsync("Create", "Student");
+
         if (!success)
-            return (null, error);
+            return (null, statusCode, errorMessage);
 
         return (new StudentDto
         {
@@ -135,7 +139,7 @@ public class StudentService(StudHunterDbContext context, IPasswordHasher passwor
             SpecialityId = studyPlan.SpecialityId,
             StudyForm = studyPlan.StudyForm.ToString(),
             BeginYear = studyPlan.BeginYear
-        }, null);
+        }, StatusCodes.Status201Created, null);
     }
 
     /// <summary>
@@ -144,37 +148,38 @@ public class StudentService(StudHunterDbContext context, IPasswordHasher passwor
     /// <param name="id">The unique identifier (GUID) of the student to update.</param>
     /// <param name="dto">The updated student data.</param>
     /// <returns>A tuple indicating whether the update was successful and an optional error message.</returns>
-    public async Task<(bool Success, string? Error)> UpdateStudentAsync(Guid id, UpdateStudentDto dto)
+    public async Task<(bool Success, int? StatusCode, string? ErrorMessage)> UpdateStudentAsync(Guid id, UpdateStudentDto dto)
     {
         var student = await _context.Students
-        .Include(s => s.StudyPlan)
-        .FirstOrDefaultAsync(s => s.Id == id);
+            .Include(s => s.StudyPlan)
+            .FirstOrDefaultAsync(s => s.Id == id);
 
         if (student == null)
-            return (false, "Student not found");
+            return (false, StatusCodes.Status404NotFound, ErrorMessages.NotFound("Student"));
 
         if (dto.Email != null)
         {
             var emailExists = await _context.Students.AnyAsync(s => s.Email == dto.Email && s.Id != id);
             if (emailExists)
-                return (false, "Another student with this email already exists");
+                return (false, StatusCodes.Status409Conflict, ErrorMessages.AlreadyExists("Student", "Email"));
         }
 
+        // TODO : make /Serializers/StudentServiceSerializer
         Guid? facultyId = dto.FacultyId;
         Guid? specialityId = dto.SpecialityId;
 
         if (facultyId.HasValue || specialityId.HasValue)
         {
             var checks = await Task.WhenAll(
-            facultyId.HasValue ? _context.Faculties.AnyAsync(f => f.Id == facultyId.Value) : Task.FromResult(true),
-            specialityId.HasValue ? _context.Specialities.AnyAsync(s => s.Id == specialityId.Value) : Task.FromResult(true)
+                facultyId.HasValue ? _context.Faculties.AnyAsync(f => f.Id == facultyId.Value) : Task.FromResult(true),
+                specialityId.HasValue ? _context.Specialities.AnyAsync(s => s.Id == specialityId.Value) : Task.FromResult(true)
             );
 
             if (facultyId.HasValue && !checks[0])
-                return (false, "Faculty not found");
+                return (false, StatusCodes.Status404NotFound, ErrorMessages.NotFound("Faculty"));
 
             if (specialityId.HasValue && !checks[1])
-                return (false, "Speciality not found");
+                return (false, StatusCodes.Status404NotFound, ErrorMessages.NotFound("Speciality"));
         }
 
         if (dto.FirstName != null)
@@ -215,10 +220,12 @@ public class StudentService(StudHunterDbContext context, IPasswordHasher passwor
                 studyPlan.BeginYear = dto.BeginYear.Value;
         }
 
-        return await SaveChangesAsync("update", "Student");
+        var (success, statusCode, errorMessage) = await SaveChangesAsync("update", "Student");
+
+        return (success, statusCode, errorMessage);
     }
 
-    public async Task<(bool Success, string? Error)> SoftDeleteStudentAsync(Guid id)
+    public async Task<(bool Success, int? StatusCode, string? ErrorMessage)> SoftDeleteStudentAsync(Guid id)
     {
         return await SoftDeleteEntityAsync<Student>(id);
     }

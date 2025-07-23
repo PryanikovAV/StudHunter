@@ -1,5 +1,6 @@
 ﻿using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using StudHunter.API.Controllers.v1.BaseControllers;
 using StudHunter.API.ModelsDto.Student;
 using StudHunter.API.Services.AdminServices;
 
@@ -8,25 +9,16 @@ namespace StudHunter.API.Controllers.v1.AdminControllers;
 [Route("api/v1/admin/[controller]")]
 [ApiController]
 [Authorize(Roles = "Administrator")]
-public class AdminStudentController(AdminStudentService adminStudentService) : ControllerBase
+public class AdminStudentController(AdminStudentService adminStudentService) : ApiControllerBase
 {
     private readonly AdminStudentService _adminStudentService = adminStudentService;
-
-    /// <summary>
-    /// Retrieves a list of all students.
-    /// </summary>
-    /// <returns>A list of all students' details.</returns>
-    /// <response code="200">Returns the list of all students.</response>
-    /// <response code="401">Unauthorized if the user is not authenticated.</response>
-    /// <response code="403">Forbidden if the user is not an administrator.</response>
+    // TODO: add new documentation
     [HttpGet]
-    [ProducesResponseType(typeof(IEnumerable<StudentDto>), StatusCodes.Status200OK)]
-    [ProducesResponseType(StatusCodes.Status401Unauthorized)]
-    [ProducesResponseType(StatusCodes.Status403Forbidden)]
-    public async Task<ActionResult<IEnumerable<StudentDto>>> GetAllStudents()
+    [ProducesResponseType(typeof(List<StudentDto>), StatusCodes.Status200OK)]
+    public async Task<IActionResult> GetAllStudents()
     {
-        var students = await _adminStudentService.GetAllStudentsAsync();
-        return Ok(students);
+        var (students, statusCode, errorMessage) = await _adminStudentService.GetAllStudentsAsync();
+        return this.CreateAPIError(students, statusCode, errorMessage);
     }
 
     /// <summary>
@@ -75,7 +67,7 @@ public class AdminStudentController(AdminStudentService adminStudentService) : C
 
         var (success, error) = await _adminStudentService.UpdateStudentAsync(id, dto);
         if (!success)
-            return error == null ? NotFound() : Conflict(new { error });
+            return error == null ? NotFound() : BadRequest(new { error });
         return NoContent();
     }
 
@@ -100,7 +92,7 @@ public class AdminStudentController(AdminStudentService adminStudentService) : C
     {
         var (success, error) = await _adminStudentService.DeleteStudentAsync(id, hardDelete);
         if (!success)
-            return error == null ? NotFound() : Conflict(new { error });
+            return error == null ? NotFound() : BadRequest(new { error });
         return NoContent();
     }
 }

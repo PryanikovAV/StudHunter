@@ -30,7 +30,7 @@ public class AdminFavoriteController(AdminFavoriteService adminFavoriteService) 
     {
         var (success, error) = await _adminFavoriteService.DeleteFavoriteAsync(id);
         if (!success)
-            return error == null ? NotFound() : Conflict(new { error });
+            return error == null ? NotFound() : BadRequest(new { error });
         return NoContent();
     }
 }
