@@ -1,32 +1,20 @@
 ﻿using Microsoft.EntityFrameworkCore;
+using StudHunter.API.Common;
 using StudHunter.API.ModelsDto.Speciality;
-using StudHunter.API.Services.CommonService;
 using StudHunter.DB.Postgres;
 using StudHunter.DB.Postgres.Models;
 
 namespace StudHunter.API.Services.AdminServices;
 
-public class AdminSpecialityService(StudHunterDbContext context) : BaseService(context)
+public class AdminSpecialityService(StudHunterDbContext context) : SpecialityService(context)
 {
-    public async Task<SpecialityDto?> GetSpecialityAsync(Guid id)
+    public async Task<(SpecialityDto? Entity, int? StatusCode, string? ErrorMessage)> CreateSpecialityAsync(CreateSpecialityDto dto)
     {
-        var speciality = await _context.Specialities.FirstOrDefaultAsync(s => s.Id == id);
-
-        if (speciality == null)
-            return null;
-
-        return new SpecialityDto
-        {
-            Id = speciality.Id,
-            Name = speciality.Name,
-            Description = speciality.Description
-        };
-    }
-
-    public async Task<(SpecialityDto? Speciality, string? Error)> CreateSpecialityAsync(CreateSpecialityDto dto)
-    {
-        if (await _context.Specialities.AnyAsync(s => s.Name == dto.Name))
-            return (null, "Speciality with this name already exists.");
+        #region Serializers
+        var specialityExists = await _context.Specialities.AnyAsync(s => s.Name == dto.Name);
+        if (specialityExists)
+            return (null, StatusCodes.Status409Conflict, ErrorMessages.AlreadyExists("Speciality", "Name"));
+        #endregion
 
         var speciality = new Speciality
         {
@@ -37,46 +25,54 @@ public class AdminSpecialityService(StudHunterDbContext context) : BaseService(c
 
         _context.Specialities.Add(speciality);
 
-        var (success, error) = await SaveChangesAsync("create", "Speciality");
+        var (success, statusCode, errorMessage) = await SaveChangesAsync("Speciality");
+
         if (!success)
-            return (null, error);
+            return (null, statusCode, errorMessage);
 
         return (new SpecialityDto
         {
             Id = speciality.Id,
             Name = speciality.Name,
             Description = speciality.Description
-        }, null);
+        }, null, null);
     }
 
-    public async Task<(bool Success, string? Error)> UpdateSpecialityAsync(Guid id, UpdateSpecialityDto dto)
+    public async Task<(bool Success, int? StatusCode, string? ErrorMessage)> UpdateSpecialityAsync(Guid id, UpdateSpecialityDto dto)
     {
         var speciality = await _context.Specialities.FirstOrDefaultAsync(s => s.Id == id);
 
+        #region Serializers
         if (speciality == null)
-            return (false, "Speciality not found.");
+            return (false, StatusCodes.Status404NotFound, ErrorMessages.NotFound("Speciality"));
 
-        if (await _context.Specialities.AnyAsync(s => s.Name == dto.Name && s.Id != id))
-            return (false, "Speciality with this name already exists.");
+        var specialityExists = await _context.Specialities.AnyAsync(s => s.Name == dto.Name && s.Id != id);
+        if (specialityExists)
+            return (false, StatusCodes.Status409Conflict, ErrorMessages.AlreadyExists("Speciality", "Name"));
+        #endregion
 
         if (dto.Name != null)
             speciality.Name = dto.Name;
         if (dto.Description != null)
             speciality.Description = dto.Description;
 
-        return await SaveChangesAsync("update", "Speciality");
+        var (success, statusCode, errorMessage) = await SaveChangesAsync("Speciality");
+
+        return (success, statusCode, errorMessage);
     }
 
-    public async Task<(bool Success, string? Error)> DeleteSpecialityAsync(Guid id)
+    public async Task<(bool Success, int? StatusCode, string? ErrorMessage)> DeleteSpecialityAsync(Guid id)
     {
         var speciality = await _context.Specialities.FirstOrDefaultAsync(s => s.Id == id);
 
+        #region Serializers
         if (speciality == null)
-            return (false, "Speciality not found");
+            return (false, StatusCodes.Status404NotFound, ErrorMessages.NotFound("Speciality"));
 
         if (await _context.StudyPlans.AnyAsync(sp => sp.SpecialityId == id))
-            return (false, "Cannot delete speciality associated with study plans");
+            return (false, StatusCodes.Status400BadRequest, "Cannot delete speciality associated with study plans");
+        #endregion
 
-        return await HardDeleteEntityAsync<Speciality>(id);
+        return await DeleteEntityAsync<Speciality>(id, hardDelete: true);
     }
 }

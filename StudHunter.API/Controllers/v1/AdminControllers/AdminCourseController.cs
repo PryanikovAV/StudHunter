@@ -1,5 +1,6 @@
 ﻿using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using StudHunter.API.Controllers.v1.BaseControllers;
 using StudHunter.API.ModelsDto.Course;
 using StudHunter.API.Services.AdminServices;
 
@@ -8,9 +9,16 @@ namespace StudHunter.API.Controllers.v1.AdminControllers;
 [Route("api/v1/admin/[controller]")]
 [ApiController]
 [Authorize(Roles = "Administrator")]
-public class AdminCourseController(AdminCourseService adminCourseService) : ControllerBase
+public class AdminCourseController(AdminCourseService adminCourseService) : BaseController
 {
     private readonly AdminCourseService _adminCourseService = adminCourseService;
+
+    [HttpGet]
+    public async Task<IActionResult> GetAllCourses()
+    {
+        var (courses, statusCode, ErrorMessage) = await _adminCourseService.GetAllCoursesAsync();
+        return this.CreateAPIError(courses, statusCode, ErrorMessage);
+    }
 
     [HttpGet("{id}")]
     public async Task<IActionResult> GetCourse(Guid id)

@@ -93,7 +93,7 @@ public class VacancyController(VacancyService vacancyService) : ControllerBase
     [HttpDelete("{id}")]
     public async Task<IActionResult> DeleteVacancy(Guid id)
     {
-        var (success, error) = await _vacancyService.SoftDeleteVacancyAsync(id);
+        var (success, error) = await _vacancyService.DeleteVacancyAsync(id);
         if (!success)
             return error == null ? NotFound() : BadRequest(new { error });
         return NoContent();

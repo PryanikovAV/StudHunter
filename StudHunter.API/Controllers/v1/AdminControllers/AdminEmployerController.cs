@@ -1,5 +1,6 @@
 ﻿using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using StudHunter.API.Controllers.v1.BaseControllers;
 using StudHunter.API.ModelsDto.Employer;
 using StudHunter.API.Services.AdminServices;
 
@@ -8,15 +9,15 @@ namespace StudHunter.API.Controllers.v1.AdminControllers;
 [Route("api/v1/admin/[controller]")]
 [ApiController]
 [Authorize(Roles = "Administrator")]
-public class AdminEmployerController(AdminEmployerService adminEmployerService) : ControllerBase
+public class AdminEmployerController(AdminEmployerService adminEmployerService) : BaseController
 {
     private readonly AdminEmployerService _adminEmployerService = adminEmployerService;
 
     [HttpGet]
-    public async Task<IActionResult> GetEmployers()
+    public async Task<IActionResult> GetAllEmployers()
     {
-        var employers = await _adminEmployerService.GetAllEmployersAsync();
-        return Ok(employers);
+        var (employers, statusCode, errorMessage) = await _adminEmployerService.GetAllEmployersAsync();
+        return this.CreateAPIError(employers, statusCode, errorMessage);
     }
 
     [HttpGet("{id}")]
@@ -29,7 +30,7 @@ public class AdminEmployerController(AdminEmployerService adminEmployerService) 
     }
 
     [HttpPut("{id}")]
-    public async Task<IActionResult> UpdateEmployerByAdministrator(Guid id, [FromBody] UpdateEmployerByAdministratorDto dto)
+    public async Task<IActionResult> UpdateEmployerByAdministrator(Guid id, [FromBody] AdminUpdateEmployerDto dto)
     {
         if (!ModelState.IsValid)
             return BadRequest(ModelState);

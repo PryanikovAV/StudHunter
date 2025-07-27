@@ -1,6 +1,7 @@
 ﻿using Microsoft.EntityFrameworkCore;
+using StudHunter.API.Common;
 using StudHunter.API.ModelsDto.Vacancy;
-using StudHunter.API.Services.CommonService;
+using StudHunter.API.Services.BaseServices;
 using StudHunter.DB.Postgres;
 using StudHunter.DB.Postgres.Models;
 
@@ -10,9 +11,11 @@ public class VacancyService(StudHunterDbContext context, UserAchievementService 
 {
     public UserAchievementService _userAchievementService = userAchievementService;
 
-    public async Task<IEnumerable<VacancyDto>> GetAllVacanciesAsync()
+    public async Task<(List<VacancyDto>? Entities, int? StatusCode, string? ErrorMessage)> GetAllVacanciesAsync()
     {
-        return await _context.Vacancies.Select(v => new VacancyDto
+        var vacancies = await _context.Vacancies
+        .Where(v => !v.IsDeleted)
+        .Select(v => new VacancyDto
         {
             Id = v.Id,
             EmployerId = v.EmployerId,
@@ -22,18 +25,24 @@ public class VacancyService(StudHunterDbContext context, UserAchievementService 
             CreatedAt = v.CreatedAt,
             UpdatedAt = v.UpdatedAt,
             Type = v.Type.ToString()
-        })
-        .ToListAsync();
+        }).ToListAsync();
+
+        return (vacancies, null, null);
     }
 
-    public async Task<VacancyDto?> GetVacancyAsync(Guid id)
+    public async Task<(VacancyDto? Entity, int? StatusCode, string? ErrorMessage)> GetVacancyAsync(Guid id)
     {
         var vacancy = await _context.Vacancies.FirstOrDefaultAsync(v => v.Id == id);
 
-        if (vacancy == null || vacancy.IsDeleted)
-            return null;
+        #region Serializers
+        if (vacancy == null)
+            return (null, StatusCodes.Status404NotFound, ErrorMessages.NotFound("Vacancy"));
 
-        return new VacancyDto
+        if (vacancy.IsDeleted)
+            return (null, StatusCodes.Status409Conflict, ErrorMessages.AlreadyDeleted("Vacancy"));
+        #endregion
+
+        return (new VacancyDto
         {
             Id = vacancy.Id,
             EmployerId = vacancy.EmployerId,
@@ -42,14 +51,13 @@ public class VacancyService(StudHunterDbContext context, UserAchievementService 
             Salary = vacancy.Salary,
             CreatedAt = vacancy.CreatedAt,
             UpdatedAt = vacancy.UpdatedAt,
-            Type = vacancy.Type.ToString(),
-            IsDeleted = vacancy.IsDeleted
-        };
+            Type = vacancy.Type.ToString()
+        }, null, null);
     }
 
-    public async Task<IEnumerable<VacancyDto>> GetVacanciesByEmployerAsync(Guid id)
+    public async Task<(List<VacancyDto>? Entities, int? StatusCode, string? ErrorMessage)> GetVacanciesByEmployerAsync(Guid id)
     {
-        return await _context.Vacancies
+        var vacancies = await _context.Vacancies
         .Where(e => e.EmployerId == id)
         .Select(v => new VacancyDto
         {
@@ -61,19 +69,21 @@ public class VacancyService(StudHunterDbContext context, UserAchievementService 
             CreatedAt = v.CreatedAt,
             UpdatedAt = v.UpdatedAt,
             Type = v.Type.ToString()
-        })
-        .ToListAsync();
+        }).ToListAsync();
+
+        return (vacancies, null, null);
     }
 
-    public async Task<(VacancyDto? Vacancy, string? Error)> CreateVacancyAsync(Guid employerId, CreateVacancyDto dto)
+    public async Task<(VacancyDto? Entity, int? StatusCode, string? ErrorMessage)> CreateVacancyAsync(Guid employerId, CreateVacancyDto dto)
     {
+        #region Serializers
         var employer = await _context.Employers.FirstOrDefaultAsync(e => e.Id == employerId);
-
         if (employer == null)
-            return (null, "Employer not found");
+            return (null, StatusCodes.Status404NotFound, ErrorMessages.NotFound("Employer"));
 
-        if (!employer.AccreditationStatus)
-            return (null, "Employer is not accredited");
+        if (employer.AccreditationStatus == false)
+            return (null, StatusCodes.Status404NotFound, "Employer is not accredited");
+        #endregion
 
         var vacancy = new Vacancy
         {
@@ -90,13 +100,10 @@ public class VacancyService(StudHunterDbContext context, UserAchievementService 
 
         _context.Vacancies.Add(vacancy);
 
-        var (success, error) = await SaveChangesAsync("create", "vacancy");
-        if (!success)
-            return (null, error);
+        var (success, statusCode, errorMessage) = await SaveChangesAsync("Vacancy");
 
-        // ===== Achievement =====
-        await _userAchievementService.CheckAndGrantVacancyAchievementsAsync(employerId);
-        // ===== Achievement =====
+        if (!success)
+            return (null, statusCode, errorMessage);
 
         return (new VacancyDto
         {
@@ -107,17 +114,20 @@ public class VacancyService(StudHunterDbContext context, UserAchievementService 
             Salary = vacancy.Salary,
             CreatedAt = vacancy.CreatedAt,
             UpdatedAt = vacancy.UpdatedAt,
-            Type = vacancy.Type.ToString(),
-            IsDeleted = vacancy.IsDeleted
-        }, null);
+            Type = vacancy.Type.ToString()
+        }, null, null);
     }
 
-    public async Task<(bool Success, string? Error)> UpdateVacancyAsync(Guid id, UpdateVacancyDto dto)
+    public virtual async Task<(bool Success, int? StatusCode, string? ErrorMessage)> UpdateVacancyAsync(Guid id, UpdateVacancyDto dto)
     {
         var vacancy = await _context.Vacancies.FirstOrDefaultAsync(v => v.Id == id);
 
+        #region Serializers
         if (vacancy == null)
-            return (false, "Vacancy not found.");
+            return (false, StatusCodes.Status404NotFound, ErrorMessages.NotFound("Vacancy"));
+        if (vacancy.IsDeleted)
+            return (false, StatusCodes.Status410Gone, ErrorMessages.AlreadyDeleted("Vacancy"));
+        #endregion
 
         if (dto.Title != null)
             vacancy.Title = dto.Title;
@@ -130,19 +140,27 @@ public class VacancyService(StudHunterDbContext context, UserAchievementService 
             vacancy.Type = Enum.Parse<Vacancy.VacancyType>(dto.Type);
         vacancy.UpdatedAt = DateTime.UtcNow;
 
-        return await SaveChangesAsync("update", "vacancy");
+        var (success, statusCode, errorMessage) = await SaveChangesAsync("Vacancy");
+
+        return (success, statusCode, errorMessage);
     }
 
-    public async Task<(bool Success, string? Error)> AddCourseToVacancyAsync(Guid vacancyId, Guid courseId)
+    public async Task<(bool Success, int? StatusCode, string? ErrorMessage)> AddCourseToVacancyAsync(Guid vacancyId, Guid courseId)
     {
-        if (!await _context.Vacancies.AnyAsync(v => v.Id == vacancyId))
-            return (false, "Vacancy not found");
+        #region Serializers
+        var vacancyExists = await _context.Vacancies.AnyAsync(v => v.Id == vacancyId);
+        var courseExists = await _context.Courses.AnyAsync(c => c.Id == courseId);
+        var courseAssociated = await _context.VacancyCourses.AnyAsync(vc => vc.VacancyId == vacancyId && vc.CourseId == courseId);
 
-        if (!await _context.Courses.AllAsync(c => c.Id == courseId))
-            return (false, "Course not found");
+        if (vacancyExists == false)
+            return (false, StatusCodes.Status404NotFound, ErrorMessages.NotFound("Vacancy"));
 
-        if (await _context.VacancyCourses.AnyAsync(vc => vc.VacancyId == vacancyId && vc.CourseId == courseId))
-            return (false, "Course already associated with vacancy");
+        if (courseExists == false)
+            return (false, StatusCodes.Status404NotFound, ErrorMessages.NotFound("Course"));
+
+        if (courseAssociated)
+            return (false, StatusCodes.Status409Conflict, ErrorMessages.AlreadyExists("Course", "Vacancy"));
+        #endregion
 
         var vacancyCourse = new VacancyCourse
         {
@@ -152,30 +170,29 @@ public class VacancyService(StudHunterDbContext context, UserAchievementService 
 
         _context.VacancyCourses.Add(vacancyCourse);
 
-        return await SaveChangesAsync("add course to vacancy", "vacancy");
+        var (success, statusCode, errorMessage) = await SaveChangesAsync("Vacancy");
+
+        return (success, statusCode, errorMessage);
     }
 
-    public async Task<(bool Success, string? Error)> RemoveCourseFromVacancyAsync(Guid vacancyId, Guid courseId)
+    public async Task<(bool Success, int? StatusCode, string? ErrorMessage)> RemoveCourseFromVacancyAsync(Guid vacancyId, Guid courseId)
     {
         var vacancyCourse = await _context.VacancyCourses.FirstOrDefaultAsync(vc => vc.VacancyId == vacancyId && vc.CourseId == courseId);
 
+        #region Serializers
         if (vacancyCourse == null)
-            return (false, "Course not associated with vacancy");
+            return (false, StatusCodes.Status404NotFound, "Course not associated with vacancy");
+        #endregion
 
         _context.VacancyCourses.Remove(vacancyCourse);
 
-        return await SaveChangesAsync("remove course from vacancy", "vacancy");
+        var (success, statusCode, errorMessage) = await SaveChangesAsync("Vacancy");
+
+        return (success, statusCode, errorMessage);
     }
 
-    public async Task<(bool Success, string? Error)> SoftDeleteVacancyAsync(Guid id)
+    public virtual async Task<(bool Success, int? StatusCode, string? ErrorMessage)> DeleteVacancyAsync(Guid id)
     {
-        var vacancy = await _context.Vacancies.FirstOrDefaultAsync(v => v.Id == id);
-
-        if (vacancy == null)
-            return (false, "Vacancy not found");
-
-        vacancy.IsDeleted = true;
-
-        return await SaveChangesAsync("soft delete", "Vacancy");
+        return await SoftDeleteEntityAsync<Vacancy>(id);
     }
 }

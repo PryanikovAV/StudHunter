@@ -1,75 +1,66 @@
 ﻿using Microsoft.EntityFrameworkCore;
+using StudHunter.API.Common;
 using StudHunter.API.ModelsDto.Resume;
-using StudHunter.API.Services.CommonService;
 using StudHunter.DB.Postgres;
 using StudHunter.DB.Postgres.Models;
 
 namespace StudHunter.API.Services.AdminServices;
 
-public class AdminResumeService(StudHunterDbContext context) : BaseService(context)
+public class AdminResumeService(StudHunterDbContext context, UserAchievementService userAchievementService)
+: ResumeService(context, userAchievementService)
 {
-    public async Task<IEnumerable<ResumeDto>> GetAllResumesAsync()
+    public async Task<(List<AdminResumeDto>? Entities, int? StatusCode, string? ErrorMessage)> GetAllResumesAsync()
     {
-        return await _context.Resumes.Select(r => new ResumeDto
+        var resumes = await _context.Resumes.Select(r => new AdminResumeDto
         {
             Id = r.Id,
             StudentId = r.StudentId,
             Title = r.Title,
             Description = r.Description,
             CreatedAt = r.CreatedAt,
-            UpdatedAt = r.UpdatedAt
-        })
-        .ToListAsync();
+            UpdatedAt = r.UpdatedAt,
+            IsDeleted = r.IsDeleted
+        }).ToListAsync();
+
+        return (resumes, null, null);
     }
 
-    public async Task<ResumeDto?> GetResumeAsync(Guid id)
+    public async Task<(bool Success, int? StatusCode, string? ErrorMessage)> UpdateResumeAsync(Guid id, AdminUpdateResumeDto dto)
     {
         var resume = await _context.Resumes.FirstOrDefaultAsync(r => r.Id == id);
 
+        #region Serializers
         if (resume == null)
-            return null;
-
-        return new ResumeDto
-        {
-            Id = resume.Id,
-            StudentId = resume.StudentId,
-            Title = resume.Title,
-            Description = resume.Description,
-            CreatedAt = resume.CreatedAt,
-            UpdatedAt = resume.UpdatedAt
-        };
-    }
-
-    public async Task<(bool Success, string? Error)> UpdateResumeAsync(Guid id, UpdateResumeDto dto)
-    {
-        var resume = await _context.Resumes.FirstOrDefaultAsync(r => r.Id == id);
-
-        if (resume == null)
-            return (false, "Resume not found");
+            return (false, StatusCodes.Status404NotFound, ErrorMessages.NotFound("Resume"));
+        #endregion
 
         if (dto.Title != null)
             resume.Title = dto.Title;
         if (dto.Description != null)
             resume.Description = dto.Description;
+        if (dto.IsDeleted.HasValue)
+            resume.IsDeleted = dto.IsDeleted.Value;
         resume.UpdatedAt = DateTime.UtcNow;
 
-        return await SaveChangesAsync("update", "Resume");
+        var (success, statusCode, errorMessage) = await SaveChangesAsync("Resume");
+
+        return (success, statusCode, errorMessage);
     }
 
-    public async Task<(bool Success, string? Error)> DeleteResumeAsync(Guid id)
+    public override async Task<(bool Success, int? StatusCode, string? ErrorMessage)> UpdateResumeAsync(Guid id, UpdateResumeDto dto)
     {
-        return await HardDeleteEntityAsync<Resume>(id);
+        return await Task.FromException<(bool Success, int? StatusCode, string? ErrorMessage)>(
+        new NotSupportedException("Admins must use AdminUpdateResumeDto."));
+
     }
 
-    public async Task<(bool Success, string? Error)> SoftDeleteResumeAsync(Guid id)
+    public async Task<(bool Success, int? StatusCode, string? ErrorMessage)> DeleteResumeAsync(Guid id, bool hardDelete = false)
     {
-        var resume = await _context.Resumes.FirstOrDefaultAsync(r => r.Id == id);
+        return await DeleteEntityAsync<Resume>(id, hardDelete);
+    }
 
-        if (resume == null)
-            return (false, "Resume not found");
-
-        resume.IsDeleted = true;
-
-        return await SaveChangesAsync("soft delete", "Resume");
+    public override async Task<(bool Success, int? StatusCode, string? ErrorMessage)> DeleteResumeAsync(Guid id)
+    {
+        return await DeleteEntityAsync<Resume>(id, hardDelete: true);
     }
 }

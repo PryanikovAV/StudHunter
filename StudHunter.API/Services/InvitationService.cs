@@ -1,6 +1,7 @@
 ﻿using Microsoft.EntityFrameworkCore;
+using StudHunter.API.Common;
 using StudHunter.API.ModelsDto.Invitation;
-using StudHunter.API.Services.CommonService;
+using StudHunter.API.Services.BaseServices;
 using StudHunter.DB.Postgres;
 using StudHunter.DB.Postgres.Models;
 
@@ -10,13 +11,13 @@ public class InvitationService(StudHunterDbContext context, UserAchievementServi
 {
     public UserAchievementService _userAchievementService = userAchievementService;
 
-    public async Task<IEnumerable<InvitationDto>> GetInvitationsByUserAsync(Guid userId, bool sent = false)
+    public async Task<(List<InvitationDto>? Entities, int? StatusCode, string? ErrorMessage)> GetInvitationsByUserAsync(Guid userId, bool sent = false)
     {
         var query = sent
         ? _context.Invitations.Where(i => i.SenderId == userId).Include(i => i.Vacancy).Include(r => r.Resume)
         : _context.Invitations.Where(i => i.ReceiverId == userId).Include(i => i.Vacancy).Include(r => r.Resume);
 
-        return await _context.Invitations.Select(i => new InvitationDto
+        var invitations = await _context.Invitations.Select(i => new InvitationDto
         {
             Id = i.Id,
             SenderId = i.SenderId,
@@ -33,53 +34,90 @@ public class InvitationService(StudHunterDbContext context, UserAchievementServi
         })
         .OrderByDescending(i => i.CreatedAt)
         .ToListAsync();
+
+        return (invitations, null, null);
     }
 
-    public async Task<(InvitationDto? Invitation, string? Error)> CreateInvitationAsync(Guid senderId, CreateInvitationDto dto)
+    public async Task<(InvitationDto? Entity, int? StatusCode, string? ErrorMessage)> GetInvitationAsync(Guid id)
     {
+        var invitation = await _context.Invitations
+        .Where(i => i.Id == id)
+        .Select(i => new InvitationDto
+        {
+            Id = i.Id,
+            SenderId = i.SenderId,
+            ReceiverId = i.ReceiverId,
+            VacancyId = i.VacancyId,
+            ResumeId = i.ResumeId,
+            Type = i.Type.ToString(),
+            Message = i.Message,
+            Status = i.Status.ToString(),
+            CreatedAt = i.CreatedAt,
+            UpdatedAt = i.UpdatedAt,
+            VacancyStatus = i.Vacancy != null ? (i.Vacancy.IsDeleted ? "Deleted" : "Active") : null,
+            ResumeStatus = i.Resume != null ? (i.Resume.IsDeleted ? "Deleted" : "Active") : null
+        }).FirstOrDefaultAsync();
+
+        #region Serializers
+        if (invitation == null)
+            return (null, StatusCodes.Status404NotFound, ErrorMessages.NotFound("Invitation"));
+        #endregion
+
+        return (invitation, null, null);
+    }
+
+    public async Task<(InvitationDto? Entity, int? StatusCode, string? ErrorMessage)> CreateInvitationAsync(Guid senderId, CreateInvitationDto dto)
+    {
+        #region Serializers
         if (senderId == dto.ReceiverId)
-            return (null, "Sender and receiver cannot be the same");
+            return (null, StatusCodes.Status400BadRequest, "Sender and receiver cannot be the same.");
 
         if (dto.VacancyId == null && dto.ResumeId == null)
-            return (null, "Either VacancyId or ResumeId must be provided");
+            return (null, StatusCodes.Status400BadRequest, "Either VacancyId or ResumeId must be provided.");
 
         if (dto.VacancyId != null && dto.ResumeId != null)
-            return (null, "Only VacancyId or ResumeId can be provided");
+            return (null, StatusCodes.Status400BadRequest, "Only one of VacancyId or ResumeId can be provided.");
 
-        var sender = await _context.Users.FirstOrDefaultAsync(u => u.Id == senderId);
-        var receiver = await _context.Users.FirstOrDefaultAsync(u => u.Id == dto.ReceiverId);
+        var senderExists = await _context.Users.FirstOrDefaultAsync(u => u.Id == senderId);
+        if (senderExists == null)
+            return (null, StatusCodes.Status404NotFound, ErrorMessages.NotFound("Sender"));
 
-        if (sender == null)
-            return (null, "Sender not found");
+        var receiverExists = await _context.Users.FirstOrDefaultAsync(u => u.Id == dto.ReceiverId);
+        if (receiverExists == null)
+            return (null, StatusCodes.Status404NotFound, ErrorMessages.NotFound("Receiver"));
 
-        if (receiver == null)
-            return (null, "Receiver not found");
+        if (dto.VacancyId != null)
+        {
+            var vacancyExists = await _context.Vacancies.AnyAsync(v => v.Id == dto.VacancyId);
+            if (vacancyExists == false)
+                return (null, StatusCodes.Status404NotFound, ErrorMessages.NotFound("Vacancy"));
+        }
 
-        if (dto.VacancyId != null && await _context.Vacancies.AnyAsync(v => v.Id == dto.VacancyId))
-            return (null, "Vacancy not found");
-
-        if (dto.ResumeId != null && await _context.Resumes.AnyAsync(r => r.Id == dto.ResumeId))
-            return (null, "Resume not found");
+        if (dto.ResumeId != null)
+        {
+            var resumeExists = await _context.Resumes.AnyAsync(r => r.Id == dto.ResumeId);
+            if (resumeExists == false)
+                return (null, StatusCodes.Status404NotFound, ErrorMessages.NotFound("Resume"));
+        }
 
         if (dto.Type == "EmployerToStudent")
         {
-            if (sender is not Employer || receiver is not Student)
-                return (null, "EmployerToStudent invitaion must be sent by Employer to Student");
-
+            if (senderExists is not Employer || receiverExists is not Student)
+                return (null, StatusCodes.Status400BadRequest, "EmployerToStudent invitation must be sent by Employer to Student");
             if (dto.VacancyId == null)
-                return (null, "VacancyId is required for EmployerToStudent invitation");
+                return (null, StatusCodes.Status400BadRequest, "VacancyId is required for EmployerToStudent invitation");
         }
         else if (dto.Type == "StudentToEmployer")
         {
-            if (sender is not Student || receiver is not Employer)
-                return (null, "StudentToEmployer invitaion must be sent by Student to Employer");
+            if (senderExists is not Student || receiverExists is not Employer)
+                return (null, StatusCodes.Status400BadRequest, "StudentToEmployer invitation must be sent by Student to Employer");
             if (dto.ResumeId == null)
-                return (null, "ResumeId is required for StudentToEmployer invitation");
+                return (null, StatusCodes.Status400BadRequest, "ResumeId is required for StudentToEmployer invitation");
         }
 
-        if (await _context.Invitations.AnyAsync(i => i.SenderId == senderId && i.ReceiverId == dto.ReceiverId
-        && (i.VacancyId == dto.VacancyId || i.ResumeId == dto.ResumeId)))
-            return (null, "Invitation already exists");
+        if (await _context.Invitations.AnyAsync(i => i.SenderId == senderId && i.ReceiverId == dto.ReceiverId && (i.VacancyId == dto.VacancyId || i.ResumeId == dto.ResumeId)))
+            return (null, StatusCodes.Status409Conflict, ErrorMessages.AlreadyExists("Invitation", "SenderId, ReceiverId, VacancyId/ResumeId"));
+        #endregion
 
         var invitation = new Invitation
         {
@@ -97,13 +135,10 @@ public class InvitationService(StudHunterDbContext context, UserAchievementServi
 
         _context.Invitations.Add(invitation);
 
-        var (success, error) = await SaveChangesAsync("create", "invitation");
-        if (!success)
-            return (null, error);
+        var (success, statusCode, errorMessage) = await SaveChangesAsync("Invitation");
 
-        // ===== Achievement =====
-        await _userAchievementService.CheckAndGrantInvitationAchievementAsync(senderId);
-        // ===== Achievement =====
+        if (!success)
+            return (null, statusCode, errorMessage);
 
         return (new InvitationDto
         {
@@ -118,25 +153,29 @@ public class InvitationService(StudHunterDbContext context, UserAchievementServi
             CreatedAt = invitation.CreatedAt,
             UpdatedAt = invitation.UpdatedAt,
             VacancyStatus = invitation.VacancyId.HasValue ?
-                (await _context.Vacancies.AnyAsync(v => v.Id == invitation.VacancyId && !v.IsDeleted) ? "Active" : "Deleted") : null,
+        (await _context.Vacancies.AnyAsync(v => v.Id == invitation.VacancyId && !v.IsDeleted) ? "Active" : "Deleted") : null,
             ResumeStatus = invitation.ResumeId.HasValue ?
-                (await _context.Resumes.AnyAsync(r => r.Id == invitation.ResumeId && !r.IsDeleted) ? "Active" : "Deleted") : null
-        }, null);
+        (await _context.Resumes.AnyAsync(r => r.Id == invitation.ResumeId && !r.IsDeleted) ? "Active" : "Deleted") : null
+        }, null, null);
     }
 
-    public async Task<(bool Success, string? Error)> UpdateInvitationStatusAsync(Guid id, Guid receiverId, UpdateInvitationDto dto)
+    public async Task<(bool Success, int? StatusCode, string? ErrorMessage)> UpdateInvitationStatusAsync(Guid id, Guid receiverId, UpdateInvitationDto dto)
     {
         var invitation = await _context.Invitations.FirstOrDefaultAsync(i => i.Id == id && i.ReceiverId == receiverId);
 
+        #region Serializers
         if (invitation == null)
-            return (false, "Invitation not found or user is not the receiver");
+            return (false, StatusCodes.Status404NotFound, ErrorMessages.NotFound("Invitation"));
 
         if (invitation.Status != Invitation.InvitationStatus.Sent)
-            return (false, "Invitation status cannot be changed");
+            return (false, StatusCodes.Status409Conflict, "Invitation status cannot be changed");
+        #endregion
 
         invitation.Status = Enum.Parse<Invitation.InvitationStatus>(dto.Status);
         invitation.UpdatedAt = DateTime.UtcNow;
 
-        return await SaveChangesAsync("update", "invitation");
+        var (success, statusCode, errorMessage) = await SaveChangesAsync("Invitation");
+
+        return (success, statusCode, errorMessage);
     }
 }

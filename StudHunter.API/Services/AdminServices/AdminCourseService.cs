@@ -1,33 +1,20 @@
 ﻿using Microsoft.EntityFrameworkCore;
+using StudHunter.API.Common;
 using StudHunter.API.ModelsDto.Course;
-using StudHunter.API.Services.CommonService;
 using StudHunter.DB.Postgres;
 using StudHunter.DB.Postgres.Models;
 
 namespace StudHunter.API.Services.AdminServices;
 
-public class AdminCourseService(StudHunterDbContext context) : BaseService(context)
+public class AdminCourseService(StudHunterDbContext context) : CourseService(context)
 {
-    public async Task<CourseDto?> GetCourseAsync(Guid id)
+    public async Task<(CourseDto? Entity, int? StatusCode, string? ErrorMessage)> CreateCourseAsync(CreateCourseDto dto)
     {
-        var course = await _context.Courses.FirstOrDefaultAsync(c => c.Id == id);
-
-        if (course == null)
-            return null;
-
-        return new CourseDto
-        {
-            Id = course.Id,
-            Name = course.Name,
-            Description = course.Description
-        };
-    }
-
-    public async Task<(CourseDto? Course, string? Error)> CreateCourseAsync(CreateCourseDto dto)
-    {
-        if (await _context.Courses
-        .AnyAsync(c => c.Name == dto.Name))
-            return (null, "Course with this name already exists.");
+        #region Serializers
+        var nameExists = await _context.Courses.AnyAsync(c => c.Name == dto.Name);
+        if (nameExists)
+            return (null, StatusCodes.Status409Conflict, ErrorMessages.AlreadyExists("Course", "Name"));
+        #endregion
 
         var course = new Course
         {
@@ -38,48 +25,56 @@ public class AdminCourseService(StudHunterDbContext context) : BaseService(conte
 
         _context.Courses.Add(course);
 
-        var (success, error) = await SaveChangesAsync("create", "Course");
+        var (success, statusCode, errorMessage) = await SaveChangesAsync("Course");
+
         if (!success)
-            return (null, error);
+            return (null, statusCode, errorMessage);
 
         return (new CourseDto
         {
             Id = course.Id,
             Name = course.Name,
             Description = course.Description
-        }, null);
+        }, null, null);
     }
 
-    public async Task<(bool Success, string? Error)> UpdateCourseAsync(Guid id, UpdateCourseDto dto)
+    public async Task<(bool Success, int? StatusCode, string? ErrorMessage)> UpdateCourseAsync(Guid id, UpdateCourseDto dto)
     {
         var course = await _context.Courses.FirstOrDefaultAsync(c => c.Id == id);
 
+        #region Serializers
         if (course == null)
-            return (false, "Course not found.");
+            return (false, StatusCodes.Status404NotFound, ErrorMessages.NotFound("Course"));
 
-        if (await _context.Courses.AnyAsync(c => c.Name == dto.Name && c.Id != id))
-            return (false, "Course with this name already exists.");
+        var nameExists = await _context.Courses.AnyAsync(c => c.Name == dto.Name && c.Id != id);
+        if (nameExists)
+            return (false, StatusCodes.Status409Conflict, ErrorMessages.AlreadyExists("Course", "Name"));
+        #endregion
 
         if (dto.Name != null)
             course.Name = dto.Name;
         if (dto.Description != null)
             course.Description = dto.Description;
 
-        return await SaveChangesAsync("update", "Course");
+        var (success, statusCode, errorMessage) = await SaveChangesAsync("Course");
+
+        return (success, statusCode, errorMessage);
     }
 
-    public async Task<(bool Success, string? Error)> DeleteCourseAsync(Guid id)
+    public async Task<(bool Success, int? StatusCode, string? ErrorMessage)> DeleteCourseAsync(Guid id)
     {
         var course = await _context.Courses.FirstOrDefaultAsync(c => c.Id == id);
 
-        if (course == null)
-            return (false, "Course not found");
+        #region Serializers
+        var courseAssociatedVacancy = await _context.VacancyCourses.AnyAsync(vc => vc.CourseId == id);
+        if (courseAssociatedVacancy)
+            return (false, StatusCodes.Status400BadRequest, "Cannot delete course associated with vacancies");
 
-        if (await _context.VacancyCourses.AnyAsync(vc => vc.CourseId == id))
-            return (false, "Cannot delete course associated with vacancies");
-        if (await _context.StudyPlanCourses.AnyAsync(spc => spc.CourseId == id))
-            return (false, "Cannot delete course associated with study plans");
+        var courseAssociatedStudyPlan = await _context.StudyPlanCourses.AnyAsync(spc => spc.CourseId == id);
+        if (courseAssociatedStudyPlan)
+            return (false, StatusCodes.Status400BadRequest, "Cannot delete course associated with study plans");
+        #endregion
 
-        return await HardDeleteEntityAsync<Course>(id);
+        return await DeleteEntityAsync<Course>(id, hardDelete: true);
     }
 }

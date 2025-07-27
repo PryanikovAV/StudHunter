@@ -2,7 +2,7 @@
 
 namespace StudHunter.API.ModelsDto.Employer;
 
-public class UpdateEmployerByAdministratorDto
+public class BaseUpdateEmployerDto
 {
     [StringLength(100, ErrorMessage = "{0} cannot exceed {1} characters")]
     [EmailAddress(ErrorMessage = "Invalid {0} format")]
@@ -28,6 +28,4 @@ public class UpdateEmployerByAdministratorDto
 
     [StringLength(255, ErrorMessage = "{0} cannot exceed {1} characters")]
     public string? Specialization { get; set; }
-
-    public bool AccreditationStatus { get; set; }
 }

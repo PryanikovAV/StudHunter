@@ -1,6 +1,8 @@
-﻿namespace StudHunter.DB.Postgres.Models;
+﻿using StudHunter.DB.Postgres.Interfaces;
 
-public class Message
+namespace StudHunter.DB.Postgres.Models;
+
+public class Message : IEntity
 {
     public Guid Id { get; set; }
 

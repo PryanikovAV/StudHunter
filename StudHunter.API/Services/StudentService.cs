@@ -20,17 +20,19 @@ public class StudentService(StudHunterDbContext context, IPasswordHasher passwor
     public async Task<(StudentDto? Entity, int? StatusCode, string? ErrorMessage)> GetStudentAsync(Guid id)
     {
         var student = await _context.Students
-            .Include(s => s.Resume)
-            .Include(s => s.StudyPlan)
-            .Include(s => s.Achievements)
-            .ThenInclude(ua => ua.AchievementTemplate)
-            .FirstOrDefaultAsync(s => s.Id == id && !s.IsDeleted);
+        .Include(s => s.Resume)
+        .Include(s => s.StudyPlan)
+        .Include(s => s.Achievements)
+        .ThenInclude(ua => ua.AchievementTemplate)
+        .FirstOrDefaultAsync(s => s.Id == id && !s.IsDeleted);
 
+        #region Serializers
         if (student == null)
             return (null, StatusCodes.Status404NotFound, ErrorMessages.NotFound("Student"));
 
         if (student.StudyPlan == null)
             return (null, StatusCodes.Status404NotFound, ErrorMessages.NotFound("Study plan"));
+        #endregion
 
         return (new StudentDto
         {
@@ -60,7 +62,7 @@ public class StudentService(StudHunterDbContext context, IPasswordHasher passwor
                 AchievementName = userAchievement.AchievementTemplate.Name,
                 AchievementDescription = userAchievement.AchievementTemplate.Description
             }).ToList()
-        }, StatusCodes.Status200OK, null);
+        }, null, null);
     }
 
     /// <summary>
@@ -69,18 +71,20 @@ public class StudentService(StudHunterDbContext context, IPasswordHasher passwor
     /// <param name="dto">The student data to create, including study plan details.</param>
     /// <returns>A tuple containing the created student's details or null and an error message if creation fails.</returns>
     public async Task<(StudentDto? Entity, int? StatusCode, string? ErrorMessage)> CreateStudentAsync(CreateStudentDto dto)
-
     {
-        var emailExists = _context.Students.FirstOrDefaultAsync(s => s.Email == dto.Email);
-        var faculty = _context.Faculties.FirstOrDefaultAsync(f => f.Id == dto.FacultyId);
-        var speciality = _context.Specialities.FirstOrDefaultAsync(s => s.Id == dto.SpecialityId);
-
+        #region Serializers
+        var emailExists = await _context.Students.FirstOrDefaultAsync(s => s.Email == dto.Email);
         if (emailExists != null)
             return (null, StatusCodes.Status409Conflict, ErrorMessages.AlreadyExists("Student", "Email"));
-        if (faculty == null)
+
+        var facultyExists = await _context.Faculties.FirstOrDefaultAsync(f => f.Id == dto.FacultyId);
+        if (facultyExists == null)
             return (null, StatusCodes.Status404NotFound, ErrorMessages.NotFound("Faculty"));
-        if (speciality == null)
+
+        var specialityExists = await _context.Specialities.FirstOrDefaultAsync(s => s.Id == dto.SpecialityId);
+        if (specialityExists == null)
             return (null, StatusCodes.Status404NotFound, ErrorMessages.NotFound("Speciality"));
+        #endregion
 
         var student = new Student
         {
@@ -114,7 +118,7 @@ public class StudentService(StudHunterDbContext context, IPasswordHasher passwor
         _context.Students.Add(student);
         _context.StudyPlans.Add(studyPlan);
 
-        var (success, statusCode, errorMessage) = await SaveChangesAsync("Create", "Student");
+        var (success, statusCode, errorMessage) = await SaveChangesAsync("Student");
 
         if (!success)
             return (null, statusCode, errorMessage);
@@ -139,7 +143,7 @@ public class StudentService(StudHunterDbContext context, IPasswordHasher passwor
             SpecialityId = studyPlan.SpecialityId,
             StudyForm = studyPlan.StudyForm.ToString(),
             BeginYear = studyPlan.BeginYear
-        }, StatusCodes.Status201Created, null);
+        }, null, null);
     }
 
     /// <summary>
@@ -151,9 +155,10 @@ public class StudentService(StudHunterDbContext context, IPasswordHasher passwor
     public async Task<(bool Success, int? StatusCode, string? ErrorMessage)> UpdateStudentAsync(Guid id, UpdateStudentDto dto)
     {
         var student = await _context.Students
-            .Include(s => s.StudyPlan)
-            .FirstOrDefaultAsync(s => s.Id == id);
+        .Include(s => s.StudyPlan)
+        .FirstOrDefaultAsync(s => s.Id == id);
 
+        #region Serializers
         if (student == null)
             return (false, StatusCodes.Status404NotFound, ErrorMessages.NotFound("Student"));
 
@@ -164,15 +169,14 @@ public class StudentService(StudHunterDbContext context, IPasswordHasher passwor
                 return (false, StatusCodes.Status409Conflict, ErrorMessages.AlreadyExists("Student", "Email"));
         }
 
-        // TODO : make /Serializers/StudentServiceSerializer
         Guid? facultyId = dto.FacultyId;
         Guid? specialityId = dto.SpecialityId;
 
         if (facultyId.HasValue || specialityId.HasValue)
         {
             var checks = await Task.WhenAll(
-                facultyId.HasValue ? _context.Faculties.AnyAsync(f => f.Id == facultyId.Value) : Task.FromResult(true),
-                specialityId.HasValue ? _context.Specialities.AnyAsync(s => s.Id == specialityId.Value) : Task.FromResult(true)
+            facultyId.HasValue ? _context.Faculties.AnyAsync(f => f.Id == facultyId.Value) : Task.FromResult(true),
+            specialityId.HasValue ? _context.Specialities.AnyAsync(s => s.Id == specialityId.Value) : Task.FromResult(true)
             );
 
             if (facultyId.HasValue && !checks[0])
@@ -181,6 +185,7 @@ public class StudentService(StudHunterDbContext context, IPasswordHasher passwor
             if (specialityId.HasValue && !checks[1])
                 return (false, StatusCodes.Status404NotFound, ErrorMessages.NotFound("Speciality"));
         }
+        #endregion
 
         if (dto.FirstName != null)
             student.FirstName = dto.FirstName;
@@ -220,12 +225,12 @@ public class StudentService(StudHunterDbContext context, IPasswordHasher passwor
                 studyPlan.BeginYear = dto.BeginYear.Value;
         }
 
-        var (success, statusCode, errorMessage) = await SaveChangesAsync("update", "Student");
+        var (success, statusCode, errorMessage) = await SaveChangesAsync("Student");
 
         return (success, statusCode, errorMessage);
     }
 
-    public async Task<(bool Success, int? StatusCode, string? ErrorMessage)> SoftDeleteStudentAsync(Guid id)
+    public async Task<(bool Success, int? StatusCode, string? ErrorMessage)> DeleteStudentAsync(Guid id)
     {
         return await SoftDeleteEntityAsync<Student>(id);
     }

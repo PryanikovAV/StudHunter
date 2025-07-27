@@ -2,7 +2,7 @@
 
 namespace StudHunter.API.ModelsDto.Student;
 
-public class UpdateStudentByAdministratorDto
+public class BaseUpdateStudentDto
 {
     [StringLength(100, ErrorMessage = "{0} cannot exceed {1} characters")]
     [EmailAddress(ErrorMessage = "Invalid {0} format")]

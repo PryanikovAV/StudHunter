@@ -12,7 +12,7 @@ public class UserAchievementController(UserAchievementService userAchievementSer
     [HttpGet("user/{userId}/achievements")]
     public async Task<IActionResult> GetUserAchievements(Guid id)
     {
-        var achievements = await _userAchievementService.GetUserAchievementsAsync(id);
+        var achievements = await _userAchievementService.GetAllUserAchievementsAsync(id);
         return Ok(achievements);
     }
 }

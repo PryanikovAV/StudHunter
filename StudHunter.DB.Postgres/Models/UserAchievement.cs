@@ -1,10 +1,14 @@
-﻿namespace StudHunter.DB.Postgres.Models;
+﻿using StudHunter.DB.Postgres.Interfaces;
 
-public class UserAchievement
+namespace StudHunter.DB.Postgres.Models;
+
+public class UserAchievement : IEntity
 {
+    public Guid Id { get; set; }
+
     public Guid UserId { get; set; }
 
-    public int AchievementTemplateId { get; set; }
+    public Guid AchievementTemplateId { get; set; }
 
     public DateTime AchievementAt { get; set; }
 

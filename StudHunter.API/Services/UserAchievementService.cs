@@ -1,6 +1,7 @@
 ﻿using Microsoft.EntityFrameworkCore;
+using StudHunter.API.Common;
 using StudHunter.API.ModelsDto.UserAchievement;
-using StudHunter.API.Services.CommonService;
+using StudHunter.API.Services.BaseServices;
 using StudHunter.DB.Postgres;
 using StudHunter.DB.Postgres.Models;
 
@@ -8,84 +9,95 @@ namespace StudHunter.API.Services;
 
 public class UserAchievementService(StudHunterDbContext context) : BaseService(context)
 {
-    public async Task<IEnumerable<UserAchievementDto>> GetUserAchievementsAsync(Guid userId)
+    public async Task<(List<UserAchievementDto>? Entities, int? StatusCode, string? ErrorMessage)> GetAllUserAchievementsAsync(Guid userId)
     {
-        return await _context.UserAchievements
+        var userAchievements = await _context.UserAchievements
         .Where(ua => ua.UserId == userId)
         .Include(ua => ua.AchievementTemplate)
         .Select(ua => new UserAchievementDto
         {
+            Id = ua.UserId,
             UserId = ua.UserId,
-            AchievementTemplateId = ua.AchievementTemplateId,
+            AchievementTemplateOrderNumber = ua.AchievementTemplate.OrderNumber,
             AchievementAt = ua.AchievementAt,
             AchievementName = ua.AchievementTemplate.Name,
             AchievementDescription = ua.AchievementTemplate.Description,
+            IconUrl = ua.AchievementTemplate.IconUrl
         })
         .OrderBy(ua => ua.AchievementAt)
         .ToListAsync();
+
+        return (userAchievements, null, null);
     }
 
-    public async Task<(bool Success, string? Error)> GrantAchievementAsync(Guid userId, int achievementTemplateId)
+    public async Task<(bool Success, int? StatusCode, string? ErrorMessage)> GrantAchievementAsync(Guid userId, int achievementTemplateOrderNumber)
     {
-        if (!await _context.Users.AnyAsync(u => u.Id == userId))
-            return (false, "User not found");
+        #region Serializers
+        var userExists = await _context.Users.AnyAsync(u => u.Id == userId);
+        if (userExists == false)
+            return (false, StatusCodes.Status404NotFound, ErrorMessages.NotFound("User"));
 
-        if (!await _context.AchievementTemplates.AnyAsync(a => a.Id == achievementTemplateId))
-            return (false, "Achievement template not found");
+        var template = await _context.AchievementTemplates.FirstOrDefaultAsync(a => a.OrderNumber == achievementTemplateOrderNumber);
+        if (template == null)
+            return (false, StatusCodes.Status404NotFound, ErrorMessages.NotFound("AchievementTemplate"));
 
-        if (await _context.UserAchievements.AnyAsync(ua => ua.UserId == userId && ua.AchievementTemplateId == achievementTemplateId))
-            return (false, "User already has this achievement");
+        var achievementExists = await _context.UserAchievements.AnyAsync(ua => ua.UserId == userId && ua.AchievementTemplateId == template.Id);
+        if (achievementExists)
+            return (false, StatusCodes.Status409Conflict, ErrorMessages.AlreadyExists("Achievement", "UserId, AchievementTemplateOrderNumber"));
+        #endregion
 
         var userAchievement = new UserAchievement
         {
+            Id = Guid.NewGuid(),
             UserId = userId,
-            AchievementTemplateId = achievementTemplateId,
+            AchievementTemplateId = template.Id,
             AchievementAt = DateTime.UtcNow
         };
 
         _context.UserAchievements.Add(userAchievement);
 
-        return await SaveChangesAsync("grant achievement", "UserAchievement");
+        var (success, statusCode, errorMessage) = await SaveChangesAsync("UserAchievement");
+
+        return (success, statusCode, errorMessage);
     }
 
-    // ===== Achievements =====
-    // TODO: Check and fix all Id's and count of achievement elements
-    public async Task CheckAndGrantVacancyAchievementsAsync(Guid userId)
-    {
-        int vacancyCount = await _context.Vacancies.CountAsync(v => v.EmployerId == userId && !v.IsDeleted);
+    //public async Task CheckAndGrantVacancyAchievementsAsync(Guid userId)
+    //{
+    //    int vacancyCount = await _context.Vacancies.CountAsync(v => v.EmployerId == userId && !v.IsDeleted);
 
-        var userAchievements = await _context.UserAchievements
-            .Where(ua => ua.UserId == userId)
-            .Select(ua => ua.AchievementTemplateId)
-            .ToListAsync();
+    //    var userAchievements = await _context.UserAchievements
+    //        .Where(ua => ua.UserId == userId)
+    //        .Include(ua => ua.AchievementTemplate)
+    //        .Select(ua => ua.AchievementTemplate.OrderNumber)
+    //        .ToListAsync();
 
-        if (vacancyCount >= 15 && !userAchievements.Contains(3))
-        {
-            await GrantAchievementAsync(userId, 3);
-        }
-        else if (vacancyCount >= 10 && !userAchievements.Contains(2))
-        {
-            await GrantAchievementAsync(userId, 2);
-        }
-        else if (vacancyCount >= 5 && !userAchievements.Contains(1))
-        {
-            await GrantAchievementAsync(userId, 1);
-        }
-    }
+    //    if (vacancyCount >= 15 && !userAchievements.Contains(AchievementOrderNumbers.Vacancy15))
+    //    {
+    //        await GrantAchievementAsync(userId, AchievementOrderNumbers.Vacancy15);
+    //    }
+    //    else if (vacancyCount >= 10 && !userAchievements.Contains(AchievementOrderNumbers.Vacancy10))
+    //    {
+    //        await GrantAchievementAsync(userId, AchievementOrderNumbers.Vacancy10);
+    //    }
+    //    else if (vacancyCount >= 5 && !userAchievements.Contains(AchievementOrderNumbers.Vacancy5))
+    //    {
+    //        await GrantAchievementAsync(userId, AchievementOrderNumbers.Vacancy5);
+    //    }
+    //}
 
-    public async Task CheckAndGrantInvitationAchievementAsync(Guid userId)
-    {
-        int invitationCount = await _context.Invitations.CountAsync(i => i.SenderId == userId);
+    //public async Task CheckAndGrantInvitationAchievementAsync(Guid userId)
+    //{
+    //    int invitationCount = await _context.Invitations.CountAsync(i => i.SenderId == userId);
 
-        var userAchievements = await _context.UserAchievements
-            .Where(ua => ua.UserId == userId)
-            .Select(ua => ua.AchievementTemplateId)
-            .ToListAsync();
+    //    var userAchievements = await _context.UserAchievements
+    //        .Where(ua => ua.UserId == userId)
+    //        .Include(ua => ua.AchievementTemplate)
+    //        .Select(ua => ua.AchievementTemplate.OrderNumber)
+    //        .ToListAsync();
 
-        if (invitationCount >= 10 && !userAchievements.Contains(2))
-        {
-            await GrantAchievementAsync(userId, 2);
-        }
-    }
-    // ===== Achievements =====
+    //    if (invitationCount >= 10 && !userAchievements.Contains(AchievementOrderNumbers.Invitation10))
+    //    {
+    //        await GrantAchievementAsync(userId, AchievementOrderNumbers.Invitation10);
+    //    }
+    //}
 }

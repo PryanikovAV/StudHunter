@@ -21,8 +21,6 @@ public class StudentDto
 
     public DateTime CreatedAt { get; set; }
 
-    public bool IsDeleted { get; set; }
-
     [Required, MaxLength(50)]
     public string FirstName { get; set; } = string.Empty;
 

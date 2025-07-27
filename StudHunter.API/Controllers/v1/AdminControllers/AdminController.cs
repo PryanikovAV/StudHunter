@@ -1,5 +1,6 @@
 ﻿using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using StudHunter.API.Controllers.v1.BaseControllers;
 using StudHunter.API.ModelsDto.Admin;
 using StudHunter.API.Services.AdminServices;
 
@@ -8,15 +9,15 @@ namespace StudHunter.API.Controllers.v1.AdminControllers;
 [Route("api/v1/admin/[controller]")]
 [ApiController]
 [Authorize(Roles = "Administrator")]
-public class AdminController(AdminService administratorService) : ControllerBase
+public class AdminController(AdminService administratorService) : BaseController
 {
     private readonly AdminService _administratorService = administratorService;
 
     [HttpGet]
     public async Task<IActionResult> GetAllAdministrators()
     {
-        var administrators = await _administratorService.GetAllAdministratorsAsync();
-        return Ok(administrators);
+        var (administrators, statusCode, errorMessage) = await _administratorService.GetAllAdministratorsAsync(););
+        return this.CreateAPIError(administrators, statusCode, errorMessage);
     }
 
     [HttpGet("{id}")]

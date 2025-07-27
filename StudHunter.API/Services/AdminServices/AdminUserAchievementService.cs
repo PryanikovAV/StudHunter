@@ -1,41 +1,52 @@
 ﻿using Microsoft.EntityFrameworkCore;
+using StudHunter.API.Common;
 using StudHunter.API.ModelsDto.UserAchievement;
-using StudHunter.API.Services.CommonService;
+using StudHunter.API.Services.BaseServices;
 using StudHunter.DB.Postgres;
+using StudHunter.DB.Postgres.Models;
 
 namespace StudHunter.API.Services.AdminServices;
 
-public class AdminUserAchievementService(StudHunterDbContext context) : BaseService(context)
+public class AdminUserAchievementService(StudHunterDbContext context) : UserAchievementService(context)
 {
-    public async Task<IEnumerable<UserAchievementDto>> GetAllUserAchievementsAsync()
+    public async Task<(List<UserAchievementDto>? Entities, int? StatusCode, string? ErrorMessage)> GetAllUserAchievementsAsync()
     {
-        return await _context.UserAchievements
+        var userAchievements = await _context.UserAchievements
         .Include(ua => ua.AchievementTemplate)
         .Select(ua => new UserAchievementDto
         {
+            Id = ua.Id,
             UserId = ua.UserId,
-            AchievementTemplateId = ua.AchievementTemplateId,
+            AchievementTemplateOrderNumber = ua.AchievementTemplate.OrderNumber,
             AchievementAt = ua.AchievementAt,
             AchievementName = ua.AchievementTemplate.Name,
-            AchievementDescription = ua.AchievementTemplate.Description
+            AchievementDescription = ua.AchievementTemplate.Description,
+            IconUrl = ua.AchievementTemplate.IconUrl
         })
         .OrderBy(ua => ua.AchievementAt)
         .ToListAsync();
+
+        return (userAchievements, null, null);
     }
 
-    public async Task<(bool Success, string? Error)> GrantAchievementAsync(Guid userId, int achievementTemplateId)
+    public async Task<(bool Success, int? StatusCode, string? ErrorMessage)> DeleteUserAchievementAsync(Guid userId, int achievementTemplateOrderNumber)
     {
-        return await _userAchievementService.GrantAchievementAsync(userId, achievementTemplateId);
-    }
+        var template = await _context.AchievementTemplates.FirstOrDefaultAsync(a => a.OrderNumber == achievementTemplateOrderNumber);
 
-    public async Task<(bool Success, string? Error)> DeleteUserAchievementAsync(Guid userId, int achievementTemplateId)
-    {
-        var userAchievement = await _context.UserAchievements.FirstOrDefaultAsync(ua => ua.UserId == userId && ua.AchievementTemplateId == achievementTemplateId);
+        #region Serializers
+        if (template == null)
+            return (false, StatusCodes.Status404NotFound, ErrorMessages.NotFound("AchievementTemplate"));
+
+        var userAchievement = await _context.UserAchievements.FirstOrDefaultAsync(ua => ua.UserId == userId && ua.AchievementTemplateId == template.Id);
         if (userAchievement == null)
-            return (false, "User achievement not found");
+            return (false, StatusCodes.Status404NotFound, ErrorMessages.NotFound("UserAchievement"));
+        #endregion
 
-        _context.UserAchievements.Remove(userAchievement);
+        return await DeleteEntityAsync<UserAchievement>(userAchievement.Id, hardDelete: true);
+    }
 
-        return await SaveChangesAsync("delete", "UserAchievement");
+    public async Task<(bool Success, int? StatusCode, string? ErrorMessage)> GrantAchievementAsync(Guid userId, int achievementTemplateOrderNumber)
+    {
+        return await base.GrantAchievementAsync(userId, achievementTemplateOrderNumber);
     }
 }

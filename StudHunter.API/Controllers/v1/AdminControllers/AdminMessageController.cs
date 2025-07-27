@@ -1,5 +1,6 @@
 ﻿using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using StudHunter.API.Controllers.v1.BaseControllers;
 using StudHunter.API.Services.AdminServices;
 
 namespace StudHunter.API.Controllers.v1.AdminControllers;
@@ -7,15 +8,15 @@ namespace StudHunter.API.Controllers.v1.AdminControllers;
 [Route("api/v1/admin/[controller]")]
 [ApiController]
 [Authorize(Roles = "Administrator")]
-public class AdminMessageController(AdminMessagesService adminMessagesService) : ControllerBase
+public class AdminMessageController(AdminMessagesService adminMessagesService) : BaseController
 {
     private readonly AdminMessagesService _adminMessagesService = adminMessagesService;
 
     [HttpGet("messages")]
     public async Task<IActionResult> GetAllMessages()
     {
-        var messages = await _adminMessagesService.GetAllMessageAsync();
-        return Ok(messages);
+        var (messages, statusCode, errorMessage) = await _adminMessagesService.GetAllMessageAsync();
+        return this.CreateAPIError(messages, statusCode, errorMessage);
     }
 
     [HttpGet("user/{userId}/sent")]

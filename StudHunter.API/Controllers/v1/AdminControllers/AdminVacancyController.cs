@@ -1,5 +1,6 @@
 ﻿using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using StudHunter.API.Controllers.v1.BaseControllers;
 using StudHunter.API.ModelsDto.Vacancy;
 using StudHunter.API.Services.AdminServices;
 
@@ -8,15 +9,15 @@ namespace StudHunter.API.Controllers.v1.AdminControllers;
 [Route("api/v1/admin/[controller]")]
 [ApiController]
 [Authorize(Roles = "Administrator")]
-public class AdminVacancyController(AdminVacancyService adminVacancyService) : ControllerBase
+public class AdminVacancyController(AdminVacancyService adminVacancyService) : BaseController
 {
     private readonly AdminVacancyService _adminVacancyService = adminVacancyService;
 
     [HttpGet]
-    public async Task<IActionResult> GetVacancies()
+    public async Task<IActionResult> GetAllVacancies()
     {
-        var vacancies = await _adminVacancyService.GetAllVacanciesAsync();
-        return Ok(vacancies);
+        var (vacancies, statusCode, errorMessage) = await _adminVacancyService.GetAllVacanciesAsync();
+        return this.CreateAPIError(vacancies, statusCode, errorMessage);
     }
 
     [HttpGet("{id}")]

@@ -1,12 +1,18 @@
-﻿namespace StudHunter.DB.Postgres.Models;
+﻿using StudHunter.DB.Postgres.Interfaces;
 
-public class AchievementTemplate
+namespace StudHunter.DB.Postgres.Models;
+
+public class AchievementTemplate : IEntity
 {
-    public int Id { get; set; }
+    public Guid Id { get; set; }
+
+    public int OrderNumber { get; set; }
 
     public string Name { get; set; } = null!;
 
     public string? Description { get; set; }
+
+    public string? IconUrl { get; set; }
 
     public AchievementTarget Target { get; set; }
 

@@ -20,8 +20,6 @@ public class EmployerDto
 
     public DateTime CreatedAt { get; set; }
 
-    public bool IsDeleted { get; set; }
-
     public bool AccreditationStatus { get; set; }
 
     [Required, MaxLength(255)]

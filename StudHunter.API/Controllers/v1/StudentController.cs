@@ -9,7 +9,7 @@ namespace StudHunter.API.Controllers.v1;
 [Route("api/v1/[controller]")]
 [ApiController]
 [Authorize]
-public class StudentController(StudentService studentService) : ApiControllerBase
+public class StudentController(StudentService studentService) : BaseController
 {
     private readonly StudentService _studentService = studentService;
 
@@ -69,7 +69,7 @@ public class StudentController(StudentService studentService) : ApiControllerBas
         if (!ModelState.IsValid)
             return BadRequest(ModelState);
         var (success, statusCode, errorMessage) = await _studentService.UpdateStudentAsync(id, dto);
-        return this.CreateAPIError(success, statusCode, errorMessage);
+        return this.CreateAPIError<StudentDto>(success, statusCode, errorMessage);
     }
 
     /// <summary>
@@ -88,7 +88,7 @@ public class StudentController(StudentService studentService) : ApiControllerBas
     {
         if (!ModelState.IsValid)
             return BadRequest(ModelState);
-        var (success, statusCode, errorMessage) = await _studentService.SoftDeleteStudentAsync(id);
-        return this.CreateAPIError(success, statusCode, errorMessage);
+        var (success, statusCode, errorMessage) = await _studentService.DeleteStudentAsync(id);
+        return this.CreateAPIError<StudentDto>(success, statusCode, errorMessage);
     }
 }

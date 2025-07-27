@@ -58,7 +58,7 @@ public class ResumeController(ResumeService resumeService) : ControllerBase
     [Authorize]
     public async Task<IActionResult> SoftDeleteResume(Guid id)
     {
-        var (success, error) = await _resumeService.SoftDeleteResumeAsync(id);
+        var (success, error) = await _resumeService.DeleteResumeAsync(id);
         if (!success)
             return error == null ? NotFound() : Conflict(new { error });
         return NoContent();

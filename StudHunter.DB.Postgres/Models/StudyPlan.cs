@@ -1,7 +1,8 @@
-﻿using System.ComponentModel.DataAnnotations;
+﻿using StudHunter.DB.Postgres.Interfaces;
+using System.ComponentModel.DataAnnotations;
 namespace StudHunter.DB.Postgres.Models;
 
-public class StudyPlan
+public class StudyPlan : IEntity
 {
     public Guid Id { get; set; }
 

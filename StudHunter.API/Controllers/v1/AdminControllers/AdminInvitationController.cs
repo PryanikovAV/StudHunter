@@ -1,5 +1,6 @@
 ﻿using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using StudHunter.API.Controllers.v1.BaseControllers;
 using StudHunter.API.Services.AdminServices;
 
 namespace StudHunter.API.Controllers.v1.AdminControllers;
@@ -7,15 +8,15 @@ namespace StudHunter.API.Controllers.v1.AdminControllers;
 [Route("api/v1/admin/[controller]")]
 [ApiController]
 [Authorize(Roles = "Administrator")]
-public class AdminInvitationController(AdminInvitationService adminInvitationService) : ControllerBase
+public class AdminInvitationController(AdminInvitationService adminInvitationService) : BaseController
 {
     private readonly AdminInvitationService _adminInvitationService = adminInvitationService;
 
     [HttpGet("invitations")]
     public async Task<IActionResult> GetAllInvitations()
     {
-        var invitations = await _adminInvitationService.GetAllInvitationsAsync();
-        return Ok(invitations);
+        var (invitations, statusCode, errorMessage) = await _adminInvitationService.GetAllInvitationsAsync(););
+        return this.CreateAPIError(invitations, statusCode, errorMessage);
     }
 
     [HttpGet("user/{userId}/sent")]

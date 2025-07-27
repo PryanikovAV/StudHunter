@@ -1,6 +1,7 @@
-﻿using StudHunter.DB.Postgres.Models;
+﻿using StudHunter.DB.Postgres.Interfaces;
+using StudHunter.DB.Postgres.Models;
 
-public class Invitation
+public class Invitation : IEntity
 {
     public Guid Id { get; set; }
 

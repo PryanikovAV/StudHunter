@@ -1,4 +1,5 @@
 ﻿using Microsoft.EntityFrameworkCore;
+using StudHunter.API.Common;
 using StudHunter.API.ModelsDto.Student;
 using StudHunter.API.ModelsDto.UserAchievement;
 using StudHunter.API.Services.BaseServices;
@@ -9,60 +10,62 @@ namespace StudHunter.API.Services.AdminServices;
 
 public class AdminStudentService(StudHunterDbContext context) : BaseService(context)
 {
-    public async Task<(List<StudentDto>?, int?, string?)> GetAllStudentsAsync()
+    public async Task<(List<AdminStudentDto>? Entities, int? StatusCode, string? ErrorMessage)> GetAllStudentsAsync()
     {
         var students = await _context.Students
-            .Where(s => !s.IsDeleted)
-            .Include(s => s.Resume)
-            .Include(s => s.StudyPlan)
-            .Include(s => s.Achievements)
-            .ThenInclude(ua => ua.AchievementTemplate)
-            .Select(s => new StudentDto
+        .Include(s => s.Resume)
+        .Include(s => s.StudyPlan)
+        .Include(s => s.Achievements)
+        .ThenInclude(ua => ua.AchievementTemplate)
+        .Select(s => new AdminStudentDto
+        {
+            Id = s.Id,
+            FirstName = s.FirstName,
+            LastName = s.LastName,
+            Email = s.Email,
+            Gender = s.Gender.ToString(),
+            BirthDate = s.BirthDate,
+            Photo = s.Photo,
+            ContactPhone = s.ContactPhone,
+            ContactEmail = s.ContactEmail,
+            IsForeign = s.IsForeign,
+            StatusId = s.StatusId,
+            ResumeId = s.Resume != null ? s.Resume.Id : null,
+            CreatedAt = s.CreatedAt,
+            IsDeleted = s.IsDeleted,
+            CourseNumber = s.StudyPlan.CourseNumber,
+            FacultyId = s.StudyPlan.FacultyId,
+            SpecialityId = s.StudyPlan.SpecialityId,
+            StudyForm = s.StudyPlan.StudyForm.ToString(),
+            BeginYear = s.StudyPlan.BeginYear,
+            Achievements = s.Achievements.Select(ua => new UserAchievementDto
             {
-                Id = s.Id,
-                FirstName = s.FirstName,
-                LastName = s.LastName,
-                Email = s.Email,
-                Gender = s.Gender.ToString(),
-                BirthDate = s.BirthDate,
-                Photo = s.Photo,
-                ContactPhone = s.ContactPhone,
-                ContactEmail = s.ContactEmail,
-                IsForeign = s.IsForeign,
-                StatusId = s.StatusId,
-                ResumeId = s.Resume != null ? s.Resume.Id : null,
-                CreatedAt = s.CreatedAt,
-                CourseNumber = s.StudyPlan.CourseNumber,
-                FacultyId = s.StudyPlan.FacultyId,
-                SpecialityId = s.StudyPlan.SpecialityId,
-                StudyForm = s.StudyPlan.StudyForm.ToString(),
-                BeginYear = s.StudyPlan.BeginYear,
-                Achievements = s.Achievements.Select(ua => new UserAchievementDto
-                {
-                    UserId = ua.UserId,
-                    AchievementTemplateId = ua.AchievementTemplateId,
-                    AchievementAt = ua.AchievementAt,
-                    AchievementName = ua.AchievementTemplate.Name,
-                    AchievementDescription = ua.AchievementTemplate.Description
-                }).ToList()
-            }).ToListAsync();
+                UserId = ua.UserId,
+                AchievementTemplateId = ua.AchievementTemplateId,
+                AchievementAt = ua.AchievementAt,
+                AchievementName = ua.AchievementTemplate.Name,
+                AchievementDescription = ua.AchievementTemplate.Description
+            }).ToList()
+        }).ToListAsync();
 
         return (students, null, null);
     }
 
-    public async Task<StudentDto?> GetStudentAsync(Guid id)
+    public async Task<(AdminStudentDto? Entity, int? StatusCode, string? ErrorMessage)> GetStudentAsync(Guid id)
     {
         var student = await _context.Students
-            .Include(s => s.Resume)
-            .Include(s => s.StudyPlan)
-            .Include(s => s.Achievements)
-            .ThenInclude(ua => ua.AchievementTemplate)
-            .FirstOrDefaultAsync(s => s.Id == id);
+        .Include(s => s.Resume)
+        .Include(s => s.StudyPlan)
+        .Include(s => s.Achievements)
+        .ThenInclude(ua => ua.AchievementTemplate)
+        .FirstOrDefaultAsync(s => s.Id == id);
 
+        #region Serializers
         if (student == null)
-            return null;
+            return (null, StatusCodes.Status404NotFound, ErrorMessages.NotFound("Student"));
+        #endregion
 
-        return new StudentDto
+        return (new AdminStudentDto
         {
             Id = student.Id,
             FirstName = student.FirstName,
@@ -77,6 +80,7 @@ public class AdminStudentService(StudHunterDbContext context) : BaseService(cont
             StatusId = student.StatusId,
             ResumeId = student.Resume != null ? student.Resume.Id : null,
             CreatedAt = student.CreatedAt,
+            IsDeleted = student.IsDeleted,
             CourseNumber = student.StudyPlan.CourseNumber,
             FacultyId = student.StudyPlan.FacultyId,
             SpecialityId = student.StudyPlan.SpecialityId,
@@ -90,26 +94,40 @@ public class AdminStudentService(StudHunterDbContext context) : BaseService(cont
                 AchievementName = userAchievement.AchievementTemplate.Name,
                 AchievementDescription = userAchievement.AchievementTemplate.Description
             }).ToList()
-        };
+        }, null, null);
     }
 
-    public async Task<(bool Success, string? Error)> UpdateStudentAsync(Guid id, UpdateStudentByAdministratorDto dto)
+    public async Task<(bool Success, int? StatusCode, string? ErrorMessage)> UpdateStudentAsync(Guid id, AdminUpdateStudentDto dto)
     {
         var student = await _context.Students
         .Include(s => s.StudyPlan)
         .FirstOrDefaultAsync(s => s.Id == id);
 
+        #region Serializers
         if (student == null)
-            return (false, "Student not found");
+            return (false, StatusCodes.Status404NotFound, ErrorMessages.NotFound("Student"));
 
-        if (dto.Email != null && await _context.Students.AnyAsync(s => s.Email == dto.Email && s.Id != id))
-            return (false, "Another student with this email already exists");
+        if (dto.Email != null)
+        {
+            var studentExists = await _context.Students.AnyAsync(s => s.Email == dto.Email && s.Id != id);
+            if (studentExists)
+                return (false, StatusCodes.Status409Conflict, ErrorMessages.AlreadyExists("Student", "Email"));
+        }
 
-        if (dto.FacultyId.HasValue && !await _context.Faculties.AnyAsync(f => f.Id == dto.FacultyId.Value))
-            return (false, "Faculty not found");
+        if (dto.FacultyId.HasValue)
+        {
+            var facultyExists = await _context.Faculties.AnyAsync(f => f.Id == dto.FacultyId.Value);
+            if (facultyExists == false)
+                return (false, StatusCodes.Status404NotFound, ErrorMessages.NotFound("Faculty"));
+        }
 
-        if (dto.SpecialityId.HasValue && !await _context.Specialities.AnyAsync(s => s.Id == dto.SpecialityId.Value))
-            return (false, "Speciality not found");
+        if (dto.SpecialityId.HasValue)
+        {
+            var specialityExists = await _context.Specialities.AnyAsync(s => s.Id == dto.SpecialityId.Value);
+            if (specialityExists)
+                return (false, StatusCodes.Status404NotFound, ErrorMessages.NotFound("Speciality"));
+        }
+        #endregion
 
         if (dto.FirstName != null)
             student.FirstName = dto.FirstName;
@@ -129,6 +147,8 @@ public class AdminStudentService(StudHunterDbContext context) : BaseService(cont
             student.ContactEmail = dto.ContactEmail;
         if (dto.IsForeign.HasValue)
             student.IsForeign = dto.IsForeign.Value;
+        if (dto.IsDeleted.HasValue)
+            student.IsDeleted = dto.IsDeleted.Value;
 
         if (dto.CourseNumber.HasValue || dto.FacultyId.HasValue ||
         dto.SpecialityId.HasValue || dto.StudyForm != null || dto.BeginYear.HasValue)
@@ -146,13 +166,13 @@ public class AdminStudentService(StudHunterDbContext context) : BaseService(cont
                 studyPlan.BeginYear = dto.BeginYear.Value;
         }
 
-        return await SaveChangesAsync("update", "Student");
+        var (success, statusCode, errorMessage) = await SaveChangesAsync("Student");
+
+        return (success, statusCode, errorMessage);
     }
 
-    public async Task<(bool Success, string? Error)> DeleteStudentAsync(Guid id, bool hardDelete = false)
+    public async Task<(bool Success, int? StatusCode, string? ErrorMessage)> DeleteStudentAsync(Guid id, bool hardDelete = false)
     {
-        return hardDelete
-        ? await HardDeleteEntityAsync<Student>(id)
-        : await SoftDeleteEntityAsync<Student>(id);
+        return await DeleteEntityAsync<Student>(id, hardDelete);
     }
 }

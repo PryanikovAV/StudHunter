@@ -7,18 +7,19 @@ public class UserAchievementConfiguration : IEntityTypeConfiguration<UserAchieve
 {
     public void Configure(EntityTypeBuilder<UserAchievement> builder)
     {
-        builder.HasKey(ua => new
-        {
-            ua.UserId,
-            ua.AchievementTemplateId
-        });
+        builder.HasKey(ua => ua.Id);
+
+        builder.Property(ua => ua.Id)
+               .HasColumnType("UUID")
+               .HasDefaultValueSql("gen_random_uuid()")
+               .IsRequired();
 
         builder.Property(ua => ua.UserId)
                .HasColumnType("UUID")
                .IsRequired();
 
         builder.Property(ua => ua.AchievementTemplateId)
-               .HasColumnType("INTEGER")
+               .HasColumnType("UUID")
                .IsRequired();
 
         builder.Property(ua => ua.AchievementAt)

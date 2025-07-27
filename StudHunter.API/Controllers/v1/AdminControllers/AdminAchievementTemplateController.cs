@@ -1,5 +1,6 @@
 ﻿using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using StudHunter.API.Controllers.v1.BaseControllers;
 using StudHunter.API.ModelsDto.AchievementTemplate;
 using StudHunter.API.Services.AdminServices;
 
@@ -8,15 +9,15 @@ namespace StudHunter.API.Controllers.v1.AdminControllers;
 [Route("api/v1/admin/[controller]")]
 [ApiController]
 [Authorize(Roles = "Administrator")]
-public class AdminAchievementTemplateController(AdminAchievementTemplateService administratorAchievementTemplateService) : ControllerBase
+public class AdminAchievementTemplateController(AdminAchievementTemplateService administratorAchievementTemplateService) : BaseController
 {
     private readonly AdminAchievementTemplateService _administratorAchievementTemplateService = administratorAchievementTemplateService;
 
     [HttpGet]
     public async Task<IActionResult> GetAllAchievementTemplates()
     {
-        var templates = await _administratorAchievementTemplateService.GetAllAchievementTemplatesAsync();
-        return Ok(templates);
+        var (templates, statusCode, errorMessage) = await _administratorAchievementTemplateService.GetAllAchievementTemplatesAsync();
+        return this.CreateAPIError(templates, statusCode, errorMessage);
     }
 
     [HttpGet("{id}")]

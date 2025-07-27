@@ -8,5 +8,5 @@ public class GrantAchievementDto
     public Guid UserId { get; set; }
 
     [Required(ErrorMessage = "{0} is required")]
-    public int AchievementTemplateId { get; set; }
+    public int AchievementTemplateOrderNumber { get; set; }
 }

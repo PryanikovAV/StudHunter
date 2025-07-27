@@ -9,13 +9,7 @@ public class BaseService(StudHunterDbContext context)
 {
     protected readonly StudHunterDbContext _context = context;
 
-    /// <summary>
-    /// Saves changes to the database and handles potential errors.
-    /// </summary>
-    /// <param name="action">The action being performed (e.g., 'create', 'update').</param>
-    /// <param name="entityName">The name of the entity (e.g., 'Student', 'Course').</param>
-    /// <returns>A tuple indicating success, HTTP status code, and an optional error message.</returns>
-    protected async Task<(bool Success, int? StatusCode, string? ErrorMessage)> SaveChangesAsync(string action, string entityName)
+    protected async Task<(bool Success, int? StatusCode, string? ErrorMessage)> SaveChangesAsync(string entityName)
     {
         try
         {
@@ -28,54 +22,68 @@ public class BaseService(StudHunterDbContext context)
         }
     }
 
-    /// <summary>
-    /// Performs a soft delete on an entity by setting the IsDeleted flag to true.
-    /// </summary>
-    /// <typeparam name="T">Entity type implementing ISoftDeletable.</typeparam>
-    /// <param name="id">Unique entity identifier (Guid).</param>
-    /// <returns>A tuple containing the result of the operation, HTTP status code, and an optional error message.</returns>
     protected async Task<(bool Success, int? StatusCode, string? ErrorMessage)> SoftDeleteEntityAsync<T>(Guid id) where T : class, ISoftDeletable
     {
         var entity = await _context.Set<T>().FirstOrDefaultAsync(e => e.Id == id && !e.IsDeleted);
+
+        #region Serializers
         if (entity == null)
             return (false, StatusCodes.Status404NotFound, ErrorMessages.NotFound(typeof(T).Name));
+
+        if (entity.IsDeleted)
+            return (false, StatusCodes.Status410Gone, ErrorMessages.AlreadyDeleted(typeof(T).Name));
+        #endregion
 
         entity.IsDeleted = true;
-        var (success, statusCode, errorMessage) = await SaveChangesAsync("soft delete", typeof(T).Name);
+
+        var (success, statusCode, errorMessage) = await SaveChangesAsync(typeof(T).Name);
         return (success, statusCode, errorMessage);
     }
 
-    /// <summary>
-    /// Performs a hard delete of an entity from the database.
-    /// </summary>
-    /// <typeparam name="T">Entity type.</typeparam>
-    /// <param name="id">Unique entity identifier (Guid).</param>
-    /// <returns>A tuple containing the result of the operation, HTTP status code, and an optional error message.</returns>
-    protected async Task<(bool Success, int? StatusCode, string? ErrorMessage)> HardDeleteEntityAsync<T>(Guid id) where T : class
+    protected async Task<(bool Success, int? StatusCode, string? ErrorMessage)> HardDeleteEntityAsync<T>(Guid id) where T : class, IEntity
     {
         var entity = await _context.Set<T>().FindAsync(id);
+
+        #region Serializers
         if (entity == null)
             return (false, StatusCodes.Status404NotFound, ErrorMessages.NotFound(typeof(T).Name));
+        #endregion
 
         _context.Set<T>().Remove(entity);
-        var (success, statusCode, errorMessage) = await SaveChangesAsync("hard delete", typeof(T).Name);
+
+        var (success, statusCode, errorMessage) = await SaveChangesAsync(typeof(T).Name);
         return (success, statusCode, errorMessage);
     }
 
-    /// <summary>
-    /// Performs a hard delete of an entity from the database.
-    /// </summary>
-    /// <typeparam name="T">Entity type.</typeparam>
-    /// <param name="id">Unique entity identifier (int).</param>
-    /// <returns>A tuple containing the result of the operation, HTTP status code, and an optional error message.</returns>
-    protected async Task<(bool Success, int? StatusCode, string? ErrorMessage)> HardDeleteEntityAsync<T>(int id) where T : class
+    public async Task<(bool Success, int? StatusCode, string? ErrorMessage)> DeleteEntityAsync<T>(Guid id, bool hardDelete = false) where T : class, IEntity
     {
-        var entity = await _context.Set<T>().FindAsync(id);
-        if (entity == null)
-            return (false, StatusCodes.Status404NotFound, ErrorMessages.NotFound(typeof(T).Name));
+        if (hardDelete)
+            return await HardDeleteEntityAsync<T>(id);
 
-        _context.Set<T>().Remove(entity);
-        var (success, statusCode, errorMessage) = await SaveChangesAsync("hard delete", typeof(T).Name);
-        return (success, statusCode, errorMessage);
+        if (typeof(ISoftDeletable).IsAssignableFrom(typeof(T)))
+        {
+            var entity = await _context.Set<T>().FirstOrDefaultAsync(e => e.Id == id);
+
+            #region Serializers
+            if (entity == null)
+                return (false, StatusCodes.Status404NotFound, ErrorMessages.NotFound(typeof(T).Name));
+            #endregion
+
+            if (entity is ISoftDeletable softDeletable)
+            {
+                #region Serializers
+                if (softDeletable.IsDeleted)
+                    return (false, StatusCodes.Status410Gone, ErrorMessages.AlreadyDeleted(typeof(T).Name));
+                #endregion
+
+                softDeletable.IsDeleted = true;
+                var (success, statusCode, errorMessage) = await SaveChangesAsync(typeof(T).Name);
+
+                return (success, statusCode, errorMessage);
+
+            }
+        }
+        
+        return await HardDeleteEntityAsync<T>(id);
     }
 }

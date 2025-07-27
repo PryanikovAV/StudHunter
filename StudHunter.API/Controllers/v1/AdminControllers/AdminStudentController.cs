@@ -9,7 +9,7 @@ namespace StudHunter.API.Controllers.v1.AdminControllers;
 [Route("api/v1/admin/[controller]")]
 [ApiController]
 [Authorize(Roles = "Administrator")]
-public class AdminStudentController(AdminStudentService adminStudentService) : ApiControllerBase
+public class AdminStudentController(AdminStudentService adminStudentService) : BaseController
 {
     private readonly AdminStudentService _adminStudentService = adminStudentService;
     // TODO: add new documentation
@@ -60,7 +60,7 @@ public class AdminStudentController(AdminStudentService adminStudentService) : A
     [ProducesResponseType(StatusCodes.Status403Forbidden)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
     [ProducesResponseType(StatusCodes.Status409Conflict)]
-    public async Task<IActionResult> UpdateStudent(Guid id, [FromBody] UpdateStudentByAdministratorDto dto)
+    public async Task<IActionResult> UpdateStudent(Guid id, [FromBody] AdminUpdateStudentDto dto)
     {
         if (!ModelState.IsValid)
             return BadRequest(ModelState);

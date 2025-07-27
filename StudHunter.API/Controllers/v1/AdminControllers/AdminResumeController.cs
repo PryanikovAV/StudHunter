@@ -1,5 +1,6 @@
 ﻿using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using StudHunter.API.Controllers.v1.BaseControllers;
 using StudHunter.API.ModelsDto.Resume;
 using StudHunter.API.Services.AdminServices;
 
@@ -8,15 +9,15 @@ namespace StudHunter.API.Controllers.v1.AdminControllers;
 [Route("api/v1/admin/[controller]")]
 [ApiController]
 [Authorize(Roles = "Administrator")]
-public class AdminResumeController(AdminResumeService adminResumeService) : ControllerBase
+public class AdminResumeController(AdminResumeService adminResumeService) : BaseController
 {
     private readonly AdminResumeService _adminResumeService = adminResumeService;
 
     [HttpGet]
     public async Task<IActionResult> GetAllResumes()
     {
-        var resumes = await _adminResumeService.GetAllResumesAsync();
-        return Ok(resumes);
+        var (resumes, statusCode, errorMessage) = await _adminResumeService.GetAllResumesAsync();
+        return this.CreateAPIError(resumes, statusCode, errorMessage);
     }
 
     [HttpGet("{id}")]
