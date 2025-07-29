@@ -40,8 +40,9 @@ public class EmployerService(StudHunterDbContext context, IPasswordHasher passwo
             VacancyIds = employer.Vacancies.Select(v => v.Id).ToList(),
             Achievements = employer.Achievements.Select(userAchievement => new UserAchievementDto
             {
+                Id = userAchievement.Id,
                 UserId = userAchievement.UserId,
-                AchievementTemplateId = userAchievement.AchievementTemplateId,
+                AchievementTemplateOrderNumber = userAchievement.AchievementTemplate.OrderNumber,
                 AchievementAt = userAchievement.AchievementAt,
                 AchievementName = userAchievement.AchievementTemplate.Name,
                 AchievementDescription = userAchievement.AchievementTemplate.Description
@@ -75,7 +76,7 @@ public class EmployerService(StudHunterDbContext context, IPasswordHasher passwo
 
         _context.Employers.Add(employer);
 
-        var (success, statusCode, errorMessage) = await SaveChangesAsync("Employer");
+        var (success, statusCode, errorMessage) = await SaveChangesAsync<Employer>();
 
         if (!success)
             return (null, statusCode, errorMessage);
@@ -128,7 +129,7 @@ public class EmployerService(StudHunterDbContext context, IPasswordHasher passwo
         if (dto.Specialization != null)
             employer.Specialization = dto.Specialization;
 
-        var (success, statusCode, errorMessage) = await SaveChangesAsync("Employer");
+        var (success, statusCode, errorMessage) = await SaveChangesAsync<Employer>();
 
         return (success, statusCode, errorMessage);
     }

@@ -11,9 +11,9 @@ public class ResumeService(StudHunterDbContext context, UserAchievementService u
 {
     public UserAchievementService _userAchievementService = userAchievementService;
 
-    public async Task<(ResumeDto? Entity, int? StatusCode, string? ErrorMessage)> GetResumeAsync(Guid id)
+    public async Task<(ResumeDto? Entity, int? StatusCode, string? ErrorMessage)> GetResumeAsync(Guid userId)
     {
-        var resume = await _context.Resumes.FirstOrDefaultAsync(r => r.Id == id);
+        var resume = await _context.Resumes.FirstOrDefaultAsync(r => r.Id == userId);
 
         #region Serializers
         if (resume == null)
@@ -58,7 +58,7 @@ public class ResumeService(StudHunterDbContext context, UserAchievementService u
 
         _context.Resumes.Add(resume);
 
-        var (success, statusCode, errorMessage) = await SaveChangesAsync("Resume");
+        var (success, statusCode, errorMessage) = await SaveChangesAsync<Resume>();
 
         if (!success)
             return (null, statusCode, errorMessage);
@@ -89,7 +89,7 @@ public class ResumeService(StudHunterDbContext context, UserAchievementService u
             resume.Description = dto.Description;
         resume.UpdatedAt = DateTime.UtcNow;
 
-        var (success, statusCode, errorMessage) = await SaveChangesAsync("Resume");
+        var (success, statusCode, errorMessage) = await SaveChangesAsync<Resume>();
 
         return (success, statusCode, errorMessage);
     }

@@ -1,6 +1,7 @@
 ﻿using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using StudHunter.API.Controllers.v1.BaseControllers;
+using StudHunter.API.ModelsDto.Message;
 using StudHunter.API.Services.AdminServices;
 
 namespace StudHunter.API.Controllers.v1.AdminControllers;
@@ -22,23 +23,21 @@ public class AdminMessageController(AdminMessagesService adminMessagesService) :
     [HttpGet("user/{userId}/sent")]
     public async Task<IActionResult> GetSentMessages(Guid userId)
     {
-        var messages = await _adminMessagesService.GetMessagesByUserAsync(userId, sent: true);
-        return Ok(messages);
+        var (messages, statusCode, errorMessage) = await _adminMessagesService.GetMessagesByUserAsync(userId, sent: true);
+        return this.CreateAPIError(messages, statusCode, errorMessage);
     }
 
     [HttpGet("user/{userId}/received")]
     public async Task<IActionResult> GetReceivedMessages(Guid userId)
     {
-        var messages = await _adminMessagesService.GetMessagesByUserAsync(userId, sent: false);
-        return Ok(messages);
+        var (messages, statusCode, errorMessage) = await _adminMessagesService.GetMessagesByUserAsync(userId, sent: false);
+        return this.CreateAPIError(messages, statusCode, errorMessage);
     }
 
     [HttpDelete("message/{id}")]
     public async Task<IActionResult> DeleteMessage(Guid id)
     {
-        var (success, error) = await _adminMessagesService.DeleteMessageAsync(id);
-        if (!success)
-            return error == null ? NotFound() : BadRequest(new { error });
-        return NoContent();
+        var (message, statusCode, errorMessage) = await _adminMessagesService.DeleteMessageAsync(id);
+        return this.CreateAPIError<MessageDto>(message, statusCode, errorMessage);
     }
 }

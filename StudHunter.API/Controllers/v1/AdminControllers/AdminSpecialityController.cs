@@ -23,10 +23,8 @@ public class AdminSpecialityController(AdminSpecialityService adminSpecialitySer
     [HttpGet("{id}")]
     public async Task<IActionResult> GetSpeciality(Guid id)
     {
-        var speciality = await _adminSpecialityService.GetSpecialityAsync(id);
-        if (speciality == null)
-            return NotFound();
-        return Ok(speciality);
+        var (speciality, statusCode, errorMessage) = await _adminSpecialityService.GetSpecialityAsync(id);
+        return this.CreateAPIError(speciality, statusCode, errorMessage);
     }
 
     [HttpPost]
@@ -34,11 +32,8 @@ public class AdminSpecialityController(AdminSpecialityService adminSpecialitySer
     {
         if (!ModelState.IsValid)
             return BadRequest(ModelState);
-
-        var (speciality, error) = await _adminSpecialityService.CreateSpecialityAsync(dto);
-        if (speciality == null)
-            return error == null ? NotFound() : BadRequest(new { error });
-        return CreatedAtAction(nameof(GetSpeciality), new { id = speciality!.Id }, speciality);
+        var (speciality, statusCode, errorMessage) = await _adminSpecialityService.CreateSpecialityAsync(dto);
+        return this.CreateAPIError(speciality, statusCode, errorMessage, nameof(GetSpeciality), new { id = speciality?.Id });
     }
 
     [HttpPut("{id}")]
@@ -46,19 +41,14 @@ public class AdminSpecialityController(AdminSpecialityService adminSpecialitySer
     {
         if (!ModelState.IsValid)
             return BadRequest(ModelState);
-
-        var (success, error) = await _adminSpecialityService.UpdateSpecialityAsync(id, dto);
-        if (!success)
-            return error == null ? NotFound() : BadRequest(new { error });
-        return NoContent();
+        var (speciality, statusCode, errorMessage) = await _adminSpecialityService.UpdateSpecialityAsync(id, dto);
+        return this.CreateAPIError<SpecialityDto>(speciality, statusCode, errorMessage);
     }
 
     [HttpDelete("{id}")]
     public async Task<IActionResult> DeleteSpeciality(Guid id)
     {
-        var (success, error) = await _adminSpecialityService.DeleteSpecialityAsync(id);
-        if (!success)
-            return error == null ? NotFound() : BadRequest(new { error });
-        return NoContent();
+        var (speciality, statusCode, errorMessage) = await _adminSpecialityService.DeleteSpecialityAsync(id);
+        return this.CreateAPIError<SpecialityDto>(speciality, statusCode, errorMessage);
     }
 }

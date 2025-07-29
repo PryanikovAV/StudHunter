@@ -16,17 +16,15 @@ public class AdminCourseController(AdminCourseService adminCourseService) : Base
     [HttpGet]
     public async Task<IActionResult> GetAllCourses()
     {
-        var (courses, statusCode, ErrorMessage) = await _adminCourseService.GetAllCoursesAsync();
-        return this.CreateAPIError(courses, statusCode, ErrorMessage);
+        var (courses, statusCode, errorMessage) = await _adminCourseService.GetAllCoursesAsync();
+        return this.CreateAPIError(courses, statusCode, errorMessage);
     }
 
     [HttpGet("{id}")]
     public async Task<IActionResult> GetCourse(Guid id)
     {
-        var course = await _adminCourseService.GetCourseAsync(id);
-        if (course == null)
-            return NotFound();
-        return Ok(course);
+        var (course, statusCode, errorMessage) = await _adminCourseService.GetCourseAsync(id);
+        return this.CreateAPIError(course, statusCode, errorMessage);
     }
 
     [HttpPost]
@@ -34,11 +32,8 @@ public class AdminCourseController(AdminCourseService adminCourseService) : Base
     {
         if (!ModelState.IsValid)
             return BadRequest(ModelState);
-
-        var (course, error) = await _adminCourseService.CreateCourseAsync(dto);
-        if (course == null)
-            return error == null ? NotFound() : BadRequest(new { error });
-        return CreatedAtAction(nameof(GetCourse), new { id = course!.Id }, course);
+        var (course, statusCode, errorMessage) = await _adminCourseService.CreateCourseAsync(dto);
+        return this.CreateAPIError(course, statusCode, errorMessage, nameof(GetCourse), new { id = course?.Id });
     }
 
     [HttpPut("{id}")]
@@ -46,19 +41,14 @@ public class AdminCourseController(AdminCourseService adminCourseService) : Base
     {
         if (!ModelState.IsValid)
             return BadRequest(ModelState);
-
-        var (success, error) = await _adminCourseService.UpdateCourseAsync(id, dto);
-        if (!success)
-            return error == null ? NotFound() : BadRequest(new { error });
-        return NoContent();
+        var (course, statusCode, errorMessage) = await _adminCourseService.UpdateCourseAsync(id, dto);
+        return this.CreateAPIError<CourseDto>(course, statusCode, errorMessage);
     }
 
     [HttpDelete("{id}")]
     public async Task<IActionResult> DeleteCourse(Guid id)
     {
-        var (success, error) = await _adminCourseService.DeleteCourseAsync(id);
-        if (!success)
-            return error == null ? NotFound() : BadRequest(new { error });
-        return NoContent();
+        var (course, statusCode, errorMessage) = await _adminCourseService.DeleteCourseAsync(id);
+        return this.CreateAPIError<CourseDto>(course, statusCode, errorMessage);
     }
 }

@@ -21,32 +21,25 @@ public class AdminResumeController(AdminResumeService adminResumeService) : Base
     }
 
     [HttpGet("{id}")]
-    public async Task<ActionResult> GetResume(Guid id)
+    public async Task<IActionResult> GetResume(Guid id)
     {
-        var resume = await _adminResumeService.GetResumeAsync(id);
-        if (resume == null)
-            return NotFound();
-        return Ok(resume);
+        var (resume, statusCode, errorMessage) = await _adminResumeService.GetResumeAsync(id);
+        return this.CreateAPIError(resume, statusCode, errorMessage);
     }
 
     [HttpPut("{id}")]
-    public async Task<IActionResult> UpdateResume(Guid id, [FromBody] UpdateResumeDto dto)
+    public async Task<IActionResult> UpdateResume(Guid id, [FromBody] AdminUpdateResumeDto dto)
     {
         if (!ModelState.IsValid)
             return BadRequest(ModelState);
-
-        var (success, error) = await _adminResumeService.UpdateResumeAsync(id, dto);
-        if (!success)
-            return error == null ? NotFound() : BadRequest(new { error });
-        return NoContent();
+        var (success, statusCode, errorMessage) = await _adminResumeService.UpdateResumeAsync(id, dto);
+        return this.CreateAPIError<AdminResumeDto>(success, statusCode, errorMessage);
     }
 
     [HttpDelete("{id}")]
     public async Task<IActionResult> DeleteResume(Guid id)
     {
-        var (success, error) = await _adminResumeService.DeleteResumeAsync(id);
-        if (!success)
-            return error == null ? NotFound() : BadRequest(new { error });
-        return NoContent();
+        var (success, statusCode, errorMessage) = await _adminResumeService.DeleteResumeAsync(id);
+        return this.CreateAPIError<AdminResumeDto>(success, statusCode, errorMessage);
     }
 }

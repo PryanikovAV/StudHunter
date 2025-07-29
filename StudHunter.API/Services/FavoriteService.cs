@@ -9,9 +9,11 @@ namespace StudHunter.API.Services;
 
 public class FavoriteService(StudHunterDbContext context) : BaseService(context)
 {
-    public async Task<(List<FavoriteDto>? Entities, int? StatusCode, string? ErrorMessage)> GetAllFavoritesAsync()
+    public async Task<(List<FavoriteDto>? Entities, int? StatusCode, string? ErrorMessage)> GetAllFavoritesAsync(Guid userId)
     {
-        var favorites = await _context.Favorites.Select(f => new FavoriteDto
+        var favorites = await _context.Favorites
+        .Where(f => f.UserId == userId)
+        .Select(f => new FavoriteDto
         {
             Id = f.Id,
             UserId = f.UserId,
@@ -21,6 +23,25 @@ public class FavoriteService(StudHunterDbContext context) : BaseService(context)
         }).ToListAsync();
 
         return (favorites, null, null);
+    }
+
+    public async Task<(FavoriteDto? Entity, int? StatusCode, string? ErrorMessage)> GetFavoriteAsync(Guid id, Guid userId)
+    {
+        var favorite = await _context.Favorites
+        .Where(f => f.Id == id && f.UserId == userId)
+        .Select(f => new FavoriteDto
+        {
+            Id = f.Id,
+            UserId = f.UserId,
+            VacancyId = f.VacancyId,
+        }).FirstOrDefaultAsync();
+
+        #region Serializers
+        if (favorite == null)
+            return (null, StatusCodes.Status404NotFound, ErrorMessages.NotFound("Favorite"));
+        #endregion
+
+        return (favorite, null, null);
     }
 
     public async Task<(FavoriteDto? Entity, int? StatusCode, string? ErrorMessage)> CreateFavoriteAsync(Guid userId, CreateFavoriteDto dto)
@@ -53,7 +74,7 @@ public class FavoriteService(StudHunterDbContext context) : BaseService(context)
 
         _context.Favorites.Add(favorite);
 
-        var (success, statusCode, errorMessage) = await SaveChangesAsync("Favorite");
+        var (success, statusCode, errorMessage) = await SaveChangesAsync<Favorite>();
 
         if (!success)
             return (null, statusCode, errorMessage);
@@ -68,8 +89,14 @@ public class FavoriteService(StudHunterDbContext context) : BaseService(context)
         }, null, null);
     }
 
-    public async Task<(bool Success, int? StatusCode, string? ErrorMessage)> DeleteFavoriteAsync(Guid id)
+    public virtual async Task<(bool Success, int? StatusCode, string? ErrorMessage)> DeleteFavoriteAsync(Guid id, Guid userId)
     {
+        #region Serializers
+        var favorite = await _context.Favorites.FirstOrDefaultAsync(f => f.Id == id && f.UserId == userId);
+        if (favorite == null)
+            return (false, StatusCodes.Status404NotFound, ErrorMessages.NotFound("Favorite"));
+        #endregion
+
         return await HardDeleteEntityAsync<Favorite>(id);
     }
 }

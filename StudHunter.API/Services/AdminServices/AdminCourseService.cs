@@ -25,7 +25,7 @@ public class AdminCourseService(StudHunterDbContext context) : CourseService(con
 
         _context.Courses.Add(course);
 
-        var (success, statusCode, errorMessage) = await SaveChangesAsync("Course");
+        var (success, statusCode, errorMessage) = await SaveChangesAsync<Course>();
 
         if (!success)
             return (null, statusCode, errorMessage);
@@ -56,7 +56,7 @@ public class AdminCourseService(StudHunterDbContext context) : CourseService(con
         if (dto.Description != null)
             course.Description = dto.Description;
 
-        var (success, statusCode, errorMessage) = await SaveChangesAsync("Course");
+        var (success, statusCode, errorMessage) = await SaveChangesAsync<Course>();
 
         return (success, statusCode, errorMessage);
     }

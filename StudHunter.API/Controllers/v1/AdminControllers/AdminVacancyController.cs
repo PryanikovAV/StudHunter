@@ -21,33 +21,26 @@ public class AdminVacancyController(AdminVacancyService adminVacancyService) : B
     }
 
     [HttpGet("{id}")]
-    public async Task<ActionResult> GetVacancy(Guid id)
+    public async Task<IActionResult> GetVacancy(Guid id)
     {
-        var vacancy = await _adminVacancyService.GetVacancyAsync(id);
-        if (vacancy == null)
-            return NotFound();
-        return Ok(vacancy);
+        var (vacancy, statusCode, errorMessage) = await _adminVacancyService.GetVacancyAsync(id);
+        return this.CreateAPIError(vacancy, statusCode, errorMessage);
+    }
+
+    [HttpGet("by-employer/{id}")]
+    public async Task<IActionResult> GetVacanciesByEmployer(Guid employerId)
+    {
+        var (vacancies, statusCode, errorMessage) = await _adminVacancyService.GetVacanciesByEmployerAsync(employerId);
+        return this.CreateAPIError(vacancies, statusCode, errorMessage);
     }
 
     [HttpPut("{id}")]
-    public async Task<IActionResult> UpdateVacancy(Guid id, [FromBody] UpdateVacancyDto dto)
+    public async Task<IActionResult> UpdateVacancy(Guid id, [FromBody] AdminUpdateVacancyDto dto)
     {
         if (!ModelState.IsValid)
             return BadRequest(ModelState);
-
-        var (success, error) = await _adminVacancyService.UpdateVacancyAsync(id, dto);
-        if (!success)
-            return error == null ? NotFound() : BadRequest(new { error });
-        return NoContent();
-    }
-
-    [HttpDelete("{id}")]
-    public async Task<IActionResult> DeleteVacancy(Guid id)
-    {
-        var (success, error) = await _adminVacancyService.DeleteVacancyAsync(id);
-        if (!success)
-            return error == null ? NotFound() : BadRequest(new { error });
-        return NoContent();
+        var (vacancy, statusCode, errorMessage) = await _adminVacancyService.UpdateVacancyAsync(id, dto);
+        return this.CreateAPIError<AdminVacancyDto>(vacancy, statusCode, errorMessage);
     }
 
     [HttpPost("{id}/courses")]
@@ -55,11 +48,8 @@ public class AdminVacancyController(AdminVacancyService adminVacancyService) : B
     {
         if (!ModelState.IsValid)
             return BadRequest(ModelState);
-
-        var (success, error) = await _adminVacancyService.AddCourseToVacancyAsync(id, courseId);
-        if (!success)
-            return error == null ? NotFound() : BadRequest(new { error });
-        return NoContent();
+        var (vacancy, statusCode, errorMessage) = await _adminVacancyService.AddCourseToVacancyAsync(id, courseId);
+        return this.CreateAPIError<AdminVacancyDto>(vacancy, statusCode, errorMessage);
     }
 
     [HttpPost("{id}/courses/{courseId}")]
@@ -67,10 +57,14 @@ public class AdminVacancyController(AdminVacancyService adminVacancyService) : B
     {
         if (!ModelState.IsValid)
             return BadRequest(ModelState);
+        var (vacancy, statusCode, errorMessage) = await _adminVacancyService.RemoveCourseFromVacancyAsync(id, courseId);
+        return this.CreateAPIError<AdminVacancyDto>(vacancy, statusCode, errorMessage);
+    }
 
-        var (success, error) = await _adminVacancyService.RemoveCourseFromVacancyAsync(id, courseId);
-        if (!success)
-            return error == null ? NotFound() : BadRequest(new { error });
-        return NoContent();
+    [HttpDelete("{id}")]
+    public async Task<IActionResult> DeleteVacancy(Guid id)
+    {
+        var (vacancy, statusCode, errorMessage) = await _adminVacancyService.DeleteVacancyAsync(id);
+        return this.CreateAPIError<AdminVacancyDto>(vacancy, statusCode, errorMessage);
     }
 }

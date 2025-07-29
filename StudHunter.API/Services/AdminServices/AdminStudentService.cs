@@ -38,13 +38,14 @@ public class AdminStudentService(StudHunterDbContext context) : BaseService(cont
             SpecialityId = s.StudyPlan.SpecialityId,
             StudyForm = s.StudyPlan.StudyForm.ToString(),
             BeginYear = s.StudyPlan.BeginYear,
-            Achievements = s.Achievements.Select(ua => new UserAchievementDto
+            Achievements = s.Achievements.Select(userAchievement => new UserAchievementDto
             {
-                UserId = ua.UserId,
-                AchievementTemplateId = ua.AchievementTemplateId,
-                AchievementAt = ua.AchievementAt,
-                AchievementName = ua.AchievementTemplate.Name,
-                AchievementDescription = ua.AchievementTemplate.Description
+                Id = userAchievement.Id,
+                UserId = userAchievement.UserId,
+                AchievementTemplateOrderNumber = userAchievement.AchievementTemplate.OrderNumber,
+                AchievementAt = userAchievement.AchievementAt,
+                AchievementName = userAchievement.AchievementTemplate.Name,
+                AchievementDescription = userAchievement.AchievementTemplate.Description
             }).ToList()
         }).ToListAsync();
 
@@ -88,8 +89,9 @@ public class AdminStudentService(StudHunterDbContext context) : BaseService(cont
             BeginYear = student.StudyPlan.BeginYear,
             Achievements = student.Achievements.Select(userAchievement => new UserAchievementDto
             {
+                Id = userAchievement.Id,
                 UserId = userAchievement.UserId,
-                AchievementTemplateId = userAchievement.AchievementTemplateId,
+                AchievementTemplateOrderNumber = userAchievement.AchievementTemplate.OrderNumber,
                 AchievementAt = userAchievement.AchievementAt,
                 AchievementName = userAchievement.AchievementTemplate.Name,
                 AchievementDescription = userAchievement.AchievementTemplate.Description
@@ -150,8 +152,7 @@ public class AdminStudentService(StudHunterDbContext context) : BaseService(cont
         if (dto.IsDeleted.HasValue)
             student.IsDeleted = dto.IsDeleted.Value;
 
-        if (dto.CourseNumber.HasValue || dto.FacultyId.HasValue ||
-        dto.SpecialityId.HasValue || dto.StudyForm != null || dto.BeginYear.HasValue)
+        if (dto.CourseNumber.HasValue || dto.FacultyId.HasValue || dto.SpecialityId.HasValue || dto.StudyForm != null || dto.BeginYear.HasValue)
         {
             var studyPlan = student.StudyPlan;
             if (dto.CourseNumber.HasValue)
@@ -166,7 +167,7 @@ public class AdminStudentService(StudHunterDbContext context) : BaseService(cont
                 studyPlan.BeginYear = dto.BeginYear.Value;
         }
 
-        var (success, statusCode, errorMessage) = await SaveChangesAsync("Student");
+        var (success, statusCode, errorMessage) = await SaveChangesAsync<Student>();
 
         return (success, statusCode, errorMessage);
     }

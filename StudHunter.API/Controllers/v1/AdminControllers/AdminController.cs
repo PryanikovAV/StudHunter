@@ -16,17 +16,15 @@ public class AdminController(AdminService administratorService) : BaseController
     [HttpGet]
     public async Task<IActionResult> GetAllAdministrators()
     {
-        var (administrators, statusCode, errorMessage) = await _administratorService.GetAllAdministratorsAsync(););
+        var (administrators, statusCode, errorMessage) = await _administratorService.GetAllAdministratorsAsync();
         return this.CreateAPIError(administrators, statusCode, errorMessage);
     }
 
     [HttpGet("{id}")]
-    public async Task<ActionResult> GetAdministrator(Guid id)
+    public async Task<IActionResult> GetAdministrator(Guid id)
     {
-        var administrator = await _administratorService.GetAdministratorAsync(id);
-        if (administrator == null)
-            return NotFound();
-        return Ok(administrator);
+        var (administrator, statusCode, errorMessage) = await _administratorService.GetAdministratorAsync(id);
+        return this.CreateAPIError(administrator, statusCode, errorMessage);
     }
 
     [HttpPost]
@@ -34,11 +32,8 @@ public class AdminController(AdminService administratorService) : BaseController
     {
         if (!ModelState.IsValid)
             return BadRequest(ModelState);
-
-        var (administrator, error) = await _administratorService.CreateAdministratorAsync(dto);
-        if (administrator == null)
-            return error == null ? NotFound() : BadRequest(new { error });
-        return CreatedAtAction(nameof(GetAdministrator), new { id = administrator!.Id }, administrator);
+        var (administrator, statusCode, errorMessage) = await _administratorService.CreateAdministratorAsync(dto);
+        return this.CreateAPIError(administrator, statusCode, errorMessage, nameof(GetAdministrator), new { id = administrator?.Id });
     }
 
     [HttpPut("{id}")]
@@ -47,18 +42,14 @@ public class AdminController(AdminService administratorService) : BaseController
         if (!ModelState.IsValid)
             return BadRequest(ModelState);
 
-        var (success, error) = await _administratorService.UpdateAdministratorAsync(id, dto);
-        if (!success)
-            return error == null ? NotFound() : BadRequest(new { error });
-        return NoContent();
+        var (administrator, statusCode, errorMessage) = await _administratorService.UpdateAdministratorAsync(id, dto);
+        return this.CreateAPIError<AdminDto>(administrator, statusCode, errorMessage);
     }
 
     [HttpDelete("{id}")]
     public async Task<IActionResult> DeleteAdministrator(Guid id, [FromQuery] bool hardDelete = false)
     {
-        var (success, error) = await _administratorService.DeletedministratorAsync(id, hardDelete);
-        if (!success)
-            return error == null ? NotFound() : BadRequest(new { error });
-        return NoContent();
+        var (administrator, statusCode, errorMessage) = await _administratorService.DeletedministratorAsync(id, hardDelete);
+        return this.CreateAPIError<AdminDto>(administrator, statusCode, errorMessage);
     }
 }

@@ -23,10 +23,8 @@ public class AdminFacultyController(AdminFacultyService adminFacultyService) : B
     [HttpGet("{id}")]
     public async Task<IActionResult> GetFaculty(Guid id)
     {
-        var faculty = await _adminFacultyService.GetFacultyAsync(id);
-        if (faculty == null)
-            return NotFound();
-        return Ok(faculty);
+        var (faculty, statusCode, errorMessage) = await _adminFacultyService.GetFacultyAsync(id);
+        return this.CreateAPIError(faculty, statusCode, errorMessage);
     }
 
     [HttpPost]
@@ -34,11 +32,8 @@ public class AdminFacultyController(AdminFacultyService adminFacultyService) : B
     {
         if (!ModelState.IsValid)
             return BadRequest(ModelState);
-
-        var (faculty, error) = await _adminFacultyService.CreateFacultyAsync(dto);
-        if (faculty == null)
-            return error == null ? NotFound() : BadRequest(new { error });
-        return CreatedAtAction(nameof(GetFaculty), new { id = faculty!.Id }, faculty);
+        var (faculty, statusCode, errorMessage) = await _adminFacultyService.CreateFacultyAsync(dto);
+        return this.CreateAPIError(faculty, statusCode, errorMessage, nameof(GetFaculty), new { id = faculty?.Id });
     }
 
     [HttpPut("{id}")]
@@ -46,19 +41,14 @@ public class AdminFacultyController(AdminFacultyService adminFacultyService) : B
     {
         if (!ModelState.IsValid)
             return BadRequest(ModelState);
-
-        var (success, error) = await _adminFacultyService.UpdateFacultyAsync(id, dto);
-        if (!success)
-            return error == null ? NotFound() : BadRequest(new { error });
-        return NoContent();
+        var (success, statusCode, errorMessage) = await _adminFacultyService.UpdateFacultyAsync(id, dto);
+        return this.CreateAPIError<FacultyDto>(success, statusCode, errorMessage);
     }
 
     [HttpDelete("{id}")]
     public async Task<IActionResult> DeleteFaculty(Guid id)
     {
-        var (success, error) = await _adminFacultyService.DeleteFacultyAsync(id);
-        if (!success)
-            return error == null ? NotFound() : BadRequest(new { error });
-        return NoContent();
+        var (success, statusCode, errorMessage) = await _adminFacultyService.DeleteFacultyAsync(id);
+        return this.CreateAPIError<FacultyDto>(success, statusCode, errorMessage);
     }
 }

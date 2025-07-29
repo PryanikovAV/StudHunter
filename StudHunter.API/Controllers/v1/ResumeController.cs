@@ -1,5 +1,6 @@
 ﻿using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using StudHunter.API.Controllers.v1.BaseControllers;
 using StudHunter.API.ModelsDto.Resume;
 using StudHunter.API.Services;
 
@@ -7,60 +8,44 @@ namespace StudHunter.API.Controllers.v1;
 
 [Route("api/v1/[controller]")]
 [ApiController]
-public class ResumeController(ResumeService resumeService) : ControllerBase
+[Authorize]
+public class ResumeController(ResumeService resumeService) : BaseController
 {
     private readonly ResumeService _resumeService = resumeService;
 
-    [HttpGet]
-    public async Task<IActionResult> GetAllResumes()
+    [HttpGet("{id}")]
+    public async Task<IActionResult> GetResume()
     {
-        var resumes = await _resumeService.GetAllResumesAsync();
-        return Ok(resumes);
+        var userId = Guid.NewGuid();  // TODO: Replace Guid.NewGuid(); with User.FindFirstValue(ClaimTypes.NameIdentifier) after implementing JWT
+        var (resume, statusCode, errorMessage) = await _resumeService.GetResumeAsync(userId);
+        return this.CreateAPIError(resume, statusCode, errorMessage);
     }
 
-    [HttpGet("{id}")]
-    public async Task<ActionResult> GetResume(Guid id)
-    {
-        var resume = await _resumeService.GetResumeAsync(id);
-        if (resume == null)
-            return NotFound();
-        return Ok(resume);
-    }
-    // TODO: Replace Guid.NewGuid(); with User.FindFirstValue(ClaimTypes.NameIdentifier) after implementing JWT
     [HttpPost]
-    [Authorize]
     public async Task<IActionResult> CreateResume([FromBody] CreateResumeDto dto)
     {
         if (!ModelState.IsValid)
             return BadRequest(ModelState);
-
-        var studentId = Guid.NewGuid();
-        var (resume, error) = await _resumeService.CreateResumeAsync(studentId, dto);
-        if (resume == null)
-            return error == null ? NotFound() : BadRequest(new { error });
-        return CreatedAtAction(nameof(GetResume), new { id = resume!.Id }, resume);
+        var id = Guid.NewGuid();  // TODO: Replace Guid.NewGuid(); with User.FindFirstValue(ClaimTypes.NameIdentifier) after implementing JWT
+        var (resume, statusCode, errorMessage) = await _resumeService.CreateResumeAsync(id, dto);
+        return this.CreateAPIError(resume, statusCode, errorMessage, nameof(GetResume), new { id = resume?.Id });
     }
 
     [HttpPut("{id}")]
-    [Authorize]
-    public async Task<IActionResult> UpdateResume(Guid id, [FromBody] UpdateResumeDto dto)
+    public async Task<IActionResult> UpdateResume([FromBody] UpdateResumeDto dto)
     {
         if (!ModelState.IsValid)
             return BadRequest(ModelState);
-
-        var (success, error) = await _resumeService.UpdateResumeAsync(id, dto);
-        if (!success)
-            return error == null ? NotFound() : BadRequest(new { error });
-        return NoContent();
+        var id = Guid.NewGuid();  // TODO: Replace Guid.NewGuid(); with User.FindFirstValue(ClaimTypes.NameIdentifier) after implementing JWT
+        var (success, statusCode, errorMessage) = await _resumeService.UpdateResumeAsync(id, dto);
+        return this.CreateAPIError<ResumeDto>(success, statusCode, errorMessage);
     }
 
     [HttpDelete("{id}")]
-    [Authorize]
-    public async Task<IActionResult> SoftDeleteResume(Guid id)
+    public async Task<IActionResult> DeleteResume()
     {
-        var (success, error) = await _resumeService.DeleteResumeAsync(id);
-        if (!success)
-            return error == null ? NotFound() : Conflict(new { error });
-        return NoContent();
+        var id = Guid.NewGuid();  // TODO: Replace Guid.NewGuid(); with User.FindFirstValue(ClaimTypes.NameIdentifier) after implementing JWT
+        var (success, statusCode, errorMessage) = await _resumeService.DeleteResumeAsync(id);
+        return this.CreateAPIError<ResumeDto>(success, statusCode, errorMessage);
     }
 }

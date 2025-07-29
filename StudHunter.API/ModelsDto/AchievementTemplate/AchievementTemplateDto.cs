@@ -4,7 +4,9 @@ namespace StudHunter.API.ModelsDto.AchievementTemplate;
 
 public class AchievementTemplateDto
 {
-    public int Id { get; set; }
+    public Guid Id { get; set; }
+
+    public int OrderNumber { get; set; }
 
     [Required, MaxLength(255)]
     public string Name { get; set; } = string.Empty;
@@ -14,4 +16,7 @@ public class AchievementTemplateDto
 
     [Required]
     public string Target { get; set; } = string.Empty;
+
+    [MaxLength(500)]
+    public string? IconUrl { get; set; }
 }

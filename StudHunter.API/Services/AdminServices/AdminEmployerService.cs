@@ -93,7 +93,7 @@ public class AdminEmployerService(StudHunterDbContext context) : BaseService(con
         if (dto.AccreditationStatus.HasValue)
             employer.AccreditationStatus = dto.AccreditationStatus.Value;
 
-        var (success, statusCode, errorMessage) = await SaveChangesAsync("Employer");
+        var (success, statusCode, errorMessage) = await SaveChangesAsync<Employer>();
 
         return (success, statusCode, errorMessage);
     }

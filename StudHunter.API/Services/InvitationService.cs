@@ -38,10 +38,10 @@ public class InvitationService(StudHunterDbContext context, UserAchievementServi
         return (invitations, null, null);
     }
 
-    public async Task<(InvitationDto? Entity, int? StatusCode, string? ErrorMessage)> GetInvitationAsync(Guid id)
+    public async Task<(InvitationDto? Entity, int? StatusCode, string? ErrorMessage)> GetInvitationAsync(Guid id, Guid userId)
     {
         var invitation = await _context.Invitations
-        .Where(i => i.Id == id)
+        .Where(i => i.Id == id && i.SenderId == userId)
         .Select(i => new InvitationDto
         {
             Id = i.Id,
@@ -135,7 +135,7 @@ public class InvitationService(StudHunterDbContext context, UserAchievementServi
 
         _context.Invitations.Add(invitation);
 
-        var (success, statusCode, errorMessage) = await SaveChangesAsync("Invitation");
+        var (success, statusCode, errorMessage) = await SaveChangesAsync<Invitation>();
 
         if (!success)
             return (null, statusCode, errorMessage);
@@ -174,7 +174,7 @@ public class InvitationService(StudHunterDbContext context, UserAchievementServi
         invitation.Status = Enum.Parse<Invitation.InvitationStatus>(dto.Status);
         invitation.UpdatedAt = DateTime.UtcNow;
 
-        var (success, statusCode, errorMessage) = await SaveChangesAsync("Invitation");
+        var (success, statusCode, errorMessage) = await SaveChangesAsync<Invitation>();
 
         return (success, statusCode, errorMessage);
     }

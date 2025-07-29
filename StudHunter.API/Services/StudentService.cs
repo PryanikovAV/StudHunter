@@ -56,8 +56,9 @@ public class StudentService(StudHunterDbContext context, IPasswordHasher passwor
             BeginYear = student.StudyPlan.BeginYear,
             Achievements = student.Achievements.Select(userAchievement => new UserAchievementDto
             {
+                Id = userAchievement.Id,
                 UserId = userAchievement.UserId,
-                AchievementTemplateId = userAchievement.AchievementTemplateId,
+                AchievementTemplateOrderNumber = userAchievement.AchievementTemplate.OrderNumber,
                 AchievementAt = userAchievement.AchievementAt,
                 AchievementName = userAchievement.AchievementTemplate.Name,
                 AchievementDescription = userAchievement.AchievementTemplate.Description
@@ -118,7 +119,7 @@ public class StudentService(StudHunterDbContext context, IPasswordHasher passwor
         _context.Students.Add(student);
         _context.StudyPlans.Add(studyPlan);
 
-        var (success, statusCode, errorMessage) = await SaveChangesAsync("Student");
+        var (success, statusCode, errorMessage) = await SaveChangesAsync<Student>();
 
         if (!success)
             return (null, statusCode, errorMessage);
@@ -169,20 +170,17 @@ public class StudentService(StudHunterDbContext context, IPasswordHasher passwor
                 return (false, StatusCodes.Status409Conflict, ErrorMessages.AlreadyExists("Student", "Email"));
         }
 
-        Guid? facultyId = dto.FacultyId;
-        Guid? specialityId = dto.SpecialityId;
-
-        if (facultyId.HasValue || specialityId.HasValue)
+        if (dto.FacultyId.HasValue)
         {
-            var checks = await Task.WhenAll(
-            facultyId.HasValue ? _context.Faculties.AnyAsync(f => f.Id == facultyId.Value) : Task.FromResult(true),
-            specialityId.HasValue ? _context.Specialities.AnyAsync(s => s.Id == specialityId.Value) : Task.FromResult(true)
-            );
-
-            if (facultyId.HasValue && !checks[0])
+            var facultyExists = await _context.Faculties.AnyAsync(f => f.Id == dto.FacultyId.Value);
+            if (facultyExists == false)
                 return (false, StatusCodes.Status404NotFound, ErrorMessages.NotFound("Faculty"));
+        }
 
-            if (specialityId.HasValue && !checks[1])
+        if (dto.SpecialityId.HasValue)
+        {
+            var specialityExists = await _context.Specialities.AnyAsync(s => s.Id == dto.SpecialityId.Value);
+            if (specialityExists == false)
                 return (false, StatusCodes.Status404NotFound, ErrorMessages.NotFound("Speciality"));
         }
         #endregion
@@ -225,7 +223,7 @@ public class StudentService(StudHunterDbContext context, IPasswordHasher passwor
                 studyPlan.BeginYear = dto.BeginYear.Value;
         }
 
-        var (success, statusCode, errorMessage) = await SaveChangesAsync("Student");
+        var (success, statusCode, errorMessage) = await SaveChangesAsync<Student>();
 
         return (success, statusCode, errorMessage);
     }

@@ -12,7 +12,7 @@ using StudHunter.DB.Postgres;
 namespace StudHunter.DB.Postgres.Migrations
 {
     [DbContext(typeof(StudHunterDbContext))]
-    [Migration("20250721150431_InitialCreate")]
+    [Migration("20250729131419_InitialCreate")]
     partial class InitialCreate
     {
         /// <inheritdoc />
@@ -90,179 +90,36 @@ namespace StudHunter.DB.Postgres.Migrations
 
             modelBuilder.Entity("StudHunter.DB.Postgres.Models.AchievementTemplate", b =>
                 {
-                    b.Property<int>("Id")
+                    b.Property<Guid>("Id")
                         .ValueGeneratedOnAdd()
-                        .HasColumnType("INTEGER");
-
-                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
+                        .HasColumnType("UUID")
+                        .HasDefaultValueSql("gen_random_uuid()");
 
                     b.Property<string>("Description")
                         .HasMaxLength(1000)
                         .HasColumnType("TEXT");
+
+                    b.Property<string>("IconUrl")
+                        .HasMaxLength(500)
+                        .HasColumnType("VARCHAR(500)");
 
                     b.Property<string>("Name")
                         .IsRequired()
                         .HasMaxLength(255)
                         .HasColumnType("VARCHAR(255)");
 
+                    b.Property<int>("OrderNumber")
+                        .HasColumnType("INTEGER");
+
                     b.Property<int>("Target")
                         .HasColumnType("INTEGER");
 
                     b.HasKey("Id");
 
-                    b.HasIndex("Name")
+                    b.HasIndex("OrderNumber")
                         .IsUnique();
 
                     b.ToTable("AchievementTemplates", "studhunter");
-
-                    b.HasData(
-                        new
-                        {
-                            Id = 1,
-                            Description = "Откликнулся на первую вакансию",
-                            Name = "Первая попытка",
-                            Target = 0
-                        },
-                        new
-                        {
-                            Id = 2,
-                            Description = "Начал свою первую стажировку",
-                            Name = "Новый путь",
-                            Target = 0
-                        },
-                        new
-                        {
-                            Id = 3,
-                            Description = "Успешно окончил стажировку",
-                            Name = "Ступень вверх",
-                            Target = 0
-                        },
-                        new
-                        {
-                            Id = 4,
-                            Description = "Полностью заполнил профиль",
-                            Name = "Я здесь!",
-                            Target = 0
-                        },
-                        new
-                        {
-                            Id = 5,
-                            Description = "Получил первое трудоустройство",
-                            Name = "Первый шаг в карьере",
-                            Target = 0
-                        },
-                        new
-                        {
-                            Id = 6,
-                            Description = "Работаю уже 3 месяца",
-                            Name = "Опыт копится III",
-                            Target = 0
-                        },
-                        new
-                        {
-                            Id = 7,
-                            Description = "Работаю уже 6 месяцев",
-                            Name = "Опыт копится VI",
-                            Target = 0
-                        },
-                        new
-                        {
-                            Id = 8,
-                            Description = "Работаю уже 9 месяцев",
-                            Name = "Опыт копится IX",
-                            Target = 0
-                        },
-                        new
-                        {
-                            Id = 9,
-                            Description = "Работаю уже 12 месяцев",
-                            Name = "Опыт копится XII",
-                            Target = 0
-                        },
-                        new
-                        {
-                            Id = 10,
-                            Description = "Получил 10 приглашений от работодателей",
-                            Name = "Звезда работодателей",
-                            Target = 0
-                        },
-                        new
-                        {
-                            Id = 11,
-                            Description = "Прошел 3 разных стажировки",
-                            Name = "Профи стажировок",
-                            Target = 0
-                        },
-                        new
-                        {
-                            Id = 12,
-                            Description = "Получил первый отзыв от работодателя",
-                            Name = "Рекомендации",
-                            Target = 0
-                        },
-                        new
-                        {
-                            Id = 13,
-                            Description = "Заполнил профиль",
-                            Name = "Добро пожаловать!",
-                            Target = 1
-                        },
-                        new
-                        {
-                            Id = 14,
-                            Description = "Разместил первую вакансию",
-                            Name = "Работодатель мечты",
-                            Target = 1
-                        },
-                        new
-                        {
-                            Id = 15,
-                            Description = "10 студентов откликнулись на вакансии",
-                            Name = "Популярность растет",
-                            Target = 1
-                        },
-                        new
-                        {
-                            Id = 16,
-                            Description = "Предоставил стажировку первому студенту",
-                            Name = "Первые шаги в наставничестве",
-                            Target = 1
-                        },
-                        new
-                        {
-                            Id = 17,
-                            Description = "Предоставил стажировки для 10 студентов",
-                            Name = "Опытный наставник",
-                            Target = 1
-                        },
-                        new
-                        {
-                            Id = 18,
-                            Description = "Взял на работу первого студента",
-                            Name = "Первая работа",
-                            Target = 1
-                        },
-                        new
-                        {
-                            Id = 19,
-                            Description = "Нанял 10 студентов",
-                            Name = "Крупная компания",
-                            Target = 1
-                        },
-                        new
-                        {
-                            Id = 20,
-                            Description = "Разместил 10 вакансий",
-                            Name = "Активный работодатель",
-                            Target = 1
-                        },
-                        new
-                        {
-                            Id = 21,
-                            Description = "Получил 10 положительных отзывов от студентов",
-                            Name = "Идеальная репутация",
-                            Target = 1
-                        });
                 });
 
             modelBuilder.Entity("StudHunter.DB.Postgres.Models.Course", b =>
@@ -600,16 +457,21 @@ namespace StudHunter.DB.Postgres.Migrations
 
             modelBuilder.Entity("StudHunter.DB.Postgres.Models.UserAchievement", b =>
                 {
-                    b.Property<Guid>("UserId")
-                        .HasColumnType("UUID");
-
-                    b.Property<int>("AchievementTemplateId")
-                        .HasColumnType("INTEGER");
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("UUID")
+                        .HasDefaultValueSql("gen_random_uuid()");
 
                     b.Property<DateTime>("AchievementAt")
                         .HasColumnType("TIMESTAMP");
 
-                    b.HasKey("UserId", "AchievementTemplateId");
+                    b.Property<Guid>("AchievementTemplateId")
+                        .HasColumnType("UUID");
+
+                    b.Property<Guid>("UserId")
+                        .HasColumnType("UUID");
+
+                    b.HasKey("Id");
 
                     b.HasIndex("AchievementTemplateId");
 
@@ -810,9 +672,7 @@ namespace StudHunter.DB.Postgres.Migrations
 
                     b.HasOne("StudHunter.DB.Postgres.Models.User", "User")
                         .WithMany("Favorites")
-                        .HasForeignKey("UserId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
+                        .HasForeignKey("UserId");
 
                     b.HasOne("StudHunter.DB.Postgres.Models.Vacancy", "Vacancy")
                         .WithMany("Favorites")
@@ -871,8 +731,7 @@ namespace StudHunter.DB.Postgres.Migrations
                     b.HasOne("StudHunter.DB.Postgres.Models.Student", "Student")
                         .WithOne("StudyPlan")
                         .HasForeignKey("StudHunter.DB.Postgres.Models.StudyPlan", "StudentId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
+                        .OnDelete(DeleteBehavior.Cascade);
 
                     b.Navigation("Faculty");
 
@@ -910,9 +769,7 @@ namespace StudHunter.DB.Postgres.Migrations
 
                     b.HasOne("StudHunter.DB.Postgres.Models.User", "User")
                         .WithMany("Achievements")
-                        .HasForeignKey("UserId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
+                        .HasForeignKey("UserId");
 
                     b.Navigation("AchievementTemplate");
 
@@ -940,9 +797,7 @@ namespace StudHunter.DB.Postgres.Migrations
 
                     b.HasOne("StudHunter.DB.Postgres.Models.Vacancy", "Vacancy")
                         .WithMany("Courses")
-                        .HasForeignKey("VacancyId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
+                        .HasForeignKey("VacancyId");
 
                     b.Navigation("Course");
 

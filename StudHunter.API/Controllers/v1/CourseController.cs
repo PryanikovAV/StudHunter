@@ -1,27 +1,28 @@
-﻿using Microsoft.AspNetCore.Mvc;
+﻿using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Mvc;
+using StudHunter.API.Controllers.v1.BaseControllers;
 using StudHunter.API.Services;
 
 namespace StudHunter.API.Controllers.v1;
 
 [Route("api/v1/[controller]")]
 [ApiController]
-public class CourseController(CourseService courseService) : ControllerBase
+[Authorize]
+public class CourseController(CourseService courseService) : BaseController
 {
     private readonly CourseService _courseService = courseService;
 
     [HttpGet]
     public async Task<IActionResult> GetAllCourses()
     {
-        var courses = await _courseService.GetAllCoursesAsync();
-        return Ok(courses);
+        var (courses, statusCode, errorMessage) = await _courseService.GetAllCoursesAsync();
+        return this.CreateAPIError(courses, statusCode, errorMessage);
     }
 
     [HttpGet("{id}")]
     public async Task<IActionResult> GetCourse(Guid id)
     {
-        var course = await _courseService.GetCourseAsync(id);
-        if (course == null)
-            return NotFound();
-        return Ok(course);
+        var (course, statusCode, errorMessage) = await _courseService.GetCourseAsync(id);
+        return this.CreateAPIError(course, statusCode, errorMessage);
     }
 }

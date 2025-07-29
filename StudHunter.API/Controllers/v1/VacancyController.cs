@@ -1,5 +1,6 @@
 ﻿using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using StudHunter.API.Controllers.v1.BaseControllers;
 using StudHunter.API.ModelsDto.Vacancy;
 using StudHunter.API.Services;
 
@@ -8,50 +9,39 @@ namespace StudHunter.API.Controllers.v1;
 [Route("api/v1/[controller]")]
 [ApiController]
 [Authorize]
-public class VacancyController(VacancyService vacancyService) : ControllerBase
+public class VacancyController(VacancyService vacancyService) : BaseController
 {
     private readonly VacancyService _vacancyService = vacancyService;
 
     [HttpGet]
     public async Task<IActionResult> GetAllVacancies()
     {
-        var vacancies = await _vacancyService.GetAllVacanciesAsync();
-        return Ok(vacancies);
+        var (vacancies, statusCode, errorMessage) = await _vacancyService.GetAllVacanciesAsync();
+        return this.CreateAPIError(vacancies, statusCode, errorMessage);
     }
 
     [HttpGet("{id}")]
-    public async Task<ActionResult> GetVacancy(Guid id)
+    public async Task<IActionResult> GetVacancy(Guid id)
     {
-        var vacancy = await _vacancyService.GetVacancyAsync(id);
-        if (vacancy == null)
-            return NotFound();
-        return Ok(vacancy);
+        var (vacancy, statusCode, errorMessage) = await _vacancyService.GetVacancyAsync(id);
+        return this.CreateAPIError(vacancy, statusCode, errorMessage);
     }
 
-    /// <summary>
-    /// Retrieves all vacancies for a specific employer.
-    /// </summary>
-    /// <param name="employerId">The unique identifier (GUID) of the employer.</param>
-    /// <returns>A collection of vacancies associated with the employer.</returns>
     [HttpGet("employer/{employerId}/vacancies")]
     public async Task<IActionResult> GetVacanciesByEmployer(Guid employerId)
     {
-        var vacancies = await _vacancyService.GetVacanciesByEmployerAsync(employerId);
-        return Ok(vacancies);
+        var (vacancies, statusCode, errorMessage) = await _vacancyService.GetVacanciesByEmployerAsync(employerId);
+        return this.CreateAPIError(vacancies, statusCode, errorMessage);
     }
 
-    // TODO: Replace Guid.NewGuid(); with User.FindFirstValue(ClaimTypes.NameIdentifier) after implementing JWT
     [HttpPost]
     public async Task<IActionResult> CreateVacancy([FromBody] CreateVacancyDto dto)
     {
         if (!ModelState.IsValid)
             return BadRequest(ModelState);
-
-        var employerId = Guid.NewGuid();
-        var (vacancy, error) = await _vacancyService.CreateVacancyAsync(employerId, dto);
-        if (vacancy == null)
-            return error == null ? NotFound() : BadRequest(new { error });
-        return CreatedAtAction(nameof(GetVacancy), new { id = vacancy.Id }, vacancy);
+        var employerId = Guid.NewGuid();  // TODO: Replace Guid.NewGuid(); with User.FindFirstValue(ClaimTypes.NameIdentifier) after implementing JWT
+        var (vacancy, statusCode, errorMessage) = await _vacancyService.CreateVacancyAsync(employerId, dto);
+        return this.CreateAPIError(vacancy, statusCode, errorMessage, nameof(GetVacancy), new { id = vacancy?.Id });
     }
 
     [HttpPut("{id}")]
@@ -59,11 +49,8 @@ public class VacancyController(VacancyService vacancyService) : ControllerBase
     {
         if (!ModelState.IsValid)
             return BadRequest(ModelState);
-
-        var (success, error) = await _vacancyService.UpdateVacancyAsync(id, dto);
-        if (!success)
-            return error == null ? NotFound() : BadRequest(new { error });
-        return NoContent();
+        var (vacancy, statusCode, errorMessage) = await _vacancyService.UpdateVacancyAsync(id, dto);
+        return this.CreateAPIError<VacancyDto>(vacancy, statusCode, errorMessage);
     }
 
     [HttpPost("{id}/courses")]
@@ -71,11 +58,8 @@ public class VacancyController(VacancyService vacancyService) : ControllerBase
     {
         if (!ModelState.IsValid)
             return BadRequest(ModelState);
-
-        var (success, error) = await _vacancyService.AddCourseToVacancyAsync(id, courseId);
-        if (!success)
-            return error == null ? NotFound() : BadRequest(new { error });
-        return NoContent();
+        var (vacancy, statusCode, errorMessage) = await _vacancyService.AddCourseToVacancyAsync(id, courseId);
+        return this.CreateAPIError<VacancyDto>(vacancy, statusCode, errorMessage);
     }
 
     [HttpPost("{id}/courses/{courseId}")]
@@ -83,19 +67,14 @@ public class VacancyController(VacancyService vacancyService) : ControllerBase
     {
         if (!ModelState.IsValid)
             return BadRequest(ModelState);
-
-        var (success, error) = await _vacancyService.RemoveCourseFromVacancyAsync(id, courseId);
-        if (!success)
-            return error == null ? NotFound() : BadRequest(new { error });
-        return NoContent();
+        var (vacancy, statusCode, errorMessage) = await _vacancyService.RemoveCourseFromVacancyAsync(id, courseId);
+        return this.CreateAPIError<VacancyDto>(vacancy, statusCode, errorMessage);
     }
 
     [HttpDelete("{id}")]
     public async Task<IActionResult> DeleteVacancy(Guid id)
     {
-        var (success, error) = await _vacancyService.DeleteVacancyAsync(id);
-        if (!success)
-            return error == null ? NotFound() : BadRequest(new { error });
-        return NoContent();
+        var (vacancy, statusCode, errorMessage) = await _vacancyService.DeleteVacancyAsync(id);
+        return this.CreateAPIError<VacancyDto>(vacancy, statusCode, errorMessage);
     }
 }

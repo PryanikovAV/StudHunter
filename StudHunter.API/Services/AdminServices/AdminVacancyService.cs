@@ -31,14 +31,15 @@ public class AdminVacancyService(StudHunterDbContext context, UserAchievementSer
             vacancy.Type = Enum.Parse<Vacancy.VacancyType>(dto.Type);
         vacancy.UpdatedAt = DateTime.UtcNow;
 
-        var (success, statusCode, errorMessage) = await SaveChangesAsync("Vacancy");
+        var (success, statusCode, errorMessage) = await SaveChangesAsync<Vacancy>();
 
         return (success, statusCode, errorMessage);
     }
 
     public override async Task<(bool Success, int? StatusCode, string? ErrorMessage)> UpdateVacancyAsync(Guid id, UpdateVacancyDto dto)
     {
-        throw new NotSupportedException("Admins must use AdminUpdateVacancyDto.");
+        return await Task.FromException<(bool Success, int? StatusCode, string? ErrorMessage)>(
+        new NotSupportedException("Admins must use AdminUpdateVacancyDto."));
     }
 
     public async Task<(bool Success, int? StatusCode, string? ErrorMessage)> DeleteVacancyAsync(Guid id, bool hardDelete = false)

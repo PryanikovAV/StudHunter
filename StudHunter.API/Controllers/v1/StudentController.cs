@@ -21,8 +21,6 @@ public class StudentController(StudentService studentService) : BaseController
     /// <response code="200">Returns the student's details.</response>
     /// <response code="404">Student with the specified ID was not found.</response>
     [HttpGet("{id}")]
-    [ProducesResponseType(typeof(StudentDto), StatusCodes.Status200OK)]
-    [ProducesResponseType(StatusCodes.Status404NotFound)]
     public async Task<IActionResult> GetStudent(Guid id)
     {
         var (student, statusCode, errorMessage) = await _studentService.GetStudentAsync(id);
@@ -86,8 +84,6 @@ public class StudentController(StudentService studentService) : BaseController
     [ProducesResponseType(StatusCodes.Status404NotFound)]
     public async Task<IActionResult> DeleteStudent(Guid id)
     {
-        if (!ModelState.IsValid)
-            return BadRequest(ModelState);
         var (success, statusCode, errorMessage) = await _studentService.DeleteStudentAsync(id);
         return this.CreateAPIError<StudentDto>(success, statusCode, errorMessage);
     }

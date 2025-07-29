@@ -56,12 +56,12 @@ public class InvitationConfiguration : IEntityTypeConfiguration<Invitation>
         builder.HasOne(i => i.Sender)
                .WithMany(u => u.SentInvitations)
                .HasForeignKey(i => i.SenderId)
-               .IsRequired();
+               .IsRequired(false);
 
         builder.HasOne(i => i.Receiver)
                .WithMany(u => u.ReceivedInvitations)
                .HasForeignKey(i => i.ReceiverId)
-               .IsRequired();
+               .IsRequired(false);
 
         builder.HasOne(i => i.Vacancy)
                .WithMany(v => v.Invitations)

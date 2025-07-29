@@ -40,7 +40,7 @@ public class StudyPlanConfiguration : IEntityTypeConfiguration<StudyPlan>
         builder.HasOne(sp => sp.Student)
                .WithOne(s => s.StudyPlan)
                .HasForeignKey<StudyPlan>(sp => sp.StudentId)
-               .IsRequired();
+               .IsRequired(false);
 
         builder.HasOne(sp => sp.Faculty)
                .WithMany(f => f.StudyPlans)

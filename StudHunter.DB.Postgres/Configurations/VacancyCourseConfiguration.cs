@@ -30,6 +30,6 @@ public class VacancyCourseConfiguration : IEntityTypeConfiguration<VacancyCourse
         builder.HasOne(vc => vc.Vacancy)
                .WithMany(v => v.Courses)
                .HasForeignKey(vc => vc.VacancyId)
-               .IsRequired();
+               .IsRequired(false);
     }
 }

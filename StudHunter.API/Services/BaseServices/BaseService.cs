@@ -9,7 +9,7 @@ public class BaseService(StudHunterDbContext context)
 {
     protected readonly StudHunterDbContext _context = context;
 
-    protected async Task<(bool Success, int? StatusCode, string? ErrorMessage)> SaveChangesAsync(string entityName)
+    protected async Task<(bool Success, int? StatusCode, string? ErrorMessage)> SaveChangesAsync<T>()
     {
         try
         {
@@ -18,7 +18,7 @@ public class BaseService(StudHunterDbContext context)
         }
         catch (DbUpdateException)
         {
-            return (false, StatusCodes.Status400BadRequest, ErrorMessages.InvalidData(entityName));
+            return (false, StatusCodes.Status400BadRequest, ErrorMessages.InvalidData(typeof(T).Name));
         }
     }
 
@@ -36,7 +36,8 @@ public class BaseService(StudHunterDbContext context)
 
         entity.IsDeleted = true;
 
-        var (success, statusCode, errorMessage) = await SaveChangesAsync(typeof(T).Name);
+        var (success, statusCode, errorMessage) = await SaveChangesAsync<T>();
+
         return (success, statusCode, errorMessage);
     }
 
@@ -51,7 +52,8 @@ public class BaseService(StudHunterDbContext context)
 
         _context.Set<T>().Remove(entity);
 
-        var (success, statusCode, errorMessage) = await SaveChangesAsync(typeof(T).Name);
+        var (success, statusCode, errorMessage) = await SaveChangesAsync<T>();
+
         return (success, statusCode, errorMessage);
     }
 
@@ -77,13 +79,13 @@ public class BaseService(StudHunterDbContext context)
                 #endregion
 
                 softDeletable.IsDeleted = true;
-                var (success, statusCode, errorMessage) = await SaveChangesAsync(typeof(T).Name);
+
+                var (success, statusCode, errorMessage) = await SaveChangesAsync<T>();
 
                 return (success, statusCode, errorMessage);
-
             }
         }
-        
+
         return await HardDeleteEntityAsync<T>(id);
     }
 }

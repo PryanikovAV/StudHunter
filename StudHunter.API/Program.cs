@@ -1,14 +1,23 @@
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Logging;
 using StudHunter.API.Services;
 using StudHunter.API.Services.AdminServices;
 using StudHunter.DB.Postgres;
 using System.Reflection;
 using Microsoft.OpenApi.Models;
+using StudHunter.API.Common;
 
 var builder = WebApplication.CreateBuilder(args);
 
+builder.Services.AddLogging(logging =>
+{
+    logging.AddConsole();
+    logging.AddDebug();
+    logging.SetMinimumLevel(LogLevel.Debug);
+});
+
 builder.Services.AddDbContext<StudHunterDbContext>(options =>
-    options.UseNpgsql(builder.Configuration.GetConnectionString("DefaultConnection")));
+options.UseNpgsql(builder.Configuration.GetConnectionString("DefaultConnection")));
 
 //builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
 //    .AddJwtBearer(options =>
@@ -71,10 +80,16 @@ builder.Services.AddSwaggerGen(c =>
     });
     var xmlFile = $"{Assembly.GetExecutingAssembly().GetName().Name}.xml";
     var xmlPath = Path.Combine(AppContext.BaseDirectory, xmlFile);
-    c.IncludeXmlComments(xmlPath);
+    c.IncludeXmlComments(xmlPath, includeControllerXmlComments: true);
 });
 
 var app = builder.Build();
+
+using (var scope = app.Services.CreateScope())
+{
+    var context = scope.ServiceProvider.GetRequiredService<StudHunterDbContext>();
+    FillAchievements.SeedAchievements(context);
+}
 
 if (app.Environment.IsDevelopment())
 {

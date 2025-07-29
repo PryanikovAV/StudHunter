@@ -14,7 +14,7 @@ public class AdminStudentController(AdminStudentService adminStudentService) : B
     private readonly AdminStudentService _adminStudentService = adminStudentService;
     // TODO: add new documentation
     [HttpGet]
-    [ProducesResponseType(typeof(List<StudentDto>), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(List<AdminStudentDto>), StatusCodes.Status200OK)]
     public async Task<IActionResult> GetAllStudents()
     {
         var (students, statusCode, errorMessage) = await _adminStudentService.GetAllStudentsAsync();
@@ -35,12 +35,10 @@ public class AdminStudentController(AdminStudentService adminStudentService) : B
     [ProducesResponseType(StatusCodes.Status401Unauthorized)]
     [ProducesResponseType(StatusCodes.Status403Forbidden)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
-    public async Task<ActionResult<StudentDto>> GetStudent(Guid id)
+    public async Task<IActionResult> GetStudent(Guid id)
     {
-        var student = await _adminStudentService.GetStudentAsync(id);
-        if (student == null)
-            return NotFound();
-        return Ok(student);
+        var (student, statusCode, errorMessage) = await _adminStudentService.GetStudentAsync(id);
+        return this.CreateAPIError(student, statusCode, errorMessage);
     }
 
     /// <summary>
@@ -64,11 +62,8 @@ public class AdminStudentController(AdminStudentService adminStudentService) : B
     {
         if (!ModelState.IsValid)
             return BadRequest(ModelState);
-
-        var (success, error) = await _adminStudentService.UpdateStudentAsync(id, dto);
-        if (!success)
-            return error == null ? NotFound() : BadRequest(new { error });
-        return NoContent();
+        var (success, statusCode, errorMessage) = await _adminStudentService.UpdateStudentAsync(id, dto);
+        return this.CreateAPIError<AdminStudentDto>(success, statusCode, errorMessage);
     }
 
     /// <summary>
@@ -90,9 +85,7 @@ public class AdminStudentController(AdminStudentService adminStudentService) : B
     [ProducesResponseType(StatusCodes.Status409Conflict)]
     public async Task<IActionResult> DeleteStudent(Guid id, [FromQuery] bool hardDelete = false)
     {
-        var (success, error) = await _adminStudentService.DeleteStudentAsync(id, hardDelete);
-        if (!success)
-            return error == null ? NotFound() : BadRequest(new { error });
-        return NoContent();
+        var (success, statusCode, errorMessage) = await _adminStudentService.DeleteStudentAsync(id, hardDelete);
+        return this.CreateAPIError<AdminStudentDto>(success, statusCode, errorMessage);
     }
 }

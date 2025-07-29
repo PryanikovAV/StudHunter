@@ -25,7 +25,7 @@ public class AdminSpecialityService(StudHunterDbContext context) : SpecialitySer
 
         _context.Specialities.Add(speciality);
 
-        var (success, statusCode, errorMessage) = await SaveChangesAsync("Speciality");
+        var (success, statusCode, errorMessage) = await SaveChangesAsync<Speciality>();
 
         if (!success)
             return (null, statusCode, errorMessage);
@@ -56,7 +56,7 @@ public class AdminSpecialityService(StudHunterDbContext context) : SpecialitySer
         if (dto.Description != null)
             speciality.Description = dto.Description;
 
-        var (success, statusCode, errorMessage) = await SaveChangesAsync("Speciality");
+        var (success, statusCode, errorMessage) = await SaveChangesAsync<Speciality>();
 
         return (success, statusCode, errorMessage);
     }
@@ -69,7 +69,8 @@ public class AdminSpecialityService(StudHunterDbContext context) : SpecialitySer
         if (speciality == null)
             return (false, StatusCodes.Status404NotFound, ErrorMessages.NotFound("Speciality"));
 
-        if (await _context.StudyPlans.AnyAsync(sp => sp.SpecialityId == id))
+        var specialityAssociatedStudyPlans = await _context.StudyPlans.AnyAsync(sp => sp.SpecialityId == id);
+        if (specialityAssociatedStudyPlans)
             return (false, StatusCodes.Status400BadRequest, "Cannot delete speciality associated with study plans");
         #endregion
 

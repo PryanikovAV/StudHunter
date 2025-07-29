@@ -2,5 +2,5 @@
 
 public class AdminUpdateResumeDto : UpdateResumeDto
 {
-    public bool IsDeleted { get; set; }
+    public bool? IsDeleted { get; set; }
 }

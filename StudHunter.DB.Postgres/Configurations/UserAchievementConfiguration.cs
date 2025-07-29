@@ -29,7 +29,7 @@ public class UserAchievementConfiguration : IEntityTypeConfiguration<UserAchieve
         builder.HasOne(ua => ua.User)
                .WithMany(u => u.Achievements)
                .HasForeignKey(ua => ua.UserId)
-               .IsRequired();
+               .IsRequired(false);
 
         builder.HasOne(ua => ua.AchievementTemplate)
                .WithMany(a => a.UserAchievements)

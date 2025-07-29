@@ -34,6 +34,27 @@ public class MessageService(StudHunterDbContext context) : BaseService(context)
         return (messages, null, null);
     }
 
+    public async Task<(MessageDto? Entity, int? StatusCode, string? ErrorMessage)> GetMessageAsync(Guid id, Guid userId)
+    {
+        var message = await _context.Messages
+        .Where(m => m.Id == id && m.SenderId == userId)
+        .Select(m => new MessageDto
+        {
+            Id = m.Id,
+            SenderId = m.SenderId,
+            ReceiverId = m.ReceiverId,
+            Context = m.Context,
+            SentAt = m.SentAt
+        }).FirstOrDefaultAsync();
+
+        #region Serializers
+        if (message == null)
+            return (null, StatusCodes.Status404NotFound, ErrorMessages.NotFound("Favorite"));
+        #endregion
+
+        return (message, null, null);
+    }
+
     public async Task<(MessageDto? Entity, int? StatusCode, string? ErrorMessage)> CreateMessageAsync(Guid senderId, CreateMessageDto dto)
     {
         #region Serializers
@@ -60,7 +81,7 @@ public class MessageService(StudHunterDbContext context) : BaseService(context)
 
         _context.Messages.Add(message);
 
-        var (success, statusCode, errorMessage) = await SaveChangesAsync("Message");
+        var (success, statusCode, errorMessage) = await SaveChangesAsync<Message>();
 
         if (!success)
             return (null, statusCode, errorMessage);

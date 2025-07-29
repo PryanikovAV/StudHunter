@@ -25,7 +25,7 @@ public class AdminFacultyService(StudHunterDbContext context) : FacultyService(c
 
         _context.Faculties.Add(faculty);
 
-        var (success, statusCode, errorMessage) = await SaveChangesAsync("Faculty");
+        var (success, statusCode, errorMessage) = await SaveChangesAsync<Faculty>();
 
         if (!success)
             return (null, statusCode, errorMessage);
@@ -56,7 +56,7 @@ public class AdminFacultyService(StudHunterDbContext context) : FacultyService(c
         if (dto.Description != null)
             faculty.Description = dto.Description;
 
-        var (success, statusCode, errorMessage) = await SaveChangesAsync("Faculty");
+        var (success, statusCode, errorMessage) = await SaveChangesAsync<Faculty>();
 
         return (success, statusCode, errorMessage);
     }

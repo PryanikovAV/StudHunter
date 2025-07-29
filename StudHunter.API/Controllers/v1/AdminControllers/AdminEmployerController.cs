@@ -21,32 +21,25 @@ public class AdminEmployerController(AdminEmployerService adminEmployerService) 
     }
 
     [HttpGet("{id}")]
-    public async Task<ActionResult> GetEmployer(Guid id)
+    public async Task<IActionResult> GetEmployer(Guid id)
     {
-        var employer = await _adminEmployerService.GetEmployerAsync(id);
-        if (employer == null)
-            return NotFound();
-        return Ok(employer);
+        var (employer, statusCode, errorMessage) = await _adminEmployerService.GetEmployerAsync(id);
+        return this.CreateAPIError(employer, statusCode, errorMessage);
     }
 
     [HttpPut("{id}")]
-    public async Task<IActionResult> UpdateEmployerByAdministrator(Guid id, [FromBody] AdminUpdateEmployerDto dto)
+    public async Task<IActionResult> UpdateEmployer(Guid id, [FromBody] AdminUpdateEmployerDto dto)
     {
         if (!ModelState.IsValid)
             return BadRequest(ModelState);
-
-        var (success, error) = await _adminEmployerService.UpdateEmployerAsync(id, dto);
-        if (!success)
-            return error == null ? NotFound() : BadRequest(new { error });
-        return NoContent();
+        var (success, statusCode, errorMessage) = await _adminEmployerService.UpdateEmployerAsync(id, dto);
+        return this.CreateAPIError<AdminEmployerDto>(success, statusCode, errorMessage);
     }
 
     [HttpDelete("{id}")]
-    public async Task<IActionResult> DeleteEmployer(Guid id, [FromQuery] bool hardDelete = false)
+    public async Task<IActionResult> DeleteEmployer(Guid id)
     {
-        var (success, error) = await _adminEmployerService.DeleteEmployerAsync(id, hardDelete);
-        if (!success)
-            return error == null ? NotFound() : BadRequest(new { error });
-        return NoContent();
+        var (success, statusCode, errorMessage) = await _adminEmployerService.DeleteEmployerAsync(id);
+        return this.CreateAPIError<AdminEmployerDto>(success, statusCode, errorMessage);
     }
 }

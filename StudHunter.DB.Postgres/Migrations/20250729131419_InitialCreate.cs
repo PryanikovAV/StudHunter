@@ -22,10 +22,11 @@ namespace StudHunter.DB.Postgres.Migrations
                 schema: "studhunter",
                 columns: table => new
                 {
-                    Id = table.Column<int>(type: "INTEGER", nullable: false)
-                        .Annotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn),
+                    Id = table.Column<Guid>(type: "UUID", nullable: false, defaultValueSql: "gen_random_uuid()"),
+                    OrderNumber = table.Column<int>(type: "INTEGER", nullable: false),
                     Name = table.Column<string>(type: "VARCHAR(255)", maxLength: 255, nullable: false),
                     Description = table.Column<string>(type: "TEXT", maxLength: 1000, nullable: true),
+                    IconUrl = table.Column<string>(type: "VARCHAR(500)", maxLength: 500, nullable: true),
                     Target = table.Column<int>(type: "INTEGER", nullable: false)
                 },
                 constraints: table =>
@@ -154,13 +155,14 @@ namespace StudHunter.DB.Postgres.Migrations
                 schema: "studhunter",
                 columns: table => new
                 {
+                    Id = table.Column<Guid>(type: "UUID", nullable: false, defaultValueSql: "gen_random_uuid()"),
                     UserId = table.Column<Guid>(type: "UUID", nullable: false),
-                    AchievementTemplateId = table.Column<int>(type: "INTEGER", nullable: false),
+                    AchievementTemplateId = table.Column<Guid>(type: "UUID", nullable: false),
                     AchievementAt = table.Column<DateTime>(type: "TIMESTAMP", nullable: false)
                 },
                 constraints: table =>
                 {
-                    table.PrimaryKey("PK_UserAchievements", x => new { x.UserId, x.AchievementTemplateId });
+                    table.PrimaryKey("PK_UserAchievements", x => x.Id);
                     table.ForeignKey(
                         name: "FK_UserAchievements_AchievementTemplates_AchievementTemplateId",
                         column: x => x.AchievementTemplateId,
@@ -252,8 +254,7 @@ namespace StudHunter.DB.Postgres.Migrations
                         column: x => x.VacancyId,
                         principalSchema: "studhunter",
                         principalTable: "Vacancies",
-                        principalColumn: "Id",
-                        onDelete: ReferentialAction.Cascade);
+                        principalColumn: "Id");
                 });
 
             migrationBuilder.CreateTable(
@@ -410,35 +411,6 @@ namespace StudHunter.DB.Postgres.Migrations
 
             migrationBuilder.InsertData(
                 schema: "studhunter",
-                table: "AchievementTemplates",
-                columns: new[] { "Id", "Description", "Name", "Target" },
-                values: new object[,]
-                {
-                    { 1, "Откликнулся на первую вакансию", "Первая попытка", 0 },
-                    { 2, "Начал свою первую стажировку", "Новый путь", 0 },
-                    { 3, "Успешно окончил стажировку", "Ступень вверх", 0 },
-                    { 4, "Полностью заполнил профиль", "Я здесь!", 0 },
-                    { 5, "Получил первое трудоустройство", "Первый шаг в карьере", 0 },
-                    { 6, "Работаю уже 3 месяца", "Опыт копится III", 0 },
-                    { 7, "Работаю уже 6 месяцев", "Опыт копится VI", 0 },
-                    { 8, "Работаю уже 9 месяцев", "Опыт копится IX", 0 },
-                    { 9, "Работаю уже 12 месяцев", "Опыт копится XII", 0 },
-                    { 10, "Получил 10 приглашений от работодателей", "Звезда работодателей", 0 },
-                    { 11, "Прошел 3 разных стажировки", "Профи стажировок", 0 },
-                    { 12, "Получил первый отзыв от работодателя", "Рекомендации", 0 },
-                    { 13, "Заполнил профиль", "Добро пожаловать!", 1 },
-                    { 14, "Разместил первую вакансию", "Работодатель мечты", 1 },
-                    { 15, "10 студентов откликнулись на вакансии", "Популярность растет", 1 },
-                    { 16, "Предоставил стажировку первому студенту", "Первые шаги в наставничестве", 1 },
-                    { 17, "Предоставил стажировки для 10 студентов", "Опытный наставник", 1 },
-                    { 18, "Взял на работу первого студента", "Первая работа", 1 },
-                    { 19, "Нанял 10 студентов", "Крупная компания", 1 },
-                    { 20, "Разместил 10 вакансий", "Активный работодатель", 1 },
-                    { 21, "Получил 10 положительных отзывов от студентов", "Идеальная репутация", 1 }
-                });
-
-            migrationBuilder.InsertData(
-                schema: "studhunter",
                 table: "StudentStatuses",
                 columns: new[] { "Id", "Name" },
                 values: new object[,]
@@ -451,10 +423,10 @@ namespace StudHunter.DB.Postgres.Migrations
                 });
 
             migrationBuilder.CreateIndex(
-                name: "IX_AchievementTemplates_Name",
+                name: "IX_AchievementTemplates_OrderNumber",
                 schema: "studhunter",
                 table: "AchievementTemplates",
-                column: "Name",
+                column: "OrderNumber",
                 unique: true);
 
             migrationBuilder.CreateIndex(

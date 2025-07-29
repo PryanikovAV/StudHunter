@@ -35,7 +35,7 @@ public class AdminService(StudHunterDbContext context, IPasswordHasher passwordH
 
         #region Serializers
         if (administrator == null)
-            return (null, StatusCodes.Status404NotFound, ErrorMessages.NotFound("Administrator"));
+            return (null, StatusCodes.Status404NotFound, ErrorMessages.NotFound("Admin"));
         #endregion
 
         return (new AdminDto
@@ -57,7 +57,7 @@ public class AdminService(StudHunterDbContext context, IPasswordHasher passwordH
         #region Serializers
         var adminExists = await _context.Administrators.AnyAsync(e => e.Email == dto.Email);
         if (adminExists)
-            return (null, StatusCodes.Status409Conflict, ErrorMessages.AlreadyExists("Administrator", "Email"));
+            return (null, StatusCodes.Status409Conflict, ErrorMessages.AlreadyExists("Admin", "Email"));
         #endregion
 
         var administrator = new Administrator
@@ -76,7 +76,7 @@ public class AdminService(StudHunterDbContext context, IPasswordHasher passwordH
 
         _context.Administrators.Add(administrator);
 
-        var (success, statusCode, errorMessage) = await SaveChangesAsync("Administrator");
+        var (success, statusCode, errorMessage) = await SaveChangesAsync<Administrator>();
 
         if (!success)
             return (null, statusCode, errorMessage);
@@ -101,13 +101,13 @@ public class AdminService(StudHunterDbContext context, IPasswordHasher passwordH
 
         #region Serializers
         if (administrator == null)
-            return (false, StatusCodes.Status404NotFound, ErrorMessages.NotFound("Administrator"));
+            return (false, StatusCodes.Status404NotFound, ErrorMessages.NotFound("Admin"));
 
         if (dto.Email != null)
         {
             var adminExists = await _context.Administrators.AnyAsync(e => e.Email == dto.Email && e.Id != id);
             if (adminExists)
-                return (false, StatusCodes.Status409Conflict, ErrorMessages.AlreadyExists("Administrator", "Email"));
+                return (false, StatusCodes.Status409Conflict, ErrorMessages.AlreadyExists("Admin", "Email"));
         }
         #endregion
 
@@ -128,7 +128,7 @@ public class AdminService(StudHunterDbContext context, IPasswordHasher passwordH
         if (dto.AdminLevel != null)
             administrator.AdminLevel = Enum.Parse<Administrator.AdministratorLevel>(dto.AdminLevel);
 
-        var (success, statusCode, errorMessage) = await SaveChangesAsync("Administrator");
+        var (success, statusCode, errorMessage) = await SaveChangesAsync<Administrator>();
 
         return (success, statusCode, errorMessage);
     }

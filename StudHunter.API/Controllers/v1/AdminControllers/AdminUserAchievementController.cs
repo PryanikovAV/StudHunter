@@ -13,11 +13,18 @@ public class AdminUserAchievementController(AdminUserAchievementService adminUse
 {
     private readonly AdminUserAchievementService _adminUserAchievementService = adminUserAchievementService;
 
-    [HttpGet("user-achievements")]
+    [HttpGet]
     public async Task<IActionResult> GetAllUserAchievements()
     {
         var (achievements, statusCode, errorMessage) = await _adminUserAchievementService.GetAllUserAchievementsAsync();
         return this.CreateAPIError(achievements, statusCode, errorMessage);
+    }
+
+    [HttpGet("{userId}/{achievementTemplateOrderNumber}")]
+    public async Task<IActionResult> GetUserAchievement(Guid userId, int achievementTemplateOrderNumber)
+    {
+        var (achievement, statusCode, errorMessage) = await _adminUserAchievementService.GetUserAchievementAsync(userId, achievementTemplateOrderNumber);
+        return this.CreateAPIError(achievement, statusCode, errorMessage);
     }
 
     [HttpPost]
@@ -27,16 +34,13 @@ public class AdminUserAchievementController(AdminUserAchievementService adminUse
             return BadRequest(ModelState);
 
         var (success, statusCode, errorMessage) = await _adminUserAchievementService.GrantAchievementAsync(dto.UserId, dto.AchievementTemplateOrderNumber);
-        if (!success)
-        return CreateAPIError(success, statusCode, errorMessage);
+        return CreateAPIError<UserAchievementDto>(success, statusCode, errorMessage);
     }
 
-    [HttpDelete("user-achievement/{userId}/{achievementTemplateId}")]
-    public async Task<IActionResult> DeleteUserAchievement(Guid userId, Guid achievementTemplateId)
+    [HttpDelete("{userId}/{achievementTemplateOrderNumber}")]
+    public async Task<IActionResult> DeleteUserAchievement(Guid userId, int achievementTemplateOrderNumber)
     {
-        var (success, error) = await _adminUserAchievementService.DeleteUserAchievementAsync(userId, achievementTemplateId);
-        if (!success)
-            return error == null ? NotFound() : BadRequest(new { error });
-        return NoContent();
+        var (success, statusCode, errorMessage) = await _adminUserAchievementService.DeleteUserAchievementAsync(userId, achievementTemplateOrderNumber);
+        return CreateAPIError<UserAchievementDto>(success, statusCode, errorMessage);
     }
 }

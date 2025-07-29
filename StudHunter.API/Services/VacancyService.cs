@@ -100,7 +100,7 @@ public class VacancyService(StudHunterDbContext context, UserAchievementService 
 
         _context.Vacancies.Add(vacancy);
 
-        var (success, statusCode, errorMessage) = await SaveChangesAsync("Vacancy");
+        var (success, statusCode, errorMessage) = await SaveChangesAsync<Vacancy>();
 
         if (!success)
             return (null, statusCode, errorMessage);
@@ -140,7 +140,7 @@ public class VacancyService(StudHunterDbContext context, UserAchievementService 
             vacancy.Type = Enum.Parse<Vacancy.VacancyType>(dto.Type);
         vacancy.UpdatedAt = DateTime.UtcNow;
 
-        var (success, statusCode, errorMessage) = await SaveChangesAsync("Vacancy");
+        var (success, statusCode, errorMessage) = await SaveChangesAsync<Vacancy>();
 
         return (success, statusCode, errorMessage);
     }
@@ -170,7 +170,7 @@ public class VacancyService(StudHunterDbContext context, UserAchievementService 
 
         _context.VacancyCourses.Add(vacancyCourse);
 
-        var (success, statusCode, errorMessage) = await SaveChangesAsync("Vacancy");
+        var (success, statusCode, errorMessage) = await SaveChangesAsync<Vacancy>();
 
         return (success, statusCode, errorMessage);
     }
@@ -186,7 +186,7 @@ public class VacancyService(StudHunterDbContext context, UserAchievementService 
 
         _context.VacancyCourses.Remove(vacancyCourse);
 
-        var (success, statusCode, errorMessage) = await SaveChangesAsync("Vacancy");
+        var (success, statusCode, errorMessage) = await SaveChangesAsync<Vacancy>();
 
         return (success, statusCode, errorMessage);
     }

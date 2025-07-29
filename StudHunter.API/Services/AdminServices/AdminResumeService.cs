@@ -42,7 +42,7 @@ public class AdminResumeService(StudHunterDbContext context, UserAchievementServ
             resume.IsDeleted = dto.IsDeleted.Value;
         resume.UpdatedAt = DateTime.UtcNow;
 
-        var (success, statusCode, errorMessage) = await SaveChangesAsync("Resume");
+        var (success, statusCode, errorMessage) = await SaveChangesAsync<Resume>();
 
         return (success, statusCode, errorMessage);
     }

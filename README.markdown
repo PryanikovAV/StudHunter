@@ -1,97 +1,85 @@
-# StudHunter Database
+# StudHunter API
+
+Проект на стадии разработки. Реализованы:
+- модели БД
+- конфигурации
+- модели Dto
+- сервисы
+- контроллеры и эндпоинты
+- Swagger
+
+Планируется:
+- Логика Achievements
+- jwt authentication
+- CORS
+- ...
 
 ## Требования
-- **.NET SDK**: 9.0
-- **Docker Desktop**
-- **EF Core CLI**:
+
+- .NET 9.0 SDK
+- PostgreSQL 15+
+- Visual Studio 2022 (или IDE поддержкой .NET CLI)
+- Git
+
+## Установка и запуск
+
+1. GitHub:
+   ```bash
+   git clone https://github.com/your-username/StudHunter.git
+   ```
+
+2. Запуск из директории проекта:
+   ```bash
+   cd StudHunter/StudHunter.API
+   ```
+
+3. Установите зависимости:
+   ```bash
+   dotnet restore
+   ```
+
+4. Настройте строку подключения к PostgreSQL в `appsettings.json`:
+   ```json
+   {
+     "ConnectionStrings": {
+       "DefaultConnection": "Host=localhost;Port=5432;Database=studhunter;Username=postgres;Password=your_password"
+     }
+   }
+   ```
+
+5. Создайте базу данных в PostgreSQL:
+   ```sql
+   CREATE DATABASE studhunter;
+   ```
+
+6. Примените миграции для создания схемы базы данных:
+   ```bash
+   dotnet ef database update --project ../StudHunter.DB.Postgres
+   ```
+
+7. Скомпилируйте проект:
+   ```bash
+   dotnet build
+   ```
+
+8. Запустите приложение:
+   ```bash
+   dotnet run
+   ```
+
+9. Откройте Swagger UI в браузере:
+   ```
+   http://localhost:5000/swagger/index.html
+   ```
+
+## Дополнительные команды
+
+- Добавить новую миграцию:
   ```bash
-  dotnet tool install --global dotnet-ef --version 9.0.5
+  dotnet ef migrations add <MigrationName> --project ../StudHunter.DB.Postgres
   ```
 
-## Структура проекта
-- `StudHunter.DB.Postgres`: Содержит `StudHunterDbContext`, модели (`Models`) и конфигурации (`Configurations`).
-- `StudHunter.Migrations`: Содержит миграции EF Core и `StudHunterContextFactory.cs`.
-
-## 1. Запуск базы данных
-
-### 1.1. Запуск Docker-контейнера
-1. В корне проекта запустить контейнер:
-   ```bash
-   docker-compose up -d
-   ```
-   - Флаг `-d` запускает контейнер в фоновом режиме.
-   - Контейнер: `studhunter`, порт: `5433` (маппится на `5432` внутри).
-2. Проверка, что контейнер работает:
-   ```bash
-   docker ps
-   ```
-
-### 1.2. Подключение к базе в PGAdmin (опционально)
-- Параметры подключения:
-  - Host: `localhost`
-  - Port: `5433`
-  - Database: `studhunter`
-  - Username: `postgres`
-  - Password: `postgres`
-- Проверьте схему `studhunter` после применения миграций.
-
-## 2. Применение миграций
-
-### 2.1. Первоначальная настройка
-Если база новая:
-1. Создать миграцию:
-   ```bash
-   dotnet ef migrations add InitialCreate --project StudHunter.Migrations --startup-project StudHunter.Migrations
-   ```
-2. Применить миграцию:
-   ```bash
-   dotnet ef database update --project StudHunter.Migrations --startup-project StudHunter.Migrations
-   ```
-
-### 2.2. Обновление структуры базы данных
-Если изменены модели (например, добавлена сущность):
-1. Обновить `StudHunterDbContext.cs`:
-   ```csharp
-   public DbSet<Project> новая_сущность { get; set; } = null!;
-   ```
-2. (Опционально) Добавить конфигурацию в `StudHunter.DB.Postgres\Configurations`.
-3. Создать миграцию:
-   ```bash
-   dotnet ef migrations add AddProjectTable --project StudHunter.Migrations --startup-project StudHunter.Migrations
-   ```
-4. Применить миграцию:
-   ```bash
-   dotnet ef database update --project StudHunter.Migrations --startup-project StudHunter.Migrations
-   ```
-## 3. Остановка базы данных и сохранение данных
-
-### 3.1. Остановка контейнера
-1. Остановить контейнер:
-   ```bash
-   docker-compose stop
-   ```
-2. Проверка:
-   ```bash
-   docker ps
-   ```
-
-3. Сохранение данных:
-   - Данные сохраняются в томе `studhunter-data`.
-   - При следующем запуске (`docker-compose up -d`) данные доступны.
-
-### 3.2. Полное удаление
-Если нужно очистить базу:
-```bash
-docker-compose down
-docker volume rm studhunter-data
-```
-
-## 4. Резервное копирование
-- Создание бэкапа:
+- Удалить последнюю миграцию:
   ```bash
-  docker exec -t studhunter pg_dump -U postgres studhunter > studhunter_backup.sql
-  ```
-- Восстановление:
-  ```bash
-  docker exec -i studhunter psql -U postgres -d studhunter < studhunter_backup.sql
+  dotnet ef migrations remove --project ../StudHunter.DB.Postgres
   ```
