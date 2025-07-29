@@ -25,7 +25,7 @@
 
 1. GitHub:
    ```bash
-   git clone https://github.com/your-username/StudHunter.git
+   git clone https://github.com/PryanikovAV/StudHunter.git
    ```
 
 2. Запуск из директории проекта:
