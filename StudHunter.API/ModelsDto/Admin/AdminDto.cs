@@ -2,31 +2,71 @@
 
 namespace StudHunter.API.ModelsDto.Admin;
 
+/// <summary>
+/// Data transfer object for an administrator.
+/// </summary>
 public class AdminDto
 {
+    /// <summary>
+    /// The unique identifier (GUID) of the administrator.
+    /// </summary>
     public Guid Id { get; set; }
 
-    public string Role => "Administrator";
+    /// <summary>
+    /// The role of the user (always "Administrator").
+    /// </summary>
+    public string Role { get; } = "Administrator";
 
-    [Required, EmailAddress, MaxLength(100)]
+    /// <summary>
+    /// The administrator's email address.
+    /// </summary>
+    [Required]
+    [StringLength(100)]
+    [EmailAddress]
     public string Email { get; set; } = string.Empty;
 
-    [EmailAddress, MaxLength(100)]
+    /// <summary>
+    /// The administrator's contact email address.
+    /// </summary>
+    [StringLength(100)]
+    [EmailAddress]
     public string? ContactEmail { get; set; }
 
-    [Phone, MaxLength(20)]
+    /// <summary>
+    /// The administrator's contact phone number.
+    /// </summary>
+    [StringLength(20)]
+    [Phone]
     public string? ContactPhone { get; set; }
 
+    /// <summary>
+    /// The date and time the administrator was created.
+    /// </summary>
     public DateTime CreatedAt { get; set; }
 
+    /// <summary>
+    /// Indicates whether the administrator is deleted.
+    /// </summary>
     public bool IsDeleted { get; set; }
 
-    [Required, MaxLength(50)]
+    /// <summary>
+    /// The administrator's first name.
+    /// </summary>
+    [Required]
+    [StringLength(50)]
     public string FirstName { get; set; } = string.Empty;
 
-    [Required, MaxLength(50)]
+    /// <summary>
+    /// The administrator's last name.
+    /// </summary>
+    [Required]
+    [StringLength(50)]
     public string LastName { get; set; } = string.Empty;
 
-    [Required, RegularExpression("SuperAdmin|Moderator", ErrorMessage = "AdminLevel must be 'SuperAdmin' or 'Moderator'")]
+    /// <summary>
+    /// The administrator's level (SuperAdmin or Moderator).
+    /// </summary>
+    [Required]
+    [RegularExpression("SuperAdmin|Moderator")]
     public string AdminLevel { get; set; } = string.Empty;
 }

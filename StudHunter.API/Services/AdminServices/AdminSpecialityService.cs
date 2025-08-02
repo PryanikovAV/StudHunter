@@ -6,14 +6,21 @@ using StudHunter.DB.Postgres.Models;
 
 namespace StudHunter.API.Services.AdminServices;
 
+/// <summary>
+/// Service for managing specialties with administrative privileges.
+/// </summary>
 public class AdminSpecialityService(StudHunterDbContext context) : SpecialityService(context)
 {
+    /// <summary>
+    /// Creates a new specialty.
+    /// </summary>
+    /// <param name="dto">The data transfer object containing specialty details.</param>
+    /// <returns>A tuple containing the created specialty, an optional status code, and an optional error message.</returns>
     public async Task<(SpecialityDto? Entity, int? StatusCode, string? ErrorMessage)> CreateSpecialityAsync(CreateSpecialityDto dto)
     {
         #region Serializers
-        var specialityExists = await _context.Specialities.AnyAsync(s => s.Name == dto.Name);
-        if (specialityExists)
-            return (null, StatusCodes.Status409Conflict, ErrorMessages.AlreadyExists("Speciality", "Name"));
+        if (await _context.Specialities.AnyAsync(s => s.Name == dto.Name))
+            return (null, StatusCodes.Status409Conflict, ErrorMessages.AlreadyExists(nameof(Speciality), "name"));
         #endregion
 
         var speciality = new Speciality
@@ -38,17 +45,22 @@ public class AdminSpecialityService(StudHunterDbContext context) : SpecialitySer
         }, null, null);
     }
 
+    /// <summary>
+    /// Updates an existing specialty.
+    /// </summary>
+    /// <param name="id">The unique identifier (GUID) of the specialty.</param>
+    /// <param name="dto">The data transfer object containing updated specialty details.</param>
+    /// <returns>A tuple indicating whether the update was successful, an optional status code, and an optional error message.</returns>
     public async Task<(bool Success, int? StatusCode, string? ErrorMessage)> UpdateSpecialityAsync(Guid id, UpdateSpecialityDto dto)
     {
-        var speciality = await _context.Specialities.FirstOrDefaultAsync(s => s.Id == id);
+        var speciality = await _context.Specialities.FindAsync(id);
 
         #region Serializers
         if (speciality == null)
-            return (false, StatusCodes.Status404NotFound, ErrorMessages.NotFound("Speciality"));
+            return (false, StatusCodes.Status404NotFound, ErrorMessages.NotFound(nameof(Speciality)));
 
-        var specialityExists = await _context.Specialities.AnyAsync(s => s.Name == dto.Name && s.Id != id);
-        if (specialityExists)
-            return (false, StatusCodes.Status409Conflict, ErrorMessages.AlreadyExists("Speciality", "Name"));
+        if (dto.Name != null && await _context.Specialities.AnyAsync(s => s.Name == dto.Name && s.Id != id))
+            return (false, StatusCodes.Status409Conflict, ErrorMessages.AlreadyExists(nameof(Speciality), "name"));
         #endregion
 
         if (dto.Name != null)
@@ -61,17 +73,16 @@ public class AdminSpecialityService(StudHunterDbContext context) : SpecialitySer
         return (success, statusCode, errorMessage);
     }
 
+    /// <summary>
+    /// Deletes a specialty.
+    /// </summary>
+    /// <param name="id">The unique identifier (GUID) of the specialty.</param>
+    /// <returns>A tuple indicating whether the deletion was successful, an optional status code, and an optional error message.</returns>
     public async Task<(bool Success, int? StatusCode, string? ErrorMessage)> DeleteSpecialityAsync(Guid id)
     {
-        var speciality = await _context.Specialities.FirstOrDefaultAsync(s => s.Id == id);
-
         #region Serializers
-        if (speciality == null)
-            return (false, StatusCodes.Status404NotFound, ErrorMessages.NotFound("Speciality"));
-
-        var specialityAssociatedStudyPlans = await _context.StudyPlans.AnyAsync(sp => sp.SpecialityId == id);
-        if (specialityAssociatedStudyPlans)
-            return (false, StatusCodes.Status400BadRequest, "Cannot delete speciality associated with study plans");
+        if (await _context.StudyPlans.AnyAsync(sp => sp.SpecialityId == id))
+            return (false, StatusCodes.Status400BadRequest, ErrorMessages.CannotDelete(nameof(Speciality), nameof(StudyPlan)));
         #endregion
 
         return await DeleteEntityAsync<Speciality>(id, hardDelete: true);

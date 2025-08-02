@@ -6,8 +6,15 @@ using StudHunter.DB.Postgres.Models;
 
 namespace StudHunter.API.Services.AdminServices;
 
+/// <summary>
+/// Service for managing user achievements with administrative privileges.
+/// </summary>
 public class AdminUserAchievementService(StudHunterDbContext context) : UserAchievementService(context)
 {
+    /// <summary>
+    /// Retrieves all user achievements.
+    /// </summary>
+    /// <returns>A tuple containing a list of all user achievements, an optional status code, and an optional error message.</returns>
     public async Task<(List<UserAchievementDto>? Entities, int? StatusCode, string? ErrorMessage)> GetAllUserAchievementsAsync()
     {
         var userAchievements = await _context.UserAchievements
@@ -28,6 +35,12 @@ public class AdminUserAchievementService(StudHunterDbContext context) : UserAchi
         return (userAchievements, null, null);
     }
 
+    /// <summary>
+    /// Retrieves a specific user achievement by user ID and achievement template order number.
+    /// </summary>
+    /// <param name="userId">The unique identifier (GUID) of the user.</param>
+    /// <param name="orderNumber">The order number of the achievement template.</param>
+    /// <returns>A tuple containing the user achievement, an optional status code, and an optional error message.</returns>
     public async Task<(UserAchievementDto? Entity, int? StatusCode, string? ErrorMessage)> GetUserAchievementAsync(Guid userId, int orderNumber)
     {
         var userAchievement = await _context.UserAchievements
@@ -36,7 +49,7 @@ public class AdminUserAchievementService(StudHunterDbContext context) : UserAchi
 
         #region Serializers
         if (userAchievement == null)
-            return (null, StatusCodes.Status404NotFound, ErrorMessages.NotFound("UserAchievement"));
+            return (null, StatusCodes.Status404NotFound, ErrorMessages.NotFound(nameof(UserAchievement)));
         #endregion
 
         return (new UserAchievementDto
@@ -51,6 +64,12 @@ public class AdminUserAchievementService(StudHunterDbContext context) : UserAchi
         }, null, null);
     }
 
+    /// <summary>
+    /// Deletes a user achievement by user ID and achievement template order number.
+    /// </summary>
+    /// <param name="userId">The unique identifier (GUID) of the user.</param>
+    /// <param name="orderNumber">The order number of the achievement template.</param>
+    /// <returns>A tuple indicating whether the deletion was successful, an optional status code, and an optional error message.</returns>
     public async Task<(bool Success, int? StatusCode, string? ErrorMessage)> DeleteUserAchievementAsync(Guid userId, int orderNumber)
     {
         var userAchievement = await _context.UserAchievements
@@ -59,7 +78,7 @@ public class AdminUserAchievementService(StudHunterDbContext context) : UserAchi
 
         #region Serializers
         if (userAchievement == null)
-            return (false, StatusCodes.Status404NotFound, ErrorMessages.NotFound("UserAchievement"));
+            return (false, StatusCodes.Status404NotFound, ErrorMessages.NotFound(nameof(UserAchievement)));
         #endregion
 
         return await DeleteEntityAsync<UserAchievement>(userAchievement.Id, hardDelete: true);

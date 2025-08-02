@@ -7,8 +7,15 @@ using StudHunter.DB.Postgres.Models;
 
 namespace StudHunter.API.Services.AdminServices;
 
-public class AdminEmployerService(StudHunterDbContext context) : BaseService(context)
+/// <summary>
+/// Service for managing employers with administrative privileges.
+/// </summary>
+public class AdminEmployerService(StudHunterDbContext context, UserAchievementService userAchievementService) : BaseEmployerService(context, userAchievementService)
 {
+    /// <summary>
+    /// Retrieves all employers.
+    /// </summary>
+    /// <returns>A tuple containing a list of all employers, an optional status code, and an optional error message.</returns>
     public async Task<(List<AdminEmployerDto>? Entities, int? StatusCode, string? ErrorMessage)> GetAllEmployersAsync()
     {
         var employers = await _context.Employers
@@ -32,47 +39,24 @@ public class AdminEmployerService(StudHunterDbContext context) : BaseService(con
         return (employers, null, null);
     }
 
-    public async Task<(AdminEmployerDto? Entity, int? StatusCode, string? ErrorMessage)> GetEmployerAsync(Guid id)
-    {
-        var employer = await _context.Employers
-        .Include(e => e.Vacancies)
-        .FirstOrDefaultAsync(e => e.Id == id);
-
-        #region Serializers
-        if (employer == null)
-            return (null, StatusCodes.Status404NotFound, ErrorMessages.NotFound("Employer"));
-        #endregion
-
-        return (new AdminEmployerDto
-        {
-            Id = employer.Id,
-            Email = employer.Email,
-            ContactEmail = employer.ContactEmail,
-            ContactPhone = employer.ContactPhone,
-            CreatedAt = employer.CreatedAt,
-            IsDeleted = employer.IsDeleted,
-            AccreditationStatus = employer.AccreditationStatus,
-            Name = employer.Name,
-            Description = employer.Description,
-            Website = employer.Website,
-            Specialization = employer.Specialization,
-            VacancyIds = employer.Vacancies.Select(v => v.Id).ToList()
-        }, null, null);
-    }
-
+    /// <summary>
+    /// Updates an existing employer.
+    /// </summary>
+    /// <param name="id">The unique identifier (GUID) of the employer.</param>
+    /// <param name="dto">The data transfer object containing updated employer details.</param>
+    /// <returns>A tuple indicating whether the update was successful, an optional status code, and an optional error message.</returns>
     public async Task<(bool Success, int? StatusCode, string? ErrorMessage)> UpdateEmployerAsync(Guid id, AdminUpdateEmployerDto dto)
     {
-        var employer = await _context.Employers.FirstOrDefaultAsync(e => e.Id == id);
+        var employer = await _context.Employers.FindAsync(id);
 
         #region Serializers
         if (employer == null)
-            return (false, StatusCodes.Status404NotFound, ErrorMessages.NotFound("Employer"));
+            return (false, StatusCodes.Status404NotFound, ErrorMessages.NotFound(nameof(Employer)));
 
         if (dto.Email != null)
         {
-            var employerExists = await _context.Employers.AnyAsync(e => e.Email == dto.Email && e.Id != id);
-            if (employerExists)
-                return (false, StatusCodes.Status409Conflict, ErrorMessages.AlreadyExists("Employer", "Email"));
+            if (await _context.Employers.AnyAsync(e => e.Email == dto.Email && e.Id != id))
+                return (false, StatusCodes.Status409Conflict, ErrorMessages.AlreadyExists(nameof(Employer), "email"));
         }
         #endregion
 
@@ -98,6 +82,12 @@ public class AdminEmployerService(StudHunterDbContext context) : BaseService(con
         return (success, statusCode, errorMessage);
     }
 
+    /// <summary>
+    /// Deletes an employer (hard or soft delete).
+    /// </summary>
+    /// <param name="id">The unique identifier (GUID) of the employer.</param>
+    /// <param name="hardDelete">A boolean indicating whether to perform a hard delete (default is false).</param>
+    /// <returns>A tuple indicating whether the deletion was successful, an optional status code, and an optional error message.</returns>
     public async Task<(bool Success, int? StatusCode, string? ErrorMessage)> DeleteEmployerAsync(Guid id, bool hardDelete = false)
     {
         return await DeleteEntityAsync<Employer>(id, hardDelete);

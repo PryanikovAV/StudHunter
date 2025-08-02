@@ -6,86 +6,101 @@ using StudHunter.API.Services.AdminServices;
 
 namespace StudHunter.API.Controllers.v1.AdminControllers;
 
+/// <summary>
+/// Controller for managing students with administrative privileges.
+/// </summary>
 [Route("api/v1/admin/[controller]")]
 [ApiController]
 [Authorize(Roles = "Administrator")]
 public class AdminStudentController(AdminStudentService adminStudentService) : BaseController
 {
     private readonly AdminStudentService _adminStudentService = adminStudentService;
-    // TODO: add new documentation
+
+    /// <summary>
+    /// Retrieves all students.
+    /// </summary>
+    /// <returns>A list of all students.</returns>
+    /// <response code="200">Students retrieved successfully.</response>
+    /// <response code="401">User is not authenticated.</response>
+    /// <response code="403">User lacks Administrator role.</response>
     [HttpGet]
     [ProducesResponseType(typeof(List<AdminStudentDto>), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(object), StatusCodes.Status401Unauthorized)]
+    [ProducesResponseType(typeof(object), StatusCodes.Status403Forbidden)]
     public async Task<IActionResult> GetAllStudents()
     {
         var (students, statusCode, errorMessage) = await _adminStudentService.GetAllStudentsAsync();
-        return this.CreateAPIError(students, statusCode, errorMessage);
+        return CreateAPIError(students, statusCode, errorMessage);
     }
 
     /// <summary>
-    /// Retrieves a student by their unique ID.
+    /// Retrieves a student by their ID.
     /// </summary>
     /// <param name="id">The unique identifier (GUID) of the student.</param>
-    /// <returns>The student's details if found; otherwise, a 404 error.</returns>
-    /// <response code="200">Returns the student's details.</response>
-    /// <response code="401">Unauthorized if the user is not authenticated.</response>
-    /// <response code="403">Forbidden if the user is not an administrator.</response>
-    /// <response code="404">Student with the specified ID was not found.</response>
+    /// <returns>The student.</returns>
+    /// <response code="200">Student retrieved successfully.</response>
+    /// <response code="401">User is not authenticated.</response>
+    /// <response code="403">User lacks Administrator role.</response>
+    /// <response code="404">Student not found.</response>
     [HttpGet("{id}")]
-    [ProducesResponseType(typeof(StudentDto), StatusCodes.Status200OK)]
-    [ProducesResponseType(StatusCodes.Status401Unauthorized)]
-    [ProducesResponseType(StatusCodes.Status403Forbidden)]
-    [ProducesResponseType(StatusCodes.Status404NotFound)]
+    [ProducesResponseType(typeof(AdminStudentDto), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(object), StatusCodes.Status401Unauthorized)]
+    [ProducesResponseType(typeof(object), StatusCodes.Status403Forbidden)]
+    [ProducesResponseType(typeof(object), StatusCodes.Status404NotFound)]
     public async Task<IActionResult> GetStudent(Guid id)
     {
         var (student, statusCode, errorMessage) = await _adminStudentService.GetStudentAsync(id);
-        return this.CreateAPIError(student, statusCode, errorMessage);
+        return CreateAPIError(student, statusCode, errorMessage);
     }
 
     /// <summary>
-    /// Updates an existing student's data as an administrator.
+    /// Updates an existing student.
     /// </summary>
-    /// <param name="id">The unique identifier (GUID) of the student to update.</param>
-    /// <param name="dto">The updated student data.</param>
-    /// <returns>No content if successful; otherwise, an error.</returns>
-    /// <response code="204">Student was updated successfully.</response>
-    /// <response code="401">Unauthorized if the user is not authenticated.</response>
-    /// <response code="403">Forbidden if the user is not an administrator.</response>
-    /// <response code="404">Student with the specified ID was not found.</response>
-    /// <response code="409">Conflict due to duplicate email or invalid data.</response>
+    /// <param name="id">The unique identifier (GUID) of the student.</param>
+    /// <param name="dto">The data transfer object containing updated student details.</param>
+    /// <returns>No content if successful.</returns>
+    /// <response code="204">Student updated successfully.</response>
+    /// <response code="400">Invalid request data or database error.</response>
+    /// <response code="401">User is not authenticated.</response>
+    /// <response code="403">User lacks Administrator role.</response>
+    /// <response code="404">Student, faculty, or speciality not found.</response>
+    /// <response code="409">A student with the specified email already exists.</response>
     [HttpPut("{id}")]
     [ProducesResponseType(StatusCodes.Status204NoContent)]
-    [ProducesResponseType(StatusCodes.Status401Unauthorized)]
-    [ProducesResponseType(StatusCodes.Status403Forbidden)]
-    [ProducesResponseType(StatusCodes.Status404NotFound)]
-    [ProducesResponseType(StatusCodes.Status409Conflict)]
+    [ProducesResponseType(typeof(object), StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(typeof(object), StatusCodes.Status401Unauthorized)]
+    [ProducesResponseType(typeof(object), StatusCodes.Status403Forbidden)]
+    [ProducesResponseType(typeof(object), StatusCodes.Status404NotFound)]
+    [ProducesResponseType(typeof(object), StatusCodes.Status409Conflict)]
     public async Task<IActionResult> UpdateStudent(Guid id, [FromBody] AdminUpdateStudentDto dto)
     {
         if (!ModelState.IsValid)
-            return BadRequest(ModelState);
+            return BadRequest(new { error = "Invalid request data." });
+
         var (success, statusCode, errorMessage) = await _adminStudentService.UpdateStudentAsync(id, dto);
-        return this.CreateAPIError<AdminStudentDto>(success, statusCode, errorMessage);
+        return CreateAPIError<AdminStudentDto>(success, statusCode, errorMessage);
     }
 
     /// <summary>
-    /// Deletes a student by their unique ID.
+    /// Deletes a student (hard or soft delete).
     /// </summary>
-    /// <param name="id">The unique identifier (GUID) of the student to delete.</param>
-    /// <param name="hardDelete">Query parameter indicating the deletion option: hard or soft deletion.</param>
-    /// <returns>No content if successful; otherwise, an error.</returns>
-    /// <response code="204">Student was deleted successfully.</response>
-    /// <response code="401">Unauthorized if the user is not authenticated.</response>
-    /// <response code="403">Forbidden if the user is not an administrator.</response>
-    /// <response code="404">Student with the specified ID was not found.</response>
-    /// <response code="409">Conflict due to dependencies or other issues.</response>
+    /// <param name="id">The unique identifier (GUID) of the student.</param>
+    /// <param name="hardDelete">A boolean indicating whether to perform a hard delete (true) or soft delete (false).</param>
+    /// <returns>No content if successful.</returns>
+    /// <response code="204">Student deleted successfully.</response>
+    /// <response code="400">Invalid request data or database error.</response>
+    /// <response code="401">User is not authenticated.</response>
+    /// <response code="403">User lacks Administrator role.</response>
+    /// <response code="404">Student not found.</response>
     [HttpDelete("{id}")]
     [ProducesResponseType(StatusCodes.Status204NoContent)]
-    [ProducesResponseType(StatusCodes.Status401Unauthorized)]
-    [ProducesResponseType(StatusCodes.Status403Forbidden)]
-    [ProducesResponseType(StatusCodes.Status404NotFound)]
-    [ProducesResponseType(StatusCodes.Status409Conflict)]
+    [ProducesResponseType(typeof(object), StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(typeof(object), StatusCodes.Status401Unauthorized)]
+    [ProducesResponseType(typeof(object), StatusCodes.Status403Forbidden)]
+    [ProducesResponseType(typeof(object), StatusCodes.Status404NotFound)]
     public async Task<IActionResult> DeleteStudent(Guid id, [FromQuery] bool hardDelete = false)
     {
         var (success, statusCode, errorMessage) = await _adminStudentService.DeleteStudentAsync(id, hardDelete);
-        return this.CreateAPIError<AdminStudentDto>(success, statusCode, errorMessage);
+        return CreateAPIError<AdminStudentDto>(success, statusCode, errorMessage);
     }
 }

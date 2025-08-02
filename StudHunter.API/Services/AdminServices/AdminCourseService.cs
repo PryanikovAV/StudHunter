@@ -6,14 +6,21 @@ using StudHunter.DB.Postgres.Models;
 
 namespace StudHunter.API.Services.AdminServices;
 
+/// <summary>
+/// Service for managing courses with administrative privileges.
+/// </summary>
 public class AdminCourseService(StudHunterDbContext context) : CourseService(context)
 {
+    /// <summary>
+    /// Creates a new course.
+    /// </summary>
+    /// <param name="dto">The data transfer object containing course details.</param>
+    /// <returns>A tuple containing the created course, an optional status code, and an optional error message.</returns>
     public async Task<(CourseDto? Entity, int? StatusCode, string? ErrorMessage)> CreateCourseAsync(CreateCourseDto dto)
     {
         #region Serializers
-        var nameExists = await _context.Courses.AnyAsync(c => c.Name == dto.Name);
-        if (nameExists)
-            return (null, StatusCodes.Status409Conflict, ErrorMessages.AlreadyExists("Course", "Name"));
+        if (await _context.Courses.AnyAsync(c => c.Name == dto.Name))
+            return (null, StatusCodes.Status409Conflict, ErrorMessages.AlreadyExists(nameof(Course), "name"));
         #endregion
 
         var course = new Course
@@ -38,17 +45,25 @@ public class AdminCourseService(StudHunterDbContext context) : CourseService(con
         }, null, null);
     }
 
+    /// <summary>
+    /// Updates an existing course.
+    /// </summary>
+    /// <param name="id">The unique identifier (GUID) of the course.</param>
+    /// <param name="dto">The data transfer object containing updated course details.</param>
+    /// <returns>A tuple indicating whether the update was successful, an optional status code, and an optional error message.</returns>
     public async Task<(bool Success, int? StatusCode, string? ErrorMessage)> UpdateCourseAsync(Guid id, UpdateCourseDto dto)
     {
-        var course = await _context.Courses.FirstOrDefaultAsync(c => c.Id == id);
+        var course = await _context.Courses.FindAsync(id);
 
         #region Serializers
         if (course == null)
-            return (false, StatusCodes.Status404NotFound, ErrorMessages.NotFound("Course"));
+            return (false, StatusCodes.Status404NotFound, ErrorMessages.NotFound(nameof(Course)));
 
-        var nameExists = await _context.Courses.AnyAsync(c => c.Name == dto.Name && c.Id != id);
-        if (nameExists)
-            return (false, StatusCodes.Status409Conflict, ErrorMessages.AlreadyExists("Course", "Name"));
+        if (dto.Name != null)
+        {
+            if (await _context.Courses.AnyAsync(c => c.Name == dto.Name && c.Id != id))
+                return (false, StatusCodes.Status409Conflict, ErrorMessages.AlreadyExists(nameof(Course), "name"));
+        }
         #endregion
 
         if (dto.Name != null)
@@ -61,18 +76,19 @@ public class AdminCourseService(StudHunterDbContext context) : CourseService(con
         return (success, statusCode, errorMessage);
     }
 
+    /// <summary>
+    /// Deletes a course.
+    /// </summary>
+    /// <param name="id">The unique identifier (GUID) of the course.</param>
+    /// <returns>A tuple indicating whether the deletion was successful, an optional status code, and an optional error message.</returns>
     public async Task<(bool Success, int? StatusCode, string? ErrorMessage)> DeleteCourseAsync(Guid id)
     {
-        var course = await _context.Courses.FirstOrDefaultAsync(c => c.Id == id);
-
         #region Serializers
-        var courseAssociatedVacancy = await _context.VacancyCourses.AnyAsync(vc => vc.CourseId == id);
-        if (courseAssociatedVacancy)
-            return (false, StatusCodes.Status400BadRequest, "Cannot delete course associated with vacancies");
+        if (await _context.VacancyCourses.AnyAsync(vc => vc.CourseId == id))
+            return (false, StatusCodes.Status400BadRequest, ErrorMessages.CannotDelete(nameof(Course), nameof(Vacancy)));
 
-        var courseAssociatedStudyPlan = await _context.StudyPlanCourses.AnyAsync(spc => spc.CourseId == id);
-        if (courseAssociatedStudyPlan)
-            return (false, StatusCodes.Status400BadRequest, "Cannot delete course associated with study plans");
+        if (await _context.StudyPlanCourses.AnyAsync(spc => spc.CourseId == id))
+            return (false, StatusCodes.Status400BadRequest, ErrorMessages.CannotDelete(nameof(Course), nameof(StudyPlan)));
         #endregion
 
         return await DeleteEntityAsync<Course>(id, hardDelete: true);

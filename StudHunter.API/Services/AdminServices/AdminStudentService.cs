@@ -8,8 +8,15 @@ using StudHunter.DB.Postgres.Models;
 
 namespace StudHunter.API.Services.AdminServices;
 
-public class AdminStudentService(StudHunterDbContext context) : BaseService(context)
+/// <summary>
+/// Service for managing students with administrative privileges.
+/// </summary>
+public class AdminStudentService(StudHunterDbContext context, UserAchievementService userAchievementService) : BaseStudentService(context, userAchievementService)
 {
+    /// <summary>
+    /// Retrieves all students.
+    /// </summary>
+    /// <returns>A tuple containing a list of all students, an optional status code, and an optional error message.</returns>
     public async Task<(List<AdminStudentDto>? Entities, int? StatusCode, string? ErrorMessage)> GetAllStudentsAsync()
     {
         var students = await _context.Students
@@ -47,58 +54,18 @@ public class AdminStudentService(StudHunterDbContext context) : BaseService(cont
                 AchievementName = userAchievement.AchievementTemplate.Name,
                 AchievementDescription = userAchievement.AchievementTemplate.Description
             }).ToList()
-        }).ToListAsync();
+        })
+        .ToListAsync();
 
         return (students, null, null);
     }
 
-    public async Task<(AdminStudentDto? Entity, int? StatusCode, string? ErrorMessage)> GetStudentAsync(Guid id)
-    {
-        var student = await _context.Students
-        .Include(s => s.Resume)
-        .Include(s => s.StudyPlan)
-        .Include(s => s.Achievements)
-        .ThenInclude(ua => ua.AchievementTemplate)
-        .FirstOrDefaultAsync(s => s.Id == id);
-
-        #region Serializers
-        if (student == null)
-            return (null, StatusCodes.Status404NotFound, ErrorMessages.NotFound("Student"));
-        #endregion
-
-        return (new AdminStudentDto
-        {
-            Id = student.Id,
-            FirstName = student.FirstName,
-            LastName = student.LastName,
-            Email = student.Email,
-            Gender = student.Gender.ToString(),
-            BirthDate = student.BirthDate,
-            Photo = student.Photo,
-            ContactPhone = student.ContactPhone,
-            ContactEmail = student.ContactEmail,
-            IsForeign = student.IsForeign,
-            StatusId = student.StatusId,
-            ResumeId = student.Resume != null ? student.Resume.Id : null,
-            CreatedAt = student.CreatedAt,
-            IsDeleted = student.IsDeleted,
-            CourseNumber = student.StudyPlan.CourseNumber,
-            FacultyId = student.StudyPlan.FacultyId,
-            SpecialityId = student.StudyPlan.SpecialityId,
-            StudyForm = student.StudyPlan.StudyForm.ToString(),
-            BeginYear = student.StudyPlan.BeginYear,
-            Achievements = student.Achievements.Select(userAchievement => new UserAchievementDto
-            {
-                Id = userAchievement.Id,
-                UserId = userAchievement.UserId,
-                AchievementTemplateOrderNumber = userAchievement.AchievementTemplate.OrderNumber,
-                AchievementAt = userAchievement.AchievementAt,
-                AchievementName = userAchievement.AchievementTemplate.Name,
-                AchievementDescription = userAchievement.AchievementTemplate.Description
-            }).ToList()
-        }, null, null);
-    }
-
+    /// <summary>
+    /// Updates an existing student and their study plan.
+    /// </summary>
+    /// <param name="id">The unique identifier (GUID) of the student.</param>
+    /// <param name="dto">The data transfer object containing updated student details.</param>
+    /// <returns>A tuple indicating whether the update was successful, an optional status code, and an optional error message.</returns>
     public async Task<(bool Success, int? StatusCode, string? ErrorMessage)> UpdateStudentAsync(Guid id, AdminUpdateStudentDto dto)
     {
         var student = await _context.Students
@@ -107,27 +74,24 @@ public class AdminStudentService(StudHunterDbContext context) : BaseService(cont
 
         #region Serializers
         if (student == null)
-            return (false, StatusCodes.Status404NotFound, ErrorMessages.NotFound("Student"));
+            return (false, StatusCodes.Status404NotFound, ErrorMessages.NotFound(nameof(Student)));
 
         if (dto.Email != null)
         {
-            var studentExists = await _context.Students.AnyAsync(s => s.Email == dto.Email && s.Id != id);
-            if (studentExists)
-                return (false, StatusCodes.Status409Conflict, ErrorMessages.AlreadyExists("Student", "Email"));
+            if (await _context.Students.AnyAsync(s => s.Email == dto.Email && s.Id != id && !s.IsDeleted))
+                return (false, StatusCodes.Status409Conflict, ErrorMessages.AlreadyExists(nameof(Student), "email"));
         }
 
         if (dto.FacultyId.HasValue)
         {
-            var facultyExists = await _context.Faculties.AnyAsync(f => f.Id == dto.FacultyId.Value);
-            if (facultyExists == false)
-                return (false, StatusCodes.Status404NotFound, ErrorMessages.NotFound("Faculty"));
+            if (!await _context.Faculties.AnyAsync(f => f.Id == dto.FacultyId.Value))
+                return (false, StatusCodes.Status404NotFound, ErrorMessages.NotFound(nameof(Faculty)));
         }
 
         if (dto.SpecialityId.HasValue)
         {
-            var specialityExists = await _context.Specialities.AnyAsync(s => s.Id == dto.SpecialityId.Value);
-            if (specialityExists)
-                return (false, StatusCodes.Status404NotFound, ErrorMessages.NotFound("Speciality"));
+            if (!await _context.Specialities.AnyAsync(s => s.Id == dto.SpecialityId.Value))
+                return (false, StatusCodes.Status404NotFound, ErrorMessages.NotFound(nameof(Speciality)));
         }
         #endregion
 
@@ -172,6 +136,12 @@ public class AdminStudentService(StudHunterDbContext context) : BaseService(cont
         return (success, statusCode, errorMessage);
     }
 
+    /// <summary>
+    /// Deletes a student (hard or soft delete).
+    /// </summary>
+    /// <param name="id">The unique identifier (GUID) of the student.</param>
+    /// <param name="hardDelete">A boolean indicating whether to perform a hard delete (true) or soft delete (false).</param>
+    /// <returns>A tuple indicating whether the deletion was successful, an optional status code, and an optional error message.</returns>
     public async Task<(bool Success, int? StatusCode, string? ErrorMessage)> DeleteStudentAsync(Guid id, bool hardDelete = false)
     {
         return await DeleteEntityAsync<Student>(id, hardDelete);

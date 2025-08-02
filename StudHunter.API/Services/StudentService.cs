@@ -1,90 +1,36 @@
 ﻿using Microsoft.EntityFrameworkCore;
 using StudHunter.API.Common;
 using StudHunter.API.ModelsDto.Student;
-using StudHunter.API.ModelsDto.UserAchievement;
 using StudHunter.API.Services.BaseServices;
 using StudHunter.DB.Postgres;
 using StudHunter.DB.Postgres.Models;
 
 namespace StudHunter.API.Services;
 
-public class StudentService(StudHunterDbContext context, IPasswordHasher passwordHasher) : BaseService(context)
+/// <summary>
+/// Service for managing students.
+/// </summary>
+public class StudentService(StudHunterDbContext context, UserAchievementService userAchievementService, IPasswordHasher passwordHasher)
+    : BaseStudentService(context, userAchievementService)
 {
     private readonly IPasswordHasher _passwordHasher = passwordHasher;
 
     /// <summary>
-    /// Retrieves a student by their ID, including related resume, study plan and achievements.
+    /// Creates a new student and their study plan.
     /// </summary>
-    /// <param name="id">The unique identifier (GUID) of the student.</param>
-    /// <returns>The student's detaild or null if not found.</returns>
-    public async Task<(StudentDto? Entity, int? StatusCode, string? ErrorMessage)> GetStudentAsync(Guid id)
-    {
-        var student = await _context.Students
-        .Include(s => s.Resume)
-        .Include(s => s.StudyPlan)
-        .Include(s => s.Achievements)
-        .ThenInclude(ua => ua.AchievementTemplate)
-        .FirstOrDefaultAsync(s => s.Id == id && !s.IsDeleted);
-
-        #region Serializers
-        if (student == null)
-            return (null, StatusCodes.Status404NotFound, ErrorMessages.NotFound("Student"));
-
-        if (student.StudyPlan == null)
-            return (null, StatusCodes.Status404NotFound, ErrorMessages.NotFound("Study plan"));
-        #endregion
-
-        return (new StudentDto
-        {
-            Id = student.Id,
-            FirstName = student.FirstName,
-            LastName = student.LastName,
-            Email = student.Email,
-            Gender = student.Gender.ToString(),
-            BirthDate = student.BirthDate,
-            Photo = student.Photo,
-            ContactPhone = student.ContactPhone,
-            ContactEmail = student.ContactEmail,
-            IsForeign = student.IsForeign,
-            StatusId = student.StatusId,
-            ResumeId = student.Resume != null ? student.Resume.Id : null,
-            CreatedAt = student.CreatedAt,
-            CourseNumber = student.StudyPlan.CourseNumber,
-            FacultyId = student.StudyPlan.FacultyId,
-            SpecialityId = student.StudyPlan.SpecialityId,
-            StudyForm = student.StudyPlan.StudyForm.ToString(),
-            BeginYear = student.StudyPlan.BeginYear,
-            Achievements = student.Achievements.Select(userAchievement => new UserAchievementDto
-            {
-                Id = userAchievement.Id,
-                UserId = userAchievement.UserId,
-                AchievementTemplateOrderNumber = userAchievement.AchievementTemplate.OrderNumber,
-                AchievementAt = userAchievement.AchievementAt,
-                AchievementName = userAchievement.AchievementTemplate.Name,
-                AchievementDescription = userAchievement.AchievementTemplate.Description
-            }).ToList()
-        }, null, null);
-    }
-
-    /// <summary>
-    /// Creates a new student with associated study plan.
-    /// </summary>
-    /// <param name="dto">The student data to create, including study plan details.</param>
-    /// <returns>A tuple containing the created student's details or null and an error message if creation fails.</returns>
+    /// <param name="dto">The data transfer object containing student details.</param>
+    /// <returns>A tuple containing the created student, an optional status code, and an optional error message.</returns>
     public async Task<(StudentDto? Entity, int? StatusCode, string? ErrorMessage)> CreateStudentAsync(CreateStudentDto dto)
     {
         #region Serializers
-        var emailExists = await _context.Students.FirstOrDefaultAsync(s => s.Email == dto.Email);
-        if (emailExists != null)
-            return (null, StatusCodes.Status409Conflict, ErrorMessages.AlreadyExists("Student", "Email"));
+        if (await _context.Students.AnyAsync(s => s.Email == dto.Email && !s.IsDeleted))
+            return (null, StatusCodes.Status409Conflict, ErrorMessages.AlreadyExists(nameof(Student), "email"));
 
-        var facultyExists = await _context.Faculties.FirstOrDefaultAsync(f => f.Id == dto.FacultyId);
-        if (facultyExists == null)
-            return (null, StatusCodes.Status404NotFound, ErrorMessages.NotFound("Faculty"));
+        if (!await _context.Faculties.AnyAsync(f => f.Id == dto.FacultyId))
+            return (null, StatusCodes.Status404NotFound, ErrorMessages.NotFound(nameof(Faculty)));
 
-        var specialityExists = await _context.Specialities.FirstOrDefaultAsync(s => s.Id == dto.SpecialityId);
-        if (specialityExists == null)
-            return (null, StatusCodes.Status404NotFound, ErrorMessages.NotFound("Speciality"));
+        if (!await _context.Specialities.AnyAsync(s => s.Id == dto.SpecialityId))
+            return (null, StatusCodes.Status404NotFound, ErrorMessages.NotFound(nameof(Speciality)));
         #endregion
 
         var student = new Student
@@ -148,40 +94,37 @@ public class StudentService(StudHunterDbContext context, IPasswordHasher passwor
     }
 
     /// <summary>
-    /// Updates an existing student's data, including studt plan details.
+    /// Updates an existing student and their study plan.
     /// </summary>
-    /// <param name="id">The unique identifier (GUID) of the student to update.</param>
-    /// <param name="dto">The updated student data.</param>
-    /// <returns>A tuple indicating whether the update was successful and an optional error message.</returns>
+    /// <param name="id">The unique identifier (GUID) of the student.</param>
+    /// <param name="dto">The data transfer object containing updated student details.</param>
+    /// <returns>A tuple indicating whether the update was successful, an optional status code, and an optional error message.</returns>
     public async Task<(bool Success, int? StatusCode, string? ErrorMessage)> UpdateStudentAsync(Guid id, UpdateStudentDto dto)
     {
         var student = await _context.Students
         .Include(s => s.StudyPlan)
-        .FirstOrDefaultAsync(s => s.Id == id);
+        .FirstOrDefaultAsync(s => s.Id == id && !s.IsDeleted);
 
         #region Serializers
         if (student == null)
-            return (false, StatusCodes.Status404NotFound, ErrorMessages.NotFound("Student"));
+            return (false, StatusCodes.Status404NotFound, ErrorMessages.NotFound(nameof(Student)));
 
         if (dto.Email != null)
         {
-            var emailExists = await _context.Students.AnyAsync(s => s.Email == dto.Email && s.Id != id);
-            if (emailExists)
-                return (false, StatusCodes.Status409Conflict, ErrorMessages.AlreadyExists("Student", "Email"));
+            if (await _context.Students.AnyAsync(s => s.Email == dto.Email && s.Id != id && !s.IsDeleted))
+                return (false, StatusCodes.Status409Conflict, ErrorMessages.AlreadyExists(nameof(Student), "email"));
         }
 
         if (dto.FacultyId.HasValue)
         {
-            var facultyExists = await _context.Faculties.AnyAsync(f => f.Id == dto.FacultyId.Value);
-            if (facultyExists == false)
-                return (false, StatusCodes.Status404NotFound, ErrorMessages.NotFound("Faculty"));
+            if (!await _context.Faculties.AnyAsync(f => f.Id == dto.FacultyId.Value))
+                return (false, StatusCodes.Status404NotFound, ErrorMessages.NotFound(nameof(Faculty)));
         }
 
         if (dto.SpecialityId.HasValue)
         {
-            var specialityExists = await _context.Specialities.AnyAsync(s => s.Id == dto.SpecialityId.Value);
-            if (specialityExists == false)
-                return (false, StatusCodes.Status404NotFound, ErrorMessages.NotFound("Speciality"));
+            if (!await _context.Specialities.AnyAsync(s => s.Id == dto.SpecialityId.Value))
+                return (false, StatusCodes.Status404NotFound, ErrorMessages.NotFound(nameof(Speciality)));
         }
         #endregion
 
@@ -228,8 +171,13 @@ public class StudentService(StudHunterDbContext context, IPasswordHasher passwor
         return (success, statusCode, errorMessage);
     }
 
+    /// <summary>
+    /// Deletes a student (soft delete).
+    /// </summary>
+    /// <param name="id">The unique identifier (GUID) of the student.</param>
+    /// <returns>A tuple indicating whether the deletion was successful, an optional status code, and an optional error message.</returns>
     public async Task<(bool Success, int? StatusCode, string? ErrorMessage)> DeleteStudentAsync(Guid id)
     {
-        return await SoftDeleteEntityAsync<Student>(id);
+        return await DeleteEntityAsync<Student>(id);
     }
 }

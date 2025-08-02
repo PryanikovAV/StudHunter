@@ -5,10 +5,18 @@ using StudHunter.DB.Postgres.Interfaces;
 
 namespace StudHunter.API.Services.BaseServices;
 
+/// <summary>
+/// Base service with common database operations.
+/// </summary>
 public class BaseService(StudHunterDbContext context)
 {
     protected readonly StudHunterDbContext _context = context;
 
+    /// <summary>
+    /// Saves changes to the database.
+    /// </summary>
+    /// <typeparam name="T">The type of the entity.</typeparam>
+    /// <returns>A tuple indicating whether the save was successful, an optional status code, and an optional error message.</returns>
     protected async Task<(bool Success, int? StatusCode, string? ErrorMessage)> SaveChangesAsync<T>()
     {
         try
@@ -22,70 +30,41 @@ public class BaseService(StudHunterDbContext context)
         }
     }
 
-    protected async Task<(bool Success, int? StatusCode, string? ErrorMessage)> SoftDeleteEntityAsync<T>(Guid id) where T : class, ISoftDeletable
-    {
-        var entity = await _context.Set<T>().FirstOrDefaultAsync(e => e.Id == id && !e.IsDeleted);
-
-        #region Serializers
-        if (entity == null)
-            return (false, StatusCodes.Status404NotFound, ErrorMessages.NotFound(typeof(T).Name));
-
-        if (entity.IsDeleted)
-            return (false, StatusCodes.Status410Gone, ErrorMessages.AlreadyDeleted(typeof(T).Name));
-        #endregion
-
-        entity.IsDeleted = true;
-
-        var (success, statusCode, errorMessage) = await SaveChangesAsync<T>();
-
-        return (success, statusCode, errorMessage);
-    }
-
-    protected async Task<(bool Success, int? StatusCode, string? ErrorMessage)> HardDeleteEntityAsync<T>(Guid id) where T : class, IEntity
-    {
-        var entity = await _context.Set<T>().FindAsync(id);
-
-        #region Serializers
-        if (entity == null)
-            return (false, StatusCodes.Status404NotFound, ErrorMessages.NotFound(typeof(T).Name));
-        #endregion
-
-        _context.Set<T>().Remove(entity);
-
-        var (success, statusCode, errorMessage) = await SaveChangesAsync<T>();
-
-        return (success, statusCode, errorMessage);
-    }
-
+    /// <summary>
+    /// Deletes an entity, using soft delete if supported, otherwise hard delete.
+    /// </summary>
+    /// <typeparam name="T">The type of the entity, implementing IEntity.</typeparam>
+    /// <param name="id">The unique identifier (GUID) of the entity.</param>
+    /// <param name="hardDelete">A boolean indicating whether to perform a hard delete (true) or soft delete (false).</param>
+    /// <returns>A tuple indicating whether the deletion was successful, an optional status code, and an optional error message.</returns>
     public async Task<(bool Success, int? StatusCode, string? ErrorMessage)> DeleteEntityAsync<T>(Guid id, bool hardDelete = false) where T : class, IEntity
     {
-        if (hardDelete)
-            return await HardDeleteEntityAsync<T>(id);
+        var entity = await _context.Set<T>().FindAsync(id);
+        
+        #region Serializers
+        if (entity == null)
+            return (false, StatusCodes.Status404NotFound, ErrorMessages.NotFound(typeof(T).Name));
+        #endregion
 
+        if (hardDelete)
+        {
+            _context.Set<T>().Remove(entity);
+            return await SaveChangesAsync<T>();
+        }
+        
         if (typeof(ISoftDeletable).IsAssignableFrom(typeof(T)))
         {
-            var entity = await _context.Set<T>().FirstOrDefaultAsync(e => e.Id == id);
+            var softDelitable = (ISoftDeletable)entity;
 
             #region Serializers
-            if (entity == null)
-                return (false, StatusCodes.Status404NotFound, ErrorMessages.NotFound(typeof(T).Name));
+            if (softDelitable.IsDeleted)
+                return (false, StatusCodes.Status410Gone, ErrorMessages.AlreadyDeleted(typeof(T).Name));
             #endregion
 
-            if (entity is ISoftDeletable softDeletable)
-            {
-                #region Serializers
-                if (softDeletable.IsDeleted)
-                    return (false, StatusCodes.Status410Gone, ErrorMessages.AlreadyDeleted(typeof(T).Name));
-                #endregion
-
-                softDeletable.IsDeleted = true;
-
-                var (success, statusCode, errorMessage) = await SaveChangesAsync<T>();
-
-                return (success, statusCode, errorMessage);
-            }
+            softDelitable.IsDeleted = true;
+            return await SaveChangesAsync<T>();
         }
 
-        return await HardDeleteEntityAsync<T>(id);
+        return (false, StatusCodes.Status400BadRequest, $"Soft delete is not supported for {typeof(T).Name.ToLower()}");
     }
 }

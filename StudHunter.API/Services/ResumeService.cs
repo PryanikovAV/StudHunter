@@ -7,49 +7,31 @@ using StudHunter.DB.Postgres.Models;
 
 namespace StudHunter.API.Services;
 
-public class ResumeService(StudHunterDbContext context, UserAchievementService userAchievementService) : BaseService(context)
+/// <summary>
+/// Service for managing resumes.
+/// </summary>
+public class ResumeService(StudHunterDbContext context, UserAchievementService userAchievementService) : BaseResumeService(context, userAchievementService)
 {
-    public UserAchievementService _userAchievementService = userAchievementService;
-
-    public async Task<(ResumeDto? Entity, int? StatusCode, string? ErrorMessage)> GetResumeAsync(Guid userId)
-    {
-        var resume = await _context.Resumes.FirstOrDefaultAsync(r => r.Id == userId);
-
-        #region Serializers
-        if (resume == null)
-            return (null, StatusCodes.Status404NotFound, ErrorMessages.NotFound("Resume"));
-
-        if (resume.IsDeleted)
-            return (null, StatusCodes.Status410Gone, ErrorMessages.AlreadyDeleted("Resume"));
-        #endregion
-
-        return (new ResumeDto
-        {
-            Id = resume.Id,
-            StudentId = resume.StudentId,
-            Title = resume.Title,
-            Description = resume.Description,
-            CreatedAt = resume.CreatedAt,
-            UpdatedAt = resume.UpdatedAt
-        }, null, null);
-    }
-
-    public async Task<(ResumeDto? Entity, int? StatusCode, string? ErrorMessage)> CreateResumeAsync(Guid studentId, CreateResumeDto dto)
+    /// <summary>
+    /// Creates a new resume for a student.
+    /// </summary>
+    /// <param name="id">The unique identifier (GUID) of the student.</param>
+    /// <param name="dto">The data transfer object containing resume details.</param>
+    /// <returns>A tuple containing the created resume, an optional status code, and an optional error message.</returns>
+    public async Task<(ResumeDto? Entity, int? StatusCode, string? ErrorMessage)> CreateResumeAsync(Guid id, CreateResumeDto dto)
     {
         #region Serializers
-        var studentExists = await _context.Resumes.AnyAsync(s => s.Id == studentId);
-        if (studentExists == false)
-            return (null, StatusCodes.Status404NotFound, ErrorMessages.NotFound("Student"));
+        if (!await _context.Users.AnyAsync(u => u.Id == id && u is Student))
+            return (null, StatusCodes.Status404NotFound, ErrorMessages.NotFound(nameof(Student)));
 
-        var resumeExists = await _context.Resumes.AnyAsync(r => r.StudentId == studentId);
-        if (resumeExists)
-            return (null, StatusCodes.Status409Conflict, ErrorMessages.AlreadyExists("Resume", "Student"));
+        if (await _context.Resumes.AnyAsync(r => r.StudentId == id && !r.IsDeleted))
+            return (null, StatusCodes.Status409Conflict, ErrorMessages.AlreadyExists(nameof(Resume), "Student Id"));
         #endregion
 
         var resume = new Resume
         {
             Id = Guid.NewGuid(),
-            StudentId = studentId,
+            StudentId = id,
             Title = dto.Title,
             Description = dto.Description,
             CreatedAt = DateTime.UtcNow,
@@ -74,13 +56,22 @@ public class ResumeService(StudHunterDbContext context, UserAchievementService u
         }, null, null);
     }
 
+    /// <summary>
+    /// Updates an existing resume.
+    /// </summary>
+    /// <param name="id">The unique identifier (GUID) of the resume.</param>
+    /// <param name="dto">The data transfer object containing updated resume details.</param>
+    /// <returns>A tuple indicating whether the update was successful, an optional status code, and an optional error message.</returns>
     public virtual async Task<(bool Success, int? StatusCode, string? ErrorMessage)> UpdateResumeAsync(Guid id, UpdateResumeDto dto)
     {
-        var resume = await _context.Resumes.FirstOrDefaultAsync(r => r.Id == id);
+        var resume = await _context.Resumes.FindAsync(id);
 
         #region Serializers
         if (resume == null)
-            return (false, StatusCodes.Status404NotFound, ErrorMessages.NotFound("Resume"));
+            return (false, StatusCodes.Status404NotFound, ErrorMessages.NotFound(nameof(Resume)));
+
+        if (resume.IsDeleted)
+            return (false, StatusCodes.Status410Gone, ErrorMessages.AlreadyDeleted(nameof(Resume)));
         #endregion
 
         if (dto.Title != null)
@@ -94,8 +85,13 @@ public class ResumeService(StudHunterDbContext context, UserAchievementService u
         return (success, statusCode, errorMessage);
     }
 
+    /// <summary>
+    /// Deletes a resume (soft delete).
+    /// </summary>
+    /// <param name="id">The unique identifier (GUID) of the resume.</param>
+    /// <returns>A tuple indicating whether the deletion was successful, an optional status code, and an optional error message.</returns>
     public virtual async Task<(bool Success, int? StatusCode, string? ErrorMessage)> DeleteResumeAsync(Guid id)
     {
-        return await SoftDeleteEntityAsync<Resume>(id);
+        return await DeleteEntityAsync<Resume>(id, hardDelete: false);
     }
 }

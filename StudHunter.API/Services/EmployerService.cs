@@ -1,62 +1,30 @@
 ﻿using Microsoft.EntityFrameworkCore;
 using StudHunter.API.Common;
 using StudHunter.API.ModelsDto.Employer;
-using StudHunter.API.ModelsDto.UserAchievement;
 using StudHunter.API.Services.BaseServices;
 using StudHunter.DB.Postgres;
 using StudHunter.DB.Postgres.Models;
 
 namespace StudHunter.API.Services;
 
-public class EmployerService(StudHunterDbContext context, IPasswordHasher passwordHasher) : BaseService(context)
+/// <summary>
+/// Service for managing employers.
+/// </summary>
+public class EmployerService(StudHunterDbContext context, UserAchievementService userAchievementService, IPasswordHasher passwordHasher)
+: BaseEmployerService(context, userAchievementService)
 {
     private readonly IPasswordHasher _passwordHasher = passwordHasher;
 
-    public async Task<(EmployerDto? Entity, int? StatusCode, string? ErrorMessage)> GetEmployerAsync(Guid id)
-    {
-        var employer = await _context.Employers
-        .Include(e => e.Vacancies)
-        .Include(s => s.Achievements)
-        .ThenInclude(ua => ua.AchievementTemplate)
-        .FirstOrDefaultAsync(e => e.Id == id);
-
-        #region Serializers
-        if (employer == null)
-            return (null, StatusCodes.Status404NotFound, ErrorMessages.NotFound("Employer"));
-        #endregion
-
-        return (new EmployerDto
-        {
-            Id = employer.Id,
-            Email = employer.Email,
-            ContactEmail = employer.ContactEmail,
-            ContactPhone = employer.ContactPhone,
-            CreatedAt = employer.CreatedAt,
-            AccreditationStatus = employer.AccreditationStatus,
-            Name = employer.Name,
-            Description = employer.Description,
-            Website = employer.Website,
-            Specialization = employer.Specialization,
-            VacancyIds = employer.Vacancies.Select(v => v.Id).ToList(),
-            Achievements = employer.Achievements.Select(userAchievement => new UserAchievementDto
-            {
-                Id = userAchievement.Id,
-                UserId = userAchievement.UserId,
-                AchievementTemplateOrderNumber = userAchievement.AchievementTemplate.OrderNumber,
-                AchievementAt = userAchievement.AchievementAt,
-                AchievementName = userAchievement.AchievementTemplate.Name,
-                AchievementDescription = userAchievement.AchievementTemplate.Description
-            }).ToList()
-        }, null, null);
-    }
-
+    /// <summary>
+    /// Creates a new employer.
+    /// </summary>
+    /// <param name="dto">The data transfer object containing employer details.</param>
+    /// <returns>A tuple containing the created employer, an optional status code, and an optional error message.</returns>
     public async Task<(EmployerDto? Entity, int? StatusCode, string? ErrorMessage)> CreateEmployerAsync(CreateEmployerDto dto)
     {
-        var emailExists = await _context.Employers.FirstOrDefaultAsync(e => e.Email == dto.Email);
-
         #region Serializers
-        if (emailExists != null)
-            return (null, StatusCodes.Status409Conflict, ErrorMessages.AlreadyExists("Employer", "Email"));
+        if (await _context.Employers.AnyAsync(e => e.Email == dto.Email))
+            return (null, StatusCodes.Status409Conflict, ErrorMessages.AlreadyExists(nameof(Employer), "email"));
         #endregion
 
         var employer = new Employer
@@ -96,19 +64,24 @@ public class EmployerService(StudHunterDbContext context, IPasswordHasher passwo
         }, null, null);
     }
 
+    /// <summary>
+    /// Updates an existing employer.
+    /// </summary>
+    /// <param name="id">The unique identifier (GUID) of the employer.</param>
+    /// <param name="dto">The data transfer object containing updated employer details.</param>
+    /// <returns>A tuple indicating whether the update was successful, an optional status code, and an optional error message.</returns>
     public async Task<(bool Success, int? StatusCode, string? ErrorMessage)> UpdateEmployerAsync(Guid id, UpdateEmployerDto dto)
     {
-        var employer = await _context.Employers.FirstOrDefaultAsync(e => e.Id == id);
+        var employer = await _context.Employers.FindAsync(id);
 
         #region Serializers
         if (employer == null)
-            return (false, StatusCodes.Status404NotFound, ErrorMessages.NotFound("Employer"));
+            return (false, StatusCodes.Status404NotFound, ErrorMessages.NotFound(nameof(Employer)));
 
         if (dto.Email != null)
         {
-            var emailExists = await _context.Employers.AnyAsync(s => s.Email == dto.Email && s.Id != id);
-            if (emailExists)
-                return (false, StatusCodes.Status409Conflict, ErrorMessages.AlreadyExists("Employer", "Email"));
+            if (await _context.Employers.AnyAsync(s => s.Email == dto.Email && s.Id != id))
+                return (false, StatusCodes.Status409Conflict, ErrorMessages.AlreadyExists(nameof(Employer), "email"));
         }
         #endregion
 
@@ -134,8 +107,13 @@ public class EmployerService(StudHunterDbContext context, IPasswordHasher passwo
         return (success, statusCode, errorMessage);
     }
 
+    /// <summary>
+    /// Deletes an employer (soft delete).
+    /// </summary>
+    /// <param name="id">The unique identifier (GUID) of the employer.</param>
+    /// <returns>A tuple indicating whether the deletion was successful, an optional status code, and an optional error message.</returns>
     public async Task<(bool Success, int? StatusCode, string? ErrorMessage)> DeleteEmployerAsync(Guid id)
     {
-        return await SoftDeleteEntityAsync<Employer>(id);
+        return await DeleteEntityAsync<Employer>(id, hardDelete: false);
     }
 }

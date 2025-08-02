@@ -6,14 +6,21 @@ using StudHunter.DB.Postgres.Models;
 
 namespace StudHunter.API.Services.AdminServices;
 
+/// <summary>
+/// Service for managing faculties with administrative privileges.
+/// </summary>
 public class AdminFacultyService(StudHunterDbContext context) : FacultyService(context)
 {
+    /// <summary>
+    /// Creates a new faculty.
+    /// </summary>
+    /// <param name="dto">The data transfer object containing faculty details.</param>
+    /// <returns>A tuple containing the created faculty, an optional status code, and an optional error message.</returns>
     public async Task<(FacultyDto? Entity, int? StatusCode, string? ErrorMessage)> CreateFacultyAsync(CreateFacultyDto dto)
     {
         #region Serializers
-        var facultyExists = await _context.Faculties.AnyAsync(f => f.Name == dto.Name);
-        if (facultyExists)
-            return (null, StatusCodes.Status409Conflict, ErrorMessages.AlreadyExists("Faculty", "Name"));
+        if (await _context.Faculties.AnyAsync(f => f.Name == dto.Name))
+            return (null, StatusCodes.Status409Conflict, ErrorMessages.AlreadyExists(nameof(Faculty), "name"));
         #endregion
 
         var faculty = new Faculty
@@ -38,17 +45,25 @@ public class AdminFacultyService(StudHunterDbContext context) : FacultyService(c
         }, null, null);
     }
 
+    /// <summary>
+    /// Updates an existing faculty.
+    /// </summary>
+    /// <param name="id">The unique identifier (GUID) of the faculty.</param>
+    /// <param name="dto">The data transfer object containing updated faculty details.</param>
+    /// <returns>A tuple indicating whether the update was successful, an optional status code, and an optional error message.</returns>
     public async Task<(bool Success, int? StatusCode, string? ErrorMessage)> UpdateFacultyAsync(Guid id, UpdateFacultyDto dto)
     {
-        var faculty = await _context.Faculties.FirstOrDefaultAsync(f => f.Id == id);
+        var faculty = await _context.Faculties.FindAsync(id);
 
         #region Serializers
         if (faculty == null)
-            return (false, StatusCodes.Status404NotFound, "Faculty");
+            return (false, StatusCodes.Status404NotFound, ErrorMessages.NotFound(nameof(Faculty)));
 
-        var facultyExists = await _context.Faculties.AnyAsync(f => f.Name == dto.Name && f.Id != id);
-        if (facultyExists)
-            return (false, StatusCodes.Status409Conflict, ErrorMessages.AlreadyExists("Faculty", "Name"));
+        if (dto.Name != null)
+        {
+            if (await _context.Faculties.AnyAsync(f => f.Name == dto.Name && f.Id != id))
+                return (false, StatusCodes.Status409Conflict, ErrorMessages.AlreadyExists(nameof(Faculty), "name"));
+        }
         #endregion
 
         if (dto.Name != null)
@@ -61,12 +76,16 @@ public class AdminFacultyService(StudHunterDbContext context) : FacultyService(c
         return (success, statusCode, errorMessage);
     }
 
+    /// <summary>
+    /// Deletes a faculty.
+    /// </summary>
+    /// <param name="id">The unique identifier (GUID) of the faculty.</param>
+    /// <returns>A tuple indicating whether the deletion was successful, an optional status code, and an optional error message.</returns>
     public async Task<(bool Success, int? StatusCode, string? ErrorMessage)> DeleteFacultyAsync(Guid id)
     {
         #region Serializers
-        var facultyAssociatedStudyPlan = await _context.StudyPlans.AnyAsync(sp => sp.FacultyId == id);
-        if (facultyAssociatedStudyPlan)
-            return (false, StatusCodes.Status400BadRequest, "Cannot delete faculty associated with study plans");
+        if (await _context.StudyPlans.AnyAsync(sp => sp.FacultyId == id))
+            return (false, StatusCodes.Status400BadRequest, ErrorMessages.CannotDelete(nameof(Faculty), nameof(StudyPlan)));
         #endregion
 
         return await DeleteEntityAsync<Faculty>(id, hardDelete: true);

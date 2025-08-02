@@ -7,8 +7,15 @@ using StudHunter.DB.Postgres.Models;
 
 namespace StudHunter.API.Services.AdminServices;
 
+/// <summary>
+/// Service for managing achievement templates for administrators.
+/// </summary>
 public class AdminAchievementTemplateService(StudHunterDbContext context) : BaseService(context)
 {
+    /// <summary>
+    /// Retrieves all achievement templates.
+    /// </summary>
+    /// <returns>A tuple containing a list of all achievement templates, an optional status code, and an optional error message.</returns>
     public async Task<(List<AchievementTemplateDto>? Entities, int? StatusCode, string? ErrorMessage)> GetAllAchievementTemplatesAsync()
     {
         var template = await _context.AchievementTemplates.Select(a => new AchievementTemplateDto
@@ -24,6 +31,11 @@ public class AdminAchievementTemplateService(StudHunterDbContext context) : Base
         return (template, null, null);
     }
 
+    /// <summary>
+    /// Retrieves an achievement template by its order number.
+    /// </summary>
+    /// <param name="orderNumber">The order number of the achievement template.</param>
+    /// <returns>A tuple containing the achievement template, an optional status code, and an optional error message.</returns>
     public async Task<(AchievementTemplateDto? Entity, int? StatusCode, string? ErrorMessage)> GetAchievementTemplateAsync(int orderNumber)
     {
         var template = await _context.AchievementTemplates.FirstOrDefaultAsync(a => a.OrderNumber == orderNumber);
@@ -44,7 +56,12 @@ public class AdminAchievementTemplateService(StudHunterDbContext context) : Base
         }, null, null);
     }
 
-    public async Task<(AchievementTemplateDto? Entity, int? StatusCode, string? Error)> CreateAchievementTemplateAsync(CreateAchievementTemplateDto dto)
+    /// <summary>
+    /// Creates a new achievement template.
+    /// </summary>
+    /// <param name="dto">The data transfer object containing achievement template details.</param>
+    /// <returns>A tuple containing the created achievement template, an optional status code, and an optional error message.</returns>
+    public async Task<(AchievementTemplateDto? Entity, int? StatusCode, string? ErrorMessage)> CreateAchievementTemplateAsync(CreateAchievementTemplateDto dto)
     {
         #region Serializers
         var nameExist = await _context.AchievementTemplates.AnyAsync(a => a.Name == dto.Name);
@@ -84,6 +101,12 @@ public class AdminAchievementTemplateService(StudHunterDbContext context) : Base
         }, null, null);
     }
 
+    /// <summary>
+    /// Updates an existing achievement template.
+    /// </summary>
+    /// <param name="id">The unique identifier (GUID) of the achievement template.</param>
+    /// <param name="dto">The data transfer object containing updated achievement template details.</param>
+    /// <returns>A tuple indicating whether the update was successful, an optional status code, and an optional error message.</returns>
     public async Task<(bool Success, int? StatusCode, string? ErrorMessage)> UpdateAchievementTemplateAsync(Guid id, UpdateAchievementTemplateDto dto)
     {
         var template = await _context.AchievementTemplates.FirstOrDefaultAsync(a => a.Id == id);
@@ -123,6 +146,11 @@ public class AdminAchievementTemplateService(StudHunterDbContext context) : Base
         return (success, statusCode, errorMessage);
     }
 
+    /// <summary>
+    /// Deletes an achievement template.
+    /// </summary>
+    /// <param name="id">The unique identifier (GUID) of the achievement template.</param>
+    /// <returns>A tuple indicating whether the deletion was successful, an optional status code, and an optional error message.</returns>
     public async Task<(bool Success, int? StatusCode, string? ErrorMessage)> DeleteAchievementTemplateAsync(Guid id)
     {
         return await DeleteEntityAsync<AchievementTemplate>(id, hardDelete: true);
