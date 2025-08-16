@@ -1,4 +1,5 @@
-﻿using StudHunter.API.Common;
+﻿using Microsoft.EntityFrameworkCore;
+using StudHunter.API.Common;
 using StudHunter.API.ModelsDto.Vacancy;
 using StudHunter.API.Services.BaseServices;
 using StudHunter.DB.Postgres;
@@ -9,8 +10,22 @@ namespace StudHunter.API.Services;
 /// <summary>
 /// Service for managing vacancies.
 /// </summary>
-public class VacancyService(StudHunterDbContext context, UserAchievementService userAchievementService) : BaseVacancyService(context, userAchievementService)
+public class VacancyService(StudHunterDbContext context) : BaseVacancyService(context)
 {
+    /// <summary>
+    /// Retrieves all non-deleted vacancies.
+    /// </summary>
+    /// <returns>A tuple containing a list of vacancies, an optional status code, and an optional error message.</returns>
+    public async Task<(List<VacancyDto>? Entities, int? StatusCode, string? ErrorMessage)> GetAllVacanciesAsync()
+    {
+        var vacancies = await _context.Vacancies
+        .Where(v => !v.IsDeleted)
+        .Select(v => MapToVacancyDto<VacancyDto>(v))
+        .ToListAsync();
+
+        return (vacancies, null, null);
+    }
+
     /// <summary>
     /// Creates a new vacancy for an employer.
     /// </summary>
@@ -19,14 +34,12 @@ public class VacancyService(StudHunterDbContext context, UserAchievementService 
     /// <returns>A tuple containing the created vacancy, an optional status code, and an optional error message.</returns>
     public async Task<(VacancyDto? Entity, int? StatusCode, string? ErrorMessage)> CreateVacancyAsync(Guid id, CreateVacancyDto dto)
     {
-        #region Serializers
         var employer = await _context.Employers.FindAsync(id);
         if (employer == null)
-            return (null, StatusCodes.Status404NotFound, ErrorMessages.NotFound(nameof(Employer)));
+            return (null, StatusCodes.Status404NotFound, ErrorMessages.EntityNotFound(nameof(Employer)));
 
         if (!employer.AccreditationStatus)
             return (null, StatusCodes.Status403Forbidden, $"{nameof(Employer)} is not accredited.");
-        #endregion
 
         var vacancy = new Vacancy
         {
@@ -48,17 +61,7 @@ public class VacancyService(StudHunterDbContext context, UserAchievementService 
         if (!success)
             return (null, statusCode, errorMessage);
 
-        return (new VacancyDto
-        {
-            Id = vacancy.Id,
-            EmployerId = vacancy.EmployerId,
-            Title = vacancy.Title,
-            Description = vacancy.Description,
-            Salary = vacancy.Salary,
-            CreatedAt = vacancy.CreatedAt,
-            UpdatedAt = vacancy.UpdatedAt,
-            Type = vacancy.Type.ToString()
-        }, null, null);
+        return (MapToVacancyDto<VacancyDto>(vacancy), null, null);
     }
 
     /// <summary>
@@ -71,12 +74,10 @@ public class VacancyService(StudHunterDbContext context, UserAchievementService 
     {
         var vacancy = await _context.Vacancies.FindAsync(id);
 
-        #region Serializers
         if (vacancy == null)
-            return (false, StatusCodes.Status404NotFound, ErrorMessages.NotFound(nameof(Vacancy)));
+            return (false, StatusCodes.Status404NotFound, ErrorMessages.EntityNotFound(nameof(Vacancy)));
         if (vacancy.IsDeleted)
-            return (false, StatusCodes.Status410Gone, ErrorMessages.AlreadyDeleted(nameof(Vacancy)));
-        #endregion
+            return (false, StatusCodes.Status410Gone, ErrorMessages.EntityAlreadyDeleted(nameof(Vacancy)));
 
         if (dto.Title != null)
             vacancy.Title = dto.Title;
@@ -88,9 +89,7 @@ public class VacancyService(StudHunterDbContext context, UserAchievementService 
             vacancy.Type = Enum.Parse<Vacancy.VacancyType>(dto.Type);
         vacancy.UpdatedAt = DateTime.UtcNow;
 
-        var (success, statusCode, errorMessage) = await SaveChangesAsync<Vacancy>();
-
-        return (success, statusCode, errorMessage);
+        return await SaveChangesAsync<Vacancy>();
     }
 
     /// <summary>

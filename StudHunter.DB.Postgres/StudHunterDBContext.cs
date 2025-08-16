@@ -8,6 +8,7 @@ public class StudHunterDbContext : DbContext
 {
     public DbSet<AchievementTemplate> AchievementTemplates { get; set; } = null!;
     public DbSet<Administrator> Administrators { get; set; } = null!;
+    public DbSet<Chat> Chats { get; set; } = null!;
     public DbSet<Course> Courses { get; set; } = null!;
     public DbSet<Employer> Employers { get; set; } = null!;
     public DbSet<Faculty> Faculties { get; set; } = null!;
@@ -17,7 +18,6 @@ public class StudHunterDbContext : DbContext
     public DbSet<Resume> Resumes { get; set; } = null!;
     public DbSet<Speciality> Specialities { get; set; } = null!;
     public DbSet<Student> Students { get; set; } = null!;
-    public DbSet<StudentStatus> StudentStatuses { get; set; } = null!;
     public DbSet<StudyPlan> StudyPlans { get; set; } = null!;
     public DbSet<StudyPlanCourse> StudyPlanCourses { get; set; } = null!;
     public DbSet<User> Users { get; set; } = null!;

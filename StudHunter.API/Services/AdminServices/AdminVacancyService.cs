@@ -10,8 +10,21 @@ namespace StudHunter.API.Services.AdminServices;
 /// <summary>
 /// Service for managing vacancies with administrative privileges.
 /// </summary>
-public class AdminVacancyService(StudHunterDbContext context, UserAchievementService userAchievementService) : BaseVacancyService(context, userAchievementService)
+public class AdminVacancyService(StudHunterDbContext context) : BaseVacancyService(context)
 {
+    /// <summary>
+    /// Retrieves all vacancies.
+    /// </summary>
+    /// <returns>A tuple containing a list of vacancies, an optional status code, and an optional error message.</returns>
+    public async Task<(List<AdminVacancyDto>? Entities, int? StatusCode, string? ErrorMessage)> GetAllVacanciesAsync()
+    {
+        var vacancies = await _context.Vacancies
+        .Select(v => MapToVacancyDto<AdminVacancyDto>(v))
+        .ToListAsync();
+
+        return (vacancies, null, null);
+    }
+
     /// <summary>
     /// Updates an existing vacancy.
     /// </summary>
@@ -22,10 +35,8 @@ public class AdminVacancyService(StudHunterDbContext context, UserAchievementSer
     {
         var vacancy = await _context.Vacancies.FirstOrDefaultAsync(v => v.Id == id);
 
-        #region Serializers
         if (vacancy == null)
-            return (false, StatusCodes.Status404NotFound, ErrorMessages.NotFound(nameof(Vacancy)));
-        #endregion
+            return (false, StatusCodes.Status404NotFound, ErrorMessages.EntityNotFound(nameof(Vacancy)));
 
         if (dto.Title != null)
             vacancy.Title = dto.Title;
@@ -39,9 +50,7 @@ public class AdminVacancyService(StudHunterDbContext context, UserAchievementSer
             vacancy.IsDeleted = dto.IsDeleted.Value;
         vacancy.UpdatedAt = DateTime.UtcNow;
 
-        var (success, statusCode, errorMessage) = await SaveChangesAsync<Vacancy>();
-
-        return (success, statusCode, errorMessage);
+        return await SaveChangesAsync<Vacancy>();
     }
 
     /// <summary>

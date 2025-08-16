@@ -75,7 +75,7 @@ public class AdminResumeController(AdminResumeService adminResumeService) : Base
     public async Task<IActionResult> UpdateResume(Guid id, [FromBody] AdminUpdateResumeDto dto)
     {
         if (!ModelState.IsValid)
-            return BadRequest(new { error = "Invalid request data." });
+            return ValidationError();
 
         var (success, statusCode, errorMessage) = await _adminResumeService.UpdateResumeAsync(id, dto);
         return CreateAPIError<AdminResumeDto>(success, statusCode, errorMessage);

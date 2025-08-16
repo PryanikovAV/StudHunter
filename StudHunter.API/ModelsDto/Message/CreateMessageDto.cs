@@ -18,5 +18,5 @@ public class CreateMessageDto
     /// </summary>
     [Required(ErrorMessage = "{0} is required")]
     [StringLength(1000, ErrorMessage = "{0} cannot exceed {1} characters")]
-    public string Context { get; set; } = string.Empty;
+    public string Content { get; set; } = string.Empty;
 }

@@ -10,8 +10,26 @@ namespace StudHunter.API.Services;
 /// <summary>
 /// Service for managing resumes.
 /// </summary>
-public class ResumeService(StudHunterDbContext context, UserAchievementService userAchievementService) : BaseResumeService(context, userAchievementService)
+public class ResumeService(StudHunterDbContext context) : BaseResumeService(context)
 {
+    /// <summary>
+    /// Retrieves a resume by its ID.
+    /// </summary>
+    /// <param name="id">The unique identifier (GUID) of the resume.</param>
+    /// <returns>A tuple containing the resume, an optional status code, and an optional error message.</returns>
+    public async Task<(ResumeDto? Entity, int? StatusCode, string? ErrorMessage)> GetResumeAsync(Guid id)
+    {
+        var resume = await _context.Resumes.FindAsync(id);
+
+        if (resume == null)
+            return (null, StatusCodes.Status404NotFound, ErrorMessages.EntityNotFound(nameof(Resume)));
+
+        if (resume.IsDeleted)
+            return (null, StatusCodes.Status410Gone, ErrorMessages.EntityAlreadyDeleted(nameof(Resume)));
+
+        return (MapToResumeDto<ResumeDto>(resume), null, null);
+    }
+
     /// <summary>
     /// Creates a new resume for a student.
     /// </summary>
@@ -20,13 +38,19 @@ public class ResumeService(StudHunterDbContext context, UserAchievementService u
     /// <returns>A tuple containing the created resume, an optional status code, and an optional error message.</returns>
     public async Task<(ResumeDto? Entity, int? StatusCode, string? ErrorMessage)> CreateResumeAsync(Guid id, CreateResumeDto dto)
     {
-        #region Serializers
-        if (!await _context.Users.AnyAsync(u => u.Id == id && u is Student))
-            return (null, StatusCodes.Status404NotFound, ErrorMessages.NotFound(nameof(Student)));
+        var student = await _context.Students
+        .Include(s => s.StudyPlan)
+        .Include(r => r.Resume)
+        .FirstOrDefaultAsync(s => s.Id == id && !s.IsDeleted);
 
-        if (await _context.Resumes.AnyAsync(r => r.StudentId == id && !r.IsDeleted))
-            return (null, StatusCodes.Status409Conflict, ErrorMessages.AlreadyExists(nameof(Resume), "Student Id"));
-        #endregion
+        if (student == null)
+            return (null, StatusCodes.Status404NotFound, ErrorMessages.EntityNotFound(nameof(Student)));
+
+        if (student.Resume != null && !student.Resume.IsDeleted)
+            return (null, StatusCodes.Status409Conflict, ErrorMessages.EntityAlreadyExists(nameof(Resume), "studentId"));
+
+        if (student.StudyPlan == null)
+            return (null, StatusCodes.Status400BadRequest, $"Fill out the {nameof(StudyPlan)} to create {nameof(Resume)}");
 
         var resume = new Resume
         {
@@ -45,15 +69,7 @@ public class ResumeService(StudHunterDbContext context, UserAchievementService u
         if (!success)
             return (null, statusCode, errorMessage);
 
-        return (new ResumeDto
-        {
-            Id = resume.Id,
-            StudentId = resume.StudentId,
-            Title = resume.Title,
-            Description = resume.Description,
-            CreatedAt = resume.CreatedAt,
-            UpdatedAt = resume.UpdatedAt
-        }, null, null);
+        return (MapToResumeDto<ResumeDto>(resume), null, null);
     }
 
     /// <summary>
@@ -66,13 +82,11 @@ public class ResumeService(StudHunterDbContext context, UserAchievementService u
     {
         var resume = await _context.Resumes.FindAsync(id);
 
-        #region Serializers
         if (resume == null)
-            return (false, StatusCodes.Status404NotFound, ErrorMessages.NotFound(nameof(Resume)));
+            return (false, StatusCodes.Status404NotFound, ErrorMessages.EntityNotFound(nameof(Resume)));
 
         if (resume.IsDeleted)
-            return (false, StatusCodes.Status410Gone, ErrorMessages.AlreadyDeleted(nameof(Resume)));
-        #endregion
+            return (false, StatusCodes.Status410Gone, ErrorMessages.EntityAlreadyDeleted(nameof(Resume)));
 
         if (dto.Title != null)
             resume.Title = dto.Title;
@@ -80,9 +94,7 @@ public class ResumeService(StudHunterDbContext context, UserAchievementService u
             resume.Description = dto.Description;
         resume.UpdatedAt = DateTime.UtcNow;
 
-        var (success, statusCode, errorMessage) = await SaveChangesAsync<Resume>();
-
-        return (success, statusCode, errorMessage);
+        return await SaveChangesAsync<Resume>();
     }
 
     /// <summary>

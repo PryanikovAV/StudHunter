@@ -3,51 +3,51 @@
 namespace StudHunter.API.ModelsDto.Student;
 
 /// <summary>
-/// Base data transfer object for updating a student.
+/// Base data transfer object for updating student information.
 /// </summary>
 public class BaseUpdateStudentDto
 {
     /// <summary>
-    /// The student's email address.
+    /// The student's email address (optional).
     /// </summary>
     [StringLength(100, ErrorMessage = "{0} cannot exceed {1} characters")]
     [EmailAddress(ErrorMessage = "Invalid {0} format")]
     public string? Email { get; set; }
 
     /// <summary>
-    /// The student's contact email address.
+    /// The student's first name (optional).
     /// </summary>
-    [StringLength(100, ErrorMessage = "{0} cannot exceed {1} characters")]
-    [EmailAddress(ErrorMessage = "Invalid {0} format")]
-    public string? ContactEmail { get; set; }
+    [StringLength(50, ErrorMessage = "{0} cannot exceed {1} characters")]
+    public string? FirstName { get; set; }
 
     /// <summary>
-    /// The student's contact phone number.
+    /// The student's last name (optional).
+    /// </summary>
+    [StringLength(50, ErrorMessage = "{0} cannot exceed {1} characters")]
+    public string? LastName { get; set; }
+
+    /// <summary>
+    /// The student's contact phone number (optional).
     /// </summary>
     [StringLength(20, ErrorMessage = "{0} cannot exceed {1} characters")]
     [Phone(ErrorMessage = "Invalid {0} format")]
     public string? ContactPhone { get; set; }
 
     /// <summary>
-    /// The student's first name.
+    /// The student's contact email address (optional).
     /// </summary>
-    [StringLength(50, ErrorMessage = "{0} cannot exceed {1} characters")]
-    public string? FirstName { get; set; }
+    [StringLength(100, ErrorMessage = "{0} cannot exceed {1} characters")]
+    [EmailAddress(ErrorMessage = "Invalid {0} format")]
+    public string? ContactEmail { get; set; }
 
     /// <summary>
-    /// The student's last name.
-    /// </summary>
-    [StringLength(50, ErrorMessage = "{0} cannot exceed {1} characters")]
-    public string? LastName { get; set; }
-
-    /// <summary>
-    /// The student's gender (Male or Female).
+    /// The student's gender (Male or Female, optional).
     /// </summary>
     [RegularExpression("Male|Female", ErrorMessage = "{0} must be 'Male' or 'Female'")]
     public string? Gender { get; set; }
 
     /// <summary>
-    /// The student's date of birth.
+    /// The student's date of birth (optional).
     /// </summary>
     public DateOnly? BirthDate { get; set; }
 
@@ -58,40 +58,13 @@ public class BaseUpdateStudentDto
     public string? Photo { get; set; }
 
     /// <summary>
-    /// Indicates whether the student is foreign.
+    /// Indicates whether the student is foreign (optional).
     /// </summary>
     public bool? IsForeign { get; set; }
 
     /// <summary>
-    /// The student's status ID (optional).
+    /// The student's status (Studying, SeekingInternship, SeekingJob, Interning, Working, optional).
     /// </summary>
-    public int? StatusId { get; set; }
-
-    /// <summary>
-    /// The course number for the study plan.
-    /// </summary>
-    [Range(1, 7, ErrorMessage = "{0} must be between {1} and {2}")]
-    public int? CourseNumber { get; set; }
-
-    /// <summary>
-    /// The faculty ID for the study plan.
-    /// </summary>
-    public Guid? FacultyId { get; set; }
-
-    /// <summary>
-    /// The speciality ID for the study plan.
-    /// </summary>
-    public Guid? SpecialityId { get; set; }
-
-    /// <summary>
-    /// The study form (FullTime, PartTime, or Correspondence).
-    /// </summary>
-    [RegularExpression("FullTime|PartTime|Correspondence", ErrorMessage = "{0} must be 'FullTime', 'PartTime', or 'Correspondence'")]
-    public string? StudyForm { get; set; }
-
-    /// <summary>
-    /// The year the student began studying.
-    /// </summary>
-    [Range(2000, 2025, ErrorMessage = "{0} must be between {1} and {2}")]
-    public DateOnly? BeginYear { get; set; }
+    [RegularExpression("Studying|SeekingInternship|SeekingJob|Interning|Working", ErrorMessage = "{0} must be 'Studying', 'SeekingInternship', 'SeekingJob', 'Interning', or 'Working'")]
+    public string? Status { get; set; }
 }

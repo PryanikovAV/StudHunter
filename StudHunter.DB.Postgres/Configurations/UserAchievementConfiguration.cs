@@ -23,12 +23,13 @@ public class UserAchievementConfiguration : IEntityTypeConfiguration<UserAchieve
                .IsRequired();
 
         builder.Property(ua => ua.AchievementAt)
-               .HasColumnType("TIMESTAMP")
+               .HasColumnType("TIMESTAMPTZ")
                .IsRequired();
 
         builder.HasOne(ua => ua.User)
                .WithMany(u => u.Achievements)
                .HasForeignKey(ua => ua.UserId)
+               .OnDelete(DeleteBehavior.Cascade)
                .IsRequired(false);
 
         builder.HasOne(ua => ua.AchievementTemplate)

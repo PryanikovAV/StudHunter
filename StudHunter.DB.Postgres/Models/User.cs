@@ -6,13 +6,13 @@ public abstract class User : ISoftDeletable
 {
     public Guid Id { get; set; }
 
-    public string Email { get; set; } = null!;
+    public string Email { get; private set; } = null!;
 
     public string? ContactEmail { get; set; }
 
     public string? ContactPhone { get; set; }
 
-    public string PasswordHash { get; set; } = null!;
+    public string PasswordHash { get; private set; } = null!;
 
     public DateTime CreatedAt { get; set; }
 
@@ -24,4 +24,24 @@ public abstract class User : ISoftDeletable
     public virtual ICollection<Invitation> ReceivedInvitations { get; set; } = new List<Invitation>();
     public virtual ICollection<Message> SentMessages { get; set; } = new List<Message>();
     public virtual ICollection<Message> ReceivedMessages { get; set; } = new List<Message>();
+    public virtual ICollection<Chat> ChatsAsUser1 { get; set; } = new List<Chat>();
+    public virtual ICollection<Chat> ChatsAsUser2 { get; set; } = new List<Chat>();
+
+    protected User() { }
+
+    protected void SetEmail(string email)
+    {
+        if (string.IsNullOrWhiteSpace(email))
+            throw new ArgumentNullException("Email cannot be empty.");
+
+        Email = email;
+    }
+
+    protected void SetPasswordHash(string passwordHash)
+    {
+        if (string.IsNullOrWhiteSpace(passwordHash))
+            throw new ArgumentNullException("PasswordHash cannot be empty.");
+
+        PasswordHash = passwordHash;
+    }
 }

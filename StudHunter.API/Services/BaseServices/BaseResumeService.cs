@@ -1,32 +1,20 @@
-﻿using StudHunter.API.Common;
-using StudHunter.API.ModelsDto.Resume;
+﻿using StudHunter.API.ModelsDto.Resume;
 using StudHunter.DB.Postgres;
 using StudHunter.DB.Postgres.Models;
 
 namespace StudHunter.API.Services.BaseServices;
 
-public class BaseResumeService(StudHunterDbContext context, UserAchievementService userAchievementService) : BaseService(context)
+public abstract class BaseResumeService(StudHunterDbContext context) : BaseService(context)
 {
-    private readonly UserAchievementService _userAchievementService = userAchievementService;
-
     /// <summary>
-    /// Retrieves a resume by its ID.
+    /// Maps a Resume entity to a specified DTO type.
     /// </summary>
-    /// <param name="id">The unique identifier (GUID) of the resume.</param>
-    /// <returns>A tuple containing the resume, an optional status code, and an optional error message.</returns>
-    public async Task<(ResumeDto? Entity, int? StatusCode, string? ErrorMessage)> GetResumeAsync(Guid id)
+    /// <typeparam name="TDto">The type of DTO to map to (must inherit from ResumeDto).</typeparam>
+    /// <param name="resume">The Resume entity to map.</param>
+    /// <returns>The mapped DTO.</returns>
+    protected TDto MapToResumeDto<TDto>(Resume resume) where TDto : ResumeDto, new()
     {
-        var resume = await _context.Resumes.FindAsync(id);
-
-        #region Serializers
-        if (resume == null)
-            return (null, StatusCodes.Status404NotFound, ErrorMessages.NotFound(nameof(Resume)));
-
-        if (resume.IsDeleted)
-            return (null, StatusCodes.Status410Gone, ErrorMessages.AlreadyDeleted(nameof(Resume)));
-        #endregion
-
-        return (new ResumeDto
+        var dto = new TDto
         {
             Id = resume.Id,
             StudentId = resume.StudentId,
@@ -34,6 +22,13 @@ public class BaseResumeService(StudHunterDbContext context, UserAchievementServi
             Description = resume.Description,
             CreatedAt = resume.CreatedAt,
             UpdatedAt = resume.UpdatedAt
-        }, null, null);
+        };
+
+        if (dto is AdminResumeDto adminDto)
+        {
+            adminDto.IsDeleted = resume.IsDeleted;
+        }
+
+        return dto;
     }
 }

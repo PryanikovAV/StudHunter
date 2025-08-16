@@ -11,11 +11,6 @@ public class CreateFavoriteDto
     public Guid? VacancyId { get; set; }
 
     /// <summary>
-    /// The unique identifier (GUID) of the resume.
-    /// </summary>
-    public Guid? ResumeId { get; set; }
-
-    /// <summary>
     /// The unique identifier (GUID) of the employer.
     /// </summary>
     public Guid? EmployerId { get; set; }

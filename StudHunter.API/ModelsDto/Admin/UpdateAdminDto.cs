@@ -52,8 +52,8 @@ public class UpdateAdminDto
     public string? LastName { get; set; }
 
     /// <summary>
-    /// The administrator's level (SuperAdmin or Moderator).
+    /// The administrator's patronymic.
     /// </summary>
-    [RegularExpression("SuperAdmin|Moderator", ErrorMessage = "{0} must be 'SuperAdmin' or 'Moderator'")]
-    public string? AdminLevel { get; set; }
+    [StringLength(50, ErrorMessage = "{0} cannot exceed {1} characters")]
+    public string? Patronymic { get; set; }
 }

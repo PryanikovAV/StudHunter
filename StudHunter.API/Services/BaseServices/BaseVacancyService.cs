@@ -6,32 +6,28 @@ using StudHunter.DB.Postgres.Models;
 
 namespace StudHunter.API.Services.BaseServices;
 
-public class BaseVacancyService(StudHunterDbContext context, UserAchievementService userAchievementService) : BaseService(context)
+public abstract class BaseVacancyService(StudHunterDbContext context) : BaseService(context)
 {
-    private readonly UserAchievementService _userAchievementService = userAchievementService;
-
-    /// <summary>
-    /// Retrieves all non-deleted vacancies.
-    /// </summary>
-    /// <returns>A tuple containing a list of vacancies, an optional status code, and an optional error message.</returns>
-    public async Task<(List<VacancyDto>? Entities, int? StatusCode, string? ErrorMessage)> GetAllVacanciesAsync()
+    protected TDto MapToVacancyDto<TDto>(Vacancy vacancy) where TDto : VacancyDto, new()
     {
-        var vacancies = await _context.Vacancies
-        .Where(v => !v.IsDeleted)
-        .Select(v => new VacancyDto
+        var dto = new TDto
         {
-            Id = v.Id,
-            EmployerId = v.EmployerId,
-            Title = v.Title,
-            Description = v.Description,
-            Salary = v.Salary,
-            CreatedAt = v.CreatedAt,
-            UpdatedAt = v.UpdatedAt,
-            Type = v.Type.ToString()
-        })
-        .ToListAsync();
+            Id = vacancy.Id,
+            EmployerId = vacancy.EmployerId,
+            Title = vacancy.Title,
+            Description = vacancy.Description,
+            Salary = vacancy.Salary,
+            CreatedAt = vacancy.CreatedAt,
+            UpdatedAt = vacancy.UpdatedAt,
+            Type = vacancy.Type.ToString()
+        };
 
-        return (vacancies, null, null);
+        if (dto is AdminVacancyDto adminVacancyDto)
+        {
+            adminVacancyDto.IsDeleted = vacancy.IsDeleted;
+        }
+
+        return dto;
     }
 
     /// <summary>
@@ -43,25 +39,13 @@ public class BaseVacancyService(StudHunterDbContext context, UserAchievementServ
     {
         var vacancy = await _context.Vacancies.FirstOrDefaultAsync(v => v.Id == id);
 
-        #region Serializers
         if (vacancy == null)
-            return (null, StatusCodes.Status404NotFound, ErrorMessages.NotFound(nameof(Vacancy)));
+            return (null, StatusCodes.Status404NotFound, ErrorMessages.EntityNotFound(nameof(Vacancy)));
 
         if (vacancy.IsDeleted)
-            return (null, StatusCodes.Status410Gone, ErrorMessages.AlreadyDeleted(nameof(Vacancy)));
-        #endregion
+            return (null, StatusCodes.Status410Gone, ErrorMessages.EntityAlreadyDeleted(nameof(Vacancy)));
 
-        return (new VacancyDto
-        {
-            Id = vacancy.Id,
-            EmployerId = vacancy.EmployerId,
-            Title = vacancy.Title,
-            Description = vacancy.Description,
-            Salary = vacancy.Salary,
-            CreatedAt = vacancy.CreatedAt,
-            UpdatedAt = vacancy.UpdatedAt,
-            Type = vacancy.Type.ToString()
-        }, null, null);
+        return (MapToVacancyDto<VacancyDto>(vacancy), null, null);
     }
 
     /// <summary>
@@ -71,24 +55,12 @@ public class BaseVacancyService(StudHunterDbContext context, UserAchievementServ
     /// <returns>A tuple containing a list of vacancies, an optional status code, and an optional error message.</returns>
     public async Task<(List<VacancyDto>? Entities, int? StatusCode, string? ErrorMessage)> GetVacanciesByEmployerAsync(Guid employerId)
     {
-        #region Serializers
         if (!await _context.Employers.AnyAsync(e => e.Id == employerId))
-            return (null, StatusCodes.Status404NotFound, ErrorMessages.NotFound(nameof(Employer)));
-        #endregion
+            return (null, StatusCodes.Status404NotFound, ErrorMessages.EntityNotFound(nameof(Employer)));
 
         var vacancies = await _context.Vacancies
         .Where(v => v.EmployerId == employerId && !v.IsDeleted)
-        .Select(v => new VacancyDto
-        {
-            Id = v.Id,
-            EmployerId = v.EmployerId,
-            Title = v.Title,
-            Description = v.Description,
-            Salary = v.Salary,
-            CreatedAt = v.CreatedAt,
-            UpdatedAt = v.UpdatedAt,
-            Type = v.Type.ToString()
-        })
+        .Select(v => MapToVacancyDto<VacancyDto>(v))
         .ToListAsync();
 
         return (vacancies, null, null);
@@ -102,16 +74,14 @@ public class BaseVacancyService(StudHunterDbContext context, UserAchievementServ
     /// <returns>A tuple indicating whether the operation was successful, an optional status code, and an optional error message.</returns>
     public async Task<(bool Success, int? StatusCode, string? ErrorMessage)> AddCourseToVacancyAsync(Guid vacancyId, Guid courseId)
     {
-        #region Serializers
         if (!await _context.Vacancies.AnyAsync(v => v.Id == vacancyId))
-            return (false, StatusCodes.Status404NotFound, ErrorMessages.NotFound(nameof(Vacancy)));
+            return (false, StatusCodes.Status404NotFound, ErrorMessages.EntityNotFound(nameof(Vacancy)));
 
         if (!await _context.Courses.AnyAsync(c => c.Id == courseId))
-            return (false, StatusCodes.Status404NotFound, ErrorMessages.NotFound(nameof(Course)));
+            return (false, StatusCodes.Status404NotFound, ErrorMessages.EntityNotFound(nameof(Course)));
 
         if (await _context.VacancyCourses.AnyAsync(vc => vc.VacancyId == vacancyId && vc.CourseId == courseId))
-            return (false, StatusCodes.Status409Conflict, ErrorMessages.AlreadyExists(nameof(Course), nameof(Vacancy)));
-        #endregion
+            return (false, StatusCodes.Status409Conflict, ErrorMessages.EntityAlreadyExists(nameof(Course), nameof(Vacancy)));
 
         var vacancyCourse = new VacancyCourse
         {
@@ -121,9 +91,7 @@ public class BaseVacancyService(StudHunterDbContext context, UserAchievementServ
 
         _context.VacancyCourses.Add(vacancyCourse);
 
-        var (success, statusCode, errorMessage) = await SaveChangesAsync<VacancyCourse>();
-
-        return (success, statusCode, errorMessage);
+        return await SaveChangesAsync<VacancyCourse>();
     }
 
     /// <summary>
@@ -137,15 +105,11 @@ public class BaseVacancyService(StudHunterDbContext context, UserAchievementServ
         var vacancyCourse = await _context.VacancyCourses
         .FirstOrDefaultAsync(vc => vc.VacancyId == vacancyId && vc.CourseId == courseId);
 
-        #region Serializers
         if (vacancyCourse == null)
             return (false, StatusCodes.Status404NotFound, ErrorMessages.CannotDelete(nameof(Course), nameof(Vacancy)));
-        #endregion
 
         _context.VacancyCourses.Remove(vacancyCourse);
 
-        var (success, statusCode, errorMessage) = await SaveChangesAsync<VacancyCourse>();
-
-        return (success, statusCode, errorMessage);
+        return await SaveChangesAsync<VacancyCourse>();
     }
 }

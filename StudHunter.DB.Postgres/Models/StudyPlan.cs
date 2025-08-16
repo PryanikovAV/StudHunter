@@ -8,16 +8,15 @@ public class StudyPlan : IEntity
 
     public Guid StudentId { get; set; }
 
-    [Range(1, 10)]
-    public int CourseNumber { get; set; }
+    public int CourseNumber { get; set; } = 1;
 
-    public Guid FacultyId { get; set; }
+    public Guid FacultyId { get; set; } = Guid.Empty;
 
-    public Guid SpecialityId { get; set; }
+    public Guid SpecialityId { get; set; } = Guid.Empty;
 
-    public StudyForms StudyForm { get; set; }
+    public StudyForms StudyForm { get; set; } = StudyForms.fulltime;
 
-    public DateOnly BeginYear { get; set; }
+    public DateOnly BeginYear { get; set; } = DateOnly.FromDateTime(DateTime.UtcNow);
 
     public virtual Student Student { get; set; } = null!;
     public virtual Faculty Faculty { get; set; } = null!;

@@ -18,10 +18,8 @@ public class AdminFacultyService(StudHunterDbContext context) : FacultyService(c
     /// <returns>A tuple containing the created faculty, an optional status code, and an optional error message.</returns>
     public async Task<(FacultyDto? Entity, int? StatusCode, string? ErrorMessage)> CreateFacultyAsync(CreateFacultyDto dto)
     {
-        #region Serializers
         if (await _context.Faculties.AnyAsync(f => f.Name == dto.Name))
-            return (null, StatusCodes.Status409Conflict, ErrorMessages.AlreadyExists(nameof(Faculty), "name"));
-        #endregion
+            return (null, StatusCodes.Status409Conflict, ErrorMessages.EntityAlreadyExists(nameof(Faculty), "name"));
 
         var faculty = new Faculty
         {
@@ -55,25 +53,18 @@ public class AdminFacultyService(StudHunterDbContext context) : FacultyService(c
     {
         var faculty = await _context.Faculties.FindAsync(id);
 
-        #region Serializers
         if (faculty == null)
-            return (false, StatusCodes.Status404NotFound, ErrorMessages.NotFound(nameof(Faculty)));
+            return (false, StatusCodes.Status404NotFound, ErrorMessages.EntityNotFound(nameof(Faculty)));
 
-        if (dto.Name != null)
-        {
-            if (await _context.Faculties.AnyAsync(f => f.Name == dto.Name && f.Id != id))
-                return (false, StatusCodes.Status409Conflict, ErrorMessages.AlreadyExists(nameof(Faculty), "name"));
-        }
-        #endregion
+        if (dto.Name != null && await _context.Faculties.AnyAsync(f => f.Name == dto.Name && f.Id != id))
+            return (false, StatusCodes.Status409Conflict, ErrorMessages.EntityAlreadyExists(nameof(Faculty), "name"));
 
         if (dto.Name != null)
             faculty.Name = dto.Name;
         if (dto.Description != null)
             faculty.Description = dto.Description;
 
-        var (success, statusCode, errorMessage) = await SaveChangesAsync<Faculty>();
-
-        return (success, statusCode, errorMessage);
+        return await SaveChangesAsync<Faculty>();
     }
 
     /// <summary>
@@ -83,10 +74,8 @@ public class AdminFacultyService(StudHunterDbContext context) : FacultyService(c
     /// <returns>A tuple indicating whether the deletion was successful, an optional status code, and an optional error message.</returns>
     public async Task<(bool Success, int? StatusCode, string? ErrorMessage)> DeleteFacultyAsync(Guid id)
     {
-        #region Serializers
         if (await _context.StudyPlans.AnyAsync(sp => sp.FacultyId == id))
             return (false, StatusCodes.Status400BadRequest, ErrorMessages.CannotDelete(nameof(Faculty), nameof(StudyPlan)));
-        #endregion
 
         return await DeleteEntityAsync<Faculty>(id, hardDelete: true);
     }

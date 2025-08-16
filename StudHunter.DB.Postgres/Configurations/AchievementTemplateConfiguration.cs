@@ -15,10 +15,6 @@ public class AchievementTemplateConfiguration : IEntityTypeConfiguration<Achieve
                .HasDefaultValueSql("gen_random_uuid()")
                .IsRequired();
 
-        builder.Property(a => a.OrderNumber)
-               .HasColumnType("INTEGER")
-               .IsRequired();
-
         builder.Property(a => a.Name)
                .HasColumnType("VARCHAR(255)")
                .HasMaxLength(255)
@@ -38,7 +34,7 @@ public class AchievementTemplateConfiguration : IEntityTypeConfiguration<Achieve
                .HasColumnType("INTEGER")
                .IsRequired();
 
-        builder.HasIndex(a => a.OrderNumber)
+        builder.HasIndex(a => a.Name)
                .IsUnique();
     }
 }

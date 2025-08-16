@@ -40,12 +40,6 @@ public class InvitationDto
     public string Type { get; set; } = string.Empty;
 
     /// <summary>
-    /// The message content of the invitation.
-    /// </summary>
-    [StringLength(1000)]
-    public string? Message { get; set; }
-
-    /// <summary>
     /// The status of the invitation (Sent, Accepted, or Rejected).
     /// </summary>
     [Required]

@@ -23,6 +23,7 @@ public class StudentConfiguration : IEntityTypeConfiguration<Student>
 
         builder.Property(s => s.BirthDate)
                .HasColumnType("DATE")
+               .HasDefaultValue(DateOnly.MinValue)
                .IsRequired();
 
         builder.Property(s => s.Photo)
@@ -35,14 +36,14 @@ public class StudentConfiguration : IEntityTypeConfiguration<Student>
                .HasDefaultValue(false)
                .IsRequired();
 
-        builder.HasOne(s => s.Status)
-               .WithMany()
-               .HasForeignKey(s => s.StatusId)
-               .OnDelete(DeleteBehavior.SetNull)
-               .IsRequired(false);
+        builder.Property(s => s.Status)
+               .HasColumnType("INTEGER")
+               .HasDefaultValue(Student.StudentStatus.Studying)
+               .IsRequired();
 
         builder.HasOne(s => s.Resume)
                .WithOne(r => r.Student)
+               .HasForeignKey<Resume>(r => r.StudentId)
                .OnDelete(DeleteBehavior.Cascade)
                .IsRequired(false);
 
@@ -50,7 +51,7 @@ public class StudentConfiguration : IEntityTypeConfiguration<Student>
                .WithOne(sp => sp.Student)
                .HasForeignKey<StudyPlan>(sp => sp.StudentId)
                .OnDelete(DeleteBehavior.Cascade)
-               .IsRequired();
+               .IsRequired(false);
 
         builder.HasIndex(s => s.Email)
                .IsUnique();

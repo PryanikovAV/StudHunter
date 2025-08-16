@@ -4,7 +4,7 @@ using System.ComponentModel.DataAnnotations;
 namespace StudHunter.API.ModelsDto.Employer;
 
 /// <summary>
-/// Data transfer object for an employer.
+/// Data transfer object representing an employer.
 /// </summary>
 public class EmployerDto
 {
@@ -14,20 +14,14 @@ public class EmployerDto
     public Guid Id { get; set; }
 
     /// <summary>
-    /// The role of the user (always "Employer").
-    /// </summary>
-    public string Role { get; } = "Employer";
-
-    /// <summary>
     /// The employer's email address.
     /// </summary>
-    [Required]
     [StringLength(100)]
     [EmailAddress]
     public string Email { get; set; } = string.Empty;
 
     /// <summary>
-    /// The employer's contact email address.
+    /// The employer's contact email address (optional).
     /// </summary>
     [StringLength(100)]
     [EmailAddress]
@@ -53,25 +47,24 @@ public class EmployerDto
     /// <summary>
     /// The employer's name.
     /// </summary>
-    [Required]
     [StringLength(255)]
-    public string Name { get; set; } = null!;
+    public string Name { get; set; } = string.Empty;
 
     /// <summary>
-    /// The employer's description.
+    /// The employer's description (optional).
     /// </summary>
     [StringLength(1000)]
     public string? Description { get; set; }
 
     /// <summary>
-    /// The employer's website URL.
+    /// The employer's website URL (optional).
     /// </summary>
     [StringLength(255)]
     [Url]
     public string? Website { get; set; }
 
     /// <summary>
-    /// The employer's specialization.
+    /// The employer's specialization (optional).
     /// </summary>
     [StringLength(255)]
     public string? Specialization { get; set; }

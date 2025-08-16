@@ -39,10 +39,8 @@ public class SpecialityService(StudHunterDbContext context) : BaseService(contex
     {
         var speciality = await _context.Specialities.FindAsync(id);
 
-        #region Serializers
         if (speciality == null)
-            return (null, StatusCodes.Status404NotFound, ErrorMessages.NotFound(nameof(Speciality)));
-        #endregion
+            return (null, StatusCodes.Status404NotFound, ErrorMessages.EntityNotFound(nameof(Speciality)));
 
         return (new SpecialityDto
         {

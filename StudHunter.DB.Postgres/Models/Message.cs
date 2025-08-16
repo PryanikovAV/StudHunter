@@ -6,14 +6,17 @@ public class Message : IEntity
 {
     public Guid Id { get; set; }
 
+    public Guid ChatId { get; set; }
+
     public Guid SenderId { get; set; }
 
-    public Guid ReceiverId { get; set; }
+    public string Content { get; set; } = null!;
 
-    public string Context { get; set; } = null!;
+    public Guid? InvitationId { get; set; }
 
     public DateTime SentAt { get; set; }
 
+    public virtual Chat Chat { get; set; } = null!;
     public virtual User Sender { get; set; } = null!;
-    public virtual User Receiver { get; set; } = null!;
+    public virtual Invitation? Invitation { get; set; } = null!;
 }

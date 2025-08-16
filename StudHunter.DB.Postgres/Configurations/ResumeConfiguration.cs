@@ -27,12 +27,12 @@ public class ResumeConfiguration : IEntityTypeConfiguration<Resume>
                .IsRequired(false);
 
         builder.Property(r => r.CreatedAt)
-               .HasColumnType("TIMESTAMP")
+               .HasColumnType("TIMESTAMPTZ")
                .HasDefaultValueSql("CURRENT_TIMESTAMP")
                .IsRequired();
 
         builder.Property(r => r.UpdatedAt)
-               .HasColumnType("TIMESTAMP")
+               .HasColumnType("TIMESTAMPTZ")
                .HasDefaultValueSql("CURRENT_TIMESTAMP")
                .IsRequired();
 
@@ -45,11 +45,6 @@ public class ResumeConfiguration : IEntityTypeConfiguration<Resume>
                .WithOne(s => s.Resume)
                .HasForeignKey<Resume>(r => r.StudentId)
                .IsRequired();
-
-        builder.HasMany(r => r.Favorites)
-               .WithOne(f => f.Resume)
-               .HasForeignKey(f => f.ResumeId)
-               .IsRequired(false);
 
         builder.HasMany(r => r.Invitations)
                .WithOne(i => i.Resume)

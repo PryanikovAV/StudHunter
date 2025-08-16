@@ -68,7 +68,7 @@ public class AdminFacultyController(AdminFacultyService adminFacultyService) : B
     public async Task<IActionResult> CreateFaculty([FromBody] CreateFacultyDto dto)
     {
         if (!ModelState.IsValid)
-            return BadRequest(new { error = "Invalid request data." });
+            return ValidationError();
 
         var (faculty, statusCode, errorMessage) = await _adminFacultyService.CreateFacultyAsync(dto);
         return CreateAPIError(faculty, statusCode, errorMessage, nameof(GetFaculty), new { id = faculty?.Id });
@@ -96,7 +96,7 @@ public class AdminFacultyController(AdminFacultyService adminFacultyService) : B
     public async Task<IActionResult> UpdateFaculty(Guid id, [FromBody] UpdateFacultyDto dto)
     {
         if (!ModelState.IsValid)
-            return BadRequest(new { error = "Invalid request data." });
+            return ValidationError();
 
         var (success, statusCode, errorMessage) = await _adminFacultyService.UpdateFacultyAsync(id, dto);
         return CreateAPIError<FacultyDto>(success, statusCode, errorMessage);

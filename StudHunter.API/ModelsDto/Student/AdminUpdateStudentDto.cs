@@ -8,7 +8,7 @@ namespace StudHunter.API.ModelsDto.Student;
 public class AdminUpdateStudentDto : BaseUpdateStudentDto
 {
     /// <summary>
-    /// Indicates whether the student is deleted.
+    /// Indicates whether the student is deleted (optional).
     /// </summary>
     [Required(ErrorMessage = "{0} is required")]
     public bool? IsDeleted { get; set; }

@@ -49,7 +49,7 @@ public class AdminStudentController(AdminStudentService adminStudentService) : B
     [ProducesResponseType(typeof(object), StatusCodes.Status404NotFound)]
     public async Task<IActionResult> GetStudent(Guid id)
     {
-        var (student, statusCode, errorMessage) = await _adminStudentService.GetStudentAsync(id);
+        var (student, statusCode, errorMessage) = await _adminStudentService.GetStudentAsync<StudentDto>(id);
         return CreateAPIError(student, statusCode, errorMessage);
     }
 
@@ -75,7 +75,7 @@ public class AdminStudentController(AdminStudentService adminStudentService) : B
     public async Task<IActionResult> UpdateStudent(Guid id, [FromBody] AdminUpdateStudentDto dto)
     {
         if (!ModelState.IsValid)
-            return BadRequest(new { error = "Invalid request data." });
+            return ValidationError();
 
         var (success, statusCode, errorMessage) = await _adminStudentService.UpdateStudentAsync(id, dto);
         return CreateAPIError<AdminStudentDto>(success, statusCode, errorMessage);

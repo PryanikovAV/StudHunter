@@ -72,7 +72,7 @@ public class AdminSpecialityController(AdminSpecialityService adminSpecialitySer
     public async Task<IActionResult> CreateSpeciality([FromBody] CreateSpecialityDto dto)
     {
         if (!ModelState.IsValid)
-            return BadRequest(new { error = "Invalid request data." });
+            return ValidationError();
 
         var (speciality, statusCode, errorMessage) = await _adminSpecialityService.CreateSpecialityAsync(dto);
         return CreateAPIError(speciality, statusCode, errorMessage, nameof(GetSpeciality), new { id = speciality?.Id });
@@ -100,7 +100,7 @@ public class AdminSpecialityController(AdminSpecialityService adminSpecialitySer
     public async Task<IActionResult> UpdateSpeciality(Guid id, [FromBody] UpdateSpecialityDto dto)
     {
         if (!ModelState.IsValid)
-            return BadRequest(new { error = "Invalid request data." });
+            return ValidationError();
 
         var (success, statusCode, errorMessage) = await _adminSpecialityService.UpdateSpecialityAsync(id, dto);
         return CreateAPIError<SpecialityDto>(success, statusCode, errorMessage);

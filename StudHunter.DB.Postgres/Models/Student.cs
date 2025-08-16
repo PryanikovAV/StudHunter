@@ -8,16 +8,16 @@ public class Student : User
 
     public StudentGender Gender { get; set; }
 
-    public DateOnly BirthDate { get; set; }
+    public DateOnly BirthDate { get; set; } = DateOnly.MinValue;
 
     public string? Photo { get; set; }
 
     public bool IsForeign { get; set; }
 
-    public int? StatusId { get; set; }
+    public StudentStatus Status { get; set; }
 
-    public virtual StudentStatus? Status { get; set; }
-    public virtual StudyPlan StudyPlan { get; set; } = null!;
+    public virtual StudyPlan? StudyPlan { get; set; }
+
     public virtual Resume? Resume { get; set; }
 
     public enum StudentGender
@@ -25,4 +25,16 @@ public class Student : User
         Male,
         Female
     }
+
+    public enum StudentStatus
+    {
+        Studying = 1,
+        SeekingInternship = 2,
+        SeekingJob = 3,
+        Interning = 4,
+        Working = 5
+    }
+
+    public void UpdateEmail(string email) => SetEmail(email);
+    public void UpdatePassword(string passwordHash) => SetPasswordHash(passwordHash);
 }

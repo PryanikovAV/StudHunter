@@ -1,18 +1,18 @@
 # StudHunter API
 
-Проект на стадии разработки. Реализованы:
-- модели БД
-- конфигурации
-- модели Dto
-- сервисы
-- контроллеры и эндпоинты
-- Swagger
-
-Планируется:
-- Логика Achievements
-- jwt authentication
-- CORS
-- ...
+Проект на стадии разработки.
+- :heavy_check_mark: модели БД их конфигурации
+- :heavy_check_mark: модели Dto
+- :heavy_check_mark: сервисы
+- :heavy_check_mark: контроллеры и эндпоинты
+- :heavy_check_mark: XML документация: DTO, сервисы, контроллеры
+- :heavy_check_mark: Swagger
+- :hourglass_flowing_sand: jwt authentication
+- :x: CORS
+- :x: Логика Achievements
+- :x: Пагинация
+- :x: Внешние сериализаторы
+- :x: подготовка к frontend
 
 ## Требования
 
@@ -42,7 +42,7 @@
    ```json
    {
      "ConnectionStrings": {
-       "DefaultConnection": "Host=localhost;Port=5432;Database=studhunter;Username=postgres;Password=your_password"
+       "DefaultConnection": "Host=localhost;Port=5432;Database=studhunter;Username=postgres;Password=postgres"
      }
    }
    ```

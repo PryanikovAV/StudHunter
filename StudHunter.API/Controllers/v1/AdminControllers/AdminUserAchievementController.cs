@@ -37,20 +37,20 @@ public class AdminUserAchievementController(AdminUserAchievementService adminUse
     /// Retrieves a specific user achievement by user ID and achievement template order number.
     /// </summary>
     /// <param name="userId">The unique identifier (GUID) of the user.</param>
-    /// <param name="achievementTemplateOrderNumber">The order number of the achievement template.</param>
+    /// <param name="achievementTemplateId">The unique identifier (GUID) of the achievement template.</param>
     /// <returns>The user achievement.</returns>
     /// <response code="200">User achievement retrieved successfully.</response>
     /// <response code="401">User is not authenticated.</response>
     /// <response code="403">User lacks Administrator role.</response>
     /// <response code="404">User achievement not found.</response>
-    [HttpGet("{userId}/{achievementTemplateOrderNumber}")]
+    [HttpGet("{userId}/{achievementTemplateId}")]
     [ProducesResponseType(typeof(UserAchievementDto), StatusCodes.Status200OK)]
     [ProducesResponseType(typeof(object), StatusCodes.Status401Unauthorized)]
     [ProducesResponseType(typeof(object), StatusCodes.Status403Forbidden)]
     [ProducesResponseType(typeof(object), StatusCodes.Status404NotFound)]
-    public async Task<IActionResult> GetUserAchievement(Guid userId, int achievementTemplateOrderNumber)
+    public async Task<IActionResult> GetUserAchievement(Guid userId, Guid achievementTemplateId)
     {
-        var (achievement, statusCode, errorMessage) = await _adminUserAchievementService.GetUserAchievementAsync(userId, achievementTemplateOrderNumber);
+        var (achievement, statusCode, errorMessage) = await _adminUserAchievementService.GetUserAchievementAsync(userId, achievementTemplateId);
         return CreateAPIError(achievement, statusCode, errorMessage);
     }
 
@@ -75,9 +75,9 @@ public class AdminUserAchievementController(AdminUserAchievementService adminUse
     public async Task<IActionResult> GrantAchievement([FromBody] GrantAchievementDto dto)
     {
         if (!ModelState.IsValid)
-            return BadRequest(new { error = "Invalid request data." });
+            return ValidationError();
 
-        var (success, statusCode, errorMessage) = await _adminUserAchievementService.GrantAchievementAsync(dto.UserId, dto.AchievementTemplateOrderNumber);
+        var (success, statusCode, errorMessage) = await _adminUserAchievementService.GrantAchievementAsync(dto.UserId, dto.AchievementTemplateId);
         return CreateAPIError<UserAchievementDto>(success, statusCode, errorMessage);
     }
 
@@ -85,22 +85,22 @@ public class AdminUserAchievementController(AdminUserAchievementService adminUse
     /// Deletes a user achievement by user ID and achievement template order number.
     /// </summary>
     /// <param name="userId">The unique identifier (GUID) of the user.</param>
-    /// <param name="achievementTemplateOrderNumber">The order number of the achievement template.</param>
+    /// <param name="achievementTemplateId">The unique identifier (GUID) of the achievement template.</param>
     /// <returns>No content if successful.</returns>
     /// <response code="204">User achievement deleted successfully.</response>
     /// <response code="400">Invalid request data or database error.</response>
     /// <response code="401">User is not authenticated.</response>
     /// <response code="403">User lacks Administrator role.</response>
     /// <response code="404">User achievement not found.</response>
-    [HttpDelete("{userId}/{achievementTemplateOrderNumber}")]
+    [HttpDelete("{userId}/{achievementTemplateId}")]
     [ProducesResponseType(StatusCodes.Status204NoContent)]
     [ProducesResponseType(typeof(object), StatusCodes.Status400BadRequest)]
     [ProducesResponseType(typeof(object), StatusCodes.Status401Unauthorized)]
     [ProducesResponseType(typeof(object), StatusCodes.Status403Forbidden)]
     [ProducesResponseType(typeof(object), StatusCodes.Status404NotFound)]
-    public async Task<IActionResult> DeleteUserAchievement(Guid userId, int achievementTemplateOrderNumber)
+    public async Task<IActionResult> DeleteUserAchievement(Guid userId, Guid achievementTemplateId)
     {
-        var (success, statusCode, errorMessage) = await _adminUserAchievementService.DeleteUserAchievementAsync(userId, achievementTemplateOrderNumber);
+        var (success, statusCode, errorMessage) = await _adminUserAchievementService.DeleteUserAchievementAsync(userId, achievementTemplateId);
         return CreateAPIError<UserAchievementDto>(success, statusCode, errorMessage);
     }
 }

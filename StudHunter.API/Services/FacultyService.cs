@@ -39,10 +39,8 @@ public class FacultyService(StudHunterDbContext context) : BaseService(context)
     {
         var faculty = await _context.Faculties.FindAsync(id);
 
-        #region Serializers
         if (faculty == null)
-            return (null, StatusCodes.Status404NotFound, ErrorMessages.NotFound(nameof(Faculty)));
-        #endregion
+            return (null, StatusCodes.Status404NotFound, ErrorMessages.EntityNotFound(nameof(Faculty)));
 
         return (new FacultyDto
         {

@@ -59,7 +59,6 @@ public class CreateAdminDto
     /// <summary>
     /// The administrator's level (SuperAdmin or Moderator).
     /// </summary>
-    [Required(ErrorMessage = "{0} is required")]
-    [RegularExpression("SuperAdmin|Moderator", ErrorMessage = "{0} must be 'SuperAdmin' or 'Moderator'")]
-    public string AdminLevel { get; set; } = string.Empty;
+    [StringLength(50, ErrorMessage = "{0} cannot exceed {1} characters")]
+    public string? Patronymic { get; set; }
 }

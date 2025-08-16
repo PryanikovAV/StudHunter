@@ -1,8 +1,10 @@
 ﻿using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using StudHunter.API.Common;
 using StudHunter.API.Controllers.v1.BaseControllers;
 using StudHunter.API.ModelsDto.Favorite;
 using StudHunter.API.Services;
+using System.Security.Claims;
 
 namespace StudHunter.API.Controllers.v1;
 
@@ -21,13 +23,16 @@ public class FavoriteController(FavoriteService favoriteService) : BaseControlle
     /// </summary>
     /// <returns>A list of favorites.</returns>
     /// <response code="200">Favorites retrieved successfully.</response>
-    /// <response code="401">User is not authenticated.</response>
+    /// <response code="401">User is not authenticated or invalid user ID.</response>
     [HttpGet]
     [ProducesResponseType(typeof(List<FavoriteDto>), StatusCodes.Status200OK)]
     [ProducesResponseType(typeof(object), StatusCodes.Status401Unauthorized)]
     public async Task<IActionResult> GetAllFavorites()
     {
-        var userId = Guid.NewGuid(); // TODO: Replace Guid.NewGuid() with User.FindFirstValue(ClaimTypes.NameIdentifier) after implementing JWT
+        var userIdString = User.FindFirstValue(ClaimTypes.NameIdentifier);
+        if (!Guid.TryParse(userIdString, out var userId))
+            return CreateAPIError<List<FavoriteDto>>(null, StatusCodes.Status401Unauthorized, ErrorMessages.InvalidTokenUserId());
+
         var (favorites, statusCode, errorMessage) = await _favoriteService.GetAllFavoritesByUserAsync(userId);
         return CreateAPIError(favorites, statusCode, errorMessage);
     }
@@ -46,7 +51,10 @@ public class FavoriteController(FavoriteService favoriteService) : BaseControlle
     [ProducesResponseType(typeof(object), StatusCodes.Status404NotFound)]
     public async Task<IActionResult> GetFavorite(Guid id)
     {
-        var userId = Guid.NewGuid(); // TODO: Replace Guid.NewGuid() with User.FindFirstValue(ClaimTypes.NameIdentifier) after implementing JWT
+        var userIdString = User.FindFirstValue(ClaimTypes.NameIdentifier);
+        if (!Guid.TryParse(userIdString, out var userId))
+            return CreateAPIError<FavoriteDto>(null, StatusCodes.Status401Unauthorized, ErrorMessages.InvalidTokenUserId());
+
         var (favorite, statusCode, errorMessage) = await _favoriteService.GetFavoriteAsync(id, userId);
         return CreateAPIError(favorite, statusCode, errorMessage);
     }
@@ -70,9 +78,12 @@ public class FavoriteController(FavoriteService favoriteService) : BaseControlle
     public async Task<IActionResult> CreateFavorite([FromBody] CreateFavoriteDto dto)
     {
         if (!ModelState.IsValid)
-            return BadRequest(new { error = "Invalid request data." });
+            return ValidationError();
 
-        var userId = Guid.NewGuid(); // TODO: Replace Guid.NewGuid() with User.FindFirstValue(ClaimTypes.NameIdentifier) after implementing JWT
+        var userIdString = User.FindFirstValue(ClaimTypes.NameIdentifier);
+        if (!Guid.TryParse(userIdString, out var userId))
+            return CreateAPIError<FavoriteDto>(null, StatusCodes.Status401Unauthorized, ErrorMessages.InvalidTokenUserId());
+
         var (favorite, statusCode, errorMessage) = await _favoriteService.CreateFavoriteAsync(userId, dto);
         return CreateAPIError(favorite, statusCode, errorMessage, nameof(GetFavorite), new { id = favorite?.Id });
     }
@@ -93,7 +104,10 @@ public class FavoriteController(FavoriteService favoriteService) : BaseControlle
     [ProducesResponseType(typeof(object), StatusCodes.Status404NotFound)]
     public async Task<IActionResult> DeleteFavorite(Guid id)
     {
-        var userId = Guid.NewGuid(); // TODO: Replace Guid.NewGuid() with User.FindFirstValue(ClaimTypes.NameIdentifier) after implementing JWT
+        var userIdString = User.FindFirstValue(ClaimTypes.NameIdentifier);
+        if (!Guid.TryParse(userIdString, out var userId))
+            return CreateAPIError<FavoriteDto>(null, StatusCodes.Status401Unauthorized, ErrorMessages.InvalidTokenUserId());
+
         var (success, statusCode, errorMessage) = await _favoriteService.DeleteFavoriteAsync(id, userId);
         return CreateAPIError<FavoriteDto>(success, statusCode, errorMessage);
     }

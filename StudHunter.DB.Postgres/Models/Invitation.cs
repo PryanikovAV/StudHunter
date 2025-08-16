@@ -1,5 +1,6 @@
 ﻿using StudHunter.DB.Postgres.Interfaces;
-using StudHunter.DB.Postgres.Models;
+
+namespace StudHunter.DB.Postgres.Models;
 
 public class Invitation : IEntity
 {
@@ -14,8 +15,6 @@ public class Invitation : IEntity
     public Guid? ResumeId { get; set; }
 
     public InvitationType Type { get; set; }
-
-    public string? Message { get; set; }
 
     public InvitationStatus Status { get; set; }
 

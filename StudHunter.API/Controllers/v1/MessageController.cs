@@ -2,7 +2,10 @@
 using Microsoft.AspNetCore.Mvc;
 using StudHunter.API.Controllers.v1.BaseControllers;
 using StudHunter.API.ModelsDto.Message;
+using StudHunter.API.ModelsDto.Chat;
 using StudHunter.API.Services;
+using System.Security.Claims;
+using StudHunter.API.Common;
 
 namespace StudHunter.API.Controllers.v1;
 
@@ -16,35 +19,31 @@ public class MessageController(MessageService messageService) : BaseController
 {
     private readonly MessageService _messageService = messageService;
 
-    /// <summary>
-    /// Retrieves sent messages for a specific user.
-    /// </summary>
-    /// <param name="userId">The unique identifier (GUID) of the user.</param>
-    /// <returns>A list of sent messages.</returns>
-    /// <response code="200">Messages retrieved successfully.</response>
-    /// <response code="401">User is not authenticated.</response>
-    [HttpGet("sent/{userId}")]
-    [ProducesResponseType(typeof(List<MessageDto>), StatusCodes.Status200OK)]
+    [HttpGet("chats")]
+    [ProducesResponseType(typeof(List<ChatDto>), StatusCodes.Status200OK)]
     [ProducesResponseType(typeof(object), StatusCodes.Status401Unauthorized)]
-    public async Task<IActionResult> GetSentMessages(Guid userId)
+    [ProducesResponseType(typeof(object), StatusCodes.Status404NotFound)]
+    public async Task<IActionResult> GetChatsByUser()
     {
-        var (messages, statusCode, errorMessage) = await _messageService.GetMessagesByUserAsync(userId, sent: true);
-        return CreateAPIError(messages, statusCode, errorMessage);
+        var userString = User.FindFirstValue(ClaimTypes.NameIdentifier);
+        if (!Guid.TryParse(userString, out var userId))
+            return CreateAPIError<List<ChatDto>>(null, StatusCodes.Status401Unauthorized, ErrorMessages.InvalidTokenUserId());
+
+        var (chats, statusCode, errorMessage) = await _messageService.GetChatsByUserAsync(userId);
+        return CreateAPIError(chats, statusCode, errorMessage);
     }
 
-    /// <summary>
-    /// Retrieves received messages for a specific user.
-    /// </summary>
-    /// <param name="userId">The unique identifier (GUID) of the user.</param>
-    /// <returns>A list of received messages.</returns>
-    /// <response code="200">Messages retrieved successfully.</response>
-    /// <response code="401">User is not authenticated.</response>
-    [HttpGet("received/{userId}")]
+    [HttpGet("chats/{chatId}")]
     [ProducesResponseType(typeof(List<MessageDto>), StatusCodes.Status200OK)]
     [ProducesResponseType(typeof(object), StatusCodes.Status401Unauthorized)]
-    public async Task<IActionResult> GetReceivedMessages(Guid userId)
+    [ProducesResponseType(typeof(object), StatusCodes.Status404NotFound)]
+    public async Task<IActionResult> GetMessagesByChat(Guid chatId)
     {
-        var (messages, statusCode, errorMessage) = await _messageService.GetMessagesByUserAsync(userId, sent: false);
+        var userString = User.FindFirstValue(ClaimTypes.NameIdentifier);
+        if (!Guid.TryParse(userString, out var userId))
+            return CreateAPIError<List<MessageDto>>(null, StatusCodes.Status401Unauthorized, ErrorMessages.InvalidTokenUserId());
+
+        var (messages, statusCode, errorMessage) = await _messageService.GetMessagesByChatAsync(chatId, userId);
         return CreateAPIError(messages, statusCode, errorMessage);
     }
 
@@ -62,7 +61,10 @@ public class MessageController(MessageService messageService) : BaseController
     [ProducesResponseType(typeof(object), StatusCodes.Status404NotFound)]
     public async Task<IActionResult> GetMessage(Guid id)
     {
-        var userId = Guid.NewGuid(); // TODO: Replace Guid.NewGuid() with User.FindFirstValue(ClaimTypes.NameIdentifier) after implementing JWT
+        var userString = User.FindFirstValue(ClaimTypes.NameIdentifier);
+        if (!Guid.TryParse(userString, out var userId))
+            return CreateAPIError<MessageDto>(null, StatusCodes.Status401Unauthorized, ErrorMessages.InvalidTokenUserId());
+
         var (message, statusCode, errorMessage) = await _messageService.GetMessageAsync(id, userId);
         return CreateAPIError(message, statusCode, errorMessage);
     }
@@ -84,9 +86,12 @@ public class MessageController(MessageService messageService) : BaseController
     public async Task<IActionResult> CreateMessage([FromBody] CreateMessageDto dto)
     {
         if (!ModelState.IsValid)
-            return BadRequest(new { error = "Invalid request data." });
+            return ValidationError();
 
-        var senderId = Guid.NewGuid(); // TODO: Replace Guid.NewGuid() with User.FindFirstValue(ClaimTypes.NameIdentifier) after implementing JWT
+        var userString = User.FindFirstValue(ClaimTypes.NameIdentifier);
+        if (!Guid.TryParse(userString, out var senderId))
+            return CreateAPIError<MessageDto>(null, StatusCodes.Status401Unauthorized, ErrorMessages.InvalidTokenUserId());
+
         var (message, statusCode, errorMessage) = await _messageService.CreateMessageAsync(senderId, dto);
         return CreateAPIError(message, statusCode, errorMessage, nameof(GetMessage), new { id = message?.Id });
     }

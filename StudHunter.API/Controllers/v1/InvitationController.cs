@@ -1,8 +1,10 @@
 ﻿using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using StudHunter.API.Common;
 using StudHunter.API.Controllers.v1.BaseControllers;
 using StudHunter.API.ModelsDto.Invitation;
 using StudHunter.API.Services;
+using System.Security.Claims;
 
 namespace StudHunter.API.Controllers.v1;
 
@@ -62,7 +64,10 @@ public class InvitationController(InvitationService invitationService) : BaseCon
     [ProducesResponseType(typeof(object), StatusCodes.Status404NotFound)]
     public async Task<IActionResult> GetInvitation(Guid id)
     {
-        var userId = Guid.NewGuid(); // TODO: Replace Guid.NewGuid() with User.FindFirstValue(ClaimTypes.NameIdentifier) after implementing JWT
+        var userIdString = User.FindFirstValue(ClaimTypes.NameIdentifier);
+        if (!Guid.TryParse(userIdString, out var userId))
+            return CreateAPIError<InvitationDto>(null, StatusCodes.Status401Unauthorized, ErrorMessages.InvalidTokenUserId());
+
         var (invitation, statusCode, errorMessage) = await _invitationService.GetInvitationAsync(id, userId);
         return CreateAPIError(invitation, statusCode, errorMessage);
     }
@@ -86,10 +91,13 @@ public class InvitationController(InvitationService invitationService) : BaseCon
     public async Task<IActionResult> CreateInvitation([FromBody] CreateInvitationDto dto)
     {
         if (!ModelState.IsValid)
-            return BadRequest(new { error = "Invalid request data." });
+            return ValidationError();
 
-        var senderId = Guid.NewGuid(); // TODO: Replace Guid.NewGuid() with User.FindFirstValue(ClaimTypes.NameIdentifier) after implementing JWT
-        var (invitation, statusCode, errorMessage) = await _invitationService.CreateInvitationAsync(senderId, dto);
+        var userIdString = User.FindFirstValue(ClaimTypes.NameIdentifier);
+        if (!Guid.TryParse(userIdString, out var userId))
+            return CreateAPIError<InvitationDto>(null, StatusCodes.Status401Unauthorized, ErrorMessages.InvalidTokenUserId());
+
+        var (invitation, statusCode, errorMessage) = await _invitationService.CreateInvitationAsync(userId, dto);
         return CreateAPIError(invitation, statusCode, errorMessage, nameof(GetInvitation), new { id = invitation?.Id });
     }
 
@@ -113,10 +121,13 @@ public class InvitationController(InvitationService invitationService) : BaseCon
     public async Task<IActionResult> UpdateInvitationStatus(Guid id, [FromBody] UpdateInvitationDto dto)
     {
         if (!ModelState.IsValid)
-            return BadRequest(new { error = "Invalid request data." });
+            return ValidationError();
 
-        var receiverId = Guid.NewGuid(); // TODO: Replace Guid.NewGuid() with User.FindFirstValue(ClaimTypes.NameIdentifier) after implementing JWT
-        var (success, statusCode, errorMessage) = await _invitationService.UpdateInvitationStatusAsync(id, receiverId, dto);
+        var userIdString = User.FindFirstValue(ClaimTypes.NameIdentifier);
+        if (!Guid.TryParse(userIdString, out var userId))
+            return CreateAPIError<InvitationDto>(null, StatusCodes.Status401Unauthorized, ErrorMessages.InvalidTokenUserId());
+
+        var (success, statusCode, errorMessage) = await _invitationService.UpdateInvitationStatusAsync(id, userId, dto);
         return CreateAPIError<InvitationDto>(success, statusCode, errorMessage);
     }
 }

@@ -1,11 +1,11 @@
 ﻿using System.ComponentModel.DataAnnotations;
 
-namespace StudHunter.API.ModelsDto.LoginRequest;
+namespace StudHunter.API.ModelsDto.Auth;
 
 /// <summary>
 /// Data transfer object for a login request.
 /// </summary>
-public class LoginRequestDto
+public class LoginDto
 {
     /// <summary>
     /// The user's email address.

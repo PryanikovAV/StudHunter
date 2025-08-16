@@ -10,7 +10,8 @@ public class CourseConfiguration : IEntityTypeConfiguration<Course>
         builder.HasKey(c => c.Id);
 
         builder.Property(c => c.Id)
-               .HasDefaultValueSql("gen_random_uuid()");
+               .HasDefaultValueSql("gen_random_uuid()")
+               .IsRequired();
 
         builder.Property(c => c.Name)
                .HasColumnType("VARCHAR(255)")
@@ -28,11 +29,11 @@ public class CourseConfiguration : IEntityTypeConfiguration<Course>
         builder.HasMany(c => c.VacancyCourses)
                .WithOne(vc => vc.Course)
                .HasForeignKey(vc => vc.CourseId)
-               .IsRequired();
+               .IsRequired(false);
 
         builder.HasMany(c => c.StudyPlanCourses)
                .WithOne(spc => spc.Course)
                .HasForeignKey(spc => spc.CourseId)
-               .IsRequired();
+               .IsRequired(false);
     }
 }

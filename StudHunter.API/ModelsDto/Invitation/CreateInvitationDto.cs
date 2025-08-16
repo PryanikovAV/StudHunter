@@ -29,10 +29,4 @@ public class CreateInvitationDto
     [Required(ErrorMessage = "{0} is required")]
     [RegularExpression("EmployerToStudent|StudentToEmployer", ErrorMessage = "{0} must be 'EmployerToStudent' or 'StudentToEmployer'")]
     public string Type { get; set; } = string.Empty;
-
-    /// <summary>
-    /// The message content of the invitation.
-    /// </summary>
-    [StringLength(1000, ErrorMessage = "{0} cannot exceed {1} characters")]
-    public string? Message { get; set; }
 }

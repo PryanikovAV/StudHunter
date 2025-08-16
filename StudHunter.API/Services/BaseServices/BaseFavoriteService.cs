@@ -1,13 +1,27 @@
 ﻿using Microsoft.EntityFrameworkCore;
 using StudHunter.API.Common;
+using StudHunter.API.ModelsDto.AchievementTemplate;
 using StudHunter.API.ModelsDto.Favorite;
 using StudHunter.DB.Postgres;
 using StudHunter.DB.Postgres.Models;
 
 namespace StudHunter.API.Services.BaseServices;
 
-public class BaseFavoriteService(StudHunterDbContext context) : BaseService(context)
+public abstract class BaseFavoriteService(StudHunterDbContext context) : BaseService(context)
 {
+    protected static FavoriteDto MapToFavoriteDto(Favorite favorite)
+    {
+        return new FavoriteDto
+        {
+            Id = favorite.Id,
+            UserId = favorite.UserId,
+            VacancyId = favorite.VacancyId,
+            EmployerId = favorite.EmployerId,
+            StudentId = favorite.StudentId,
+            AddedAt = favorite.AddedAt
+        };
+    }
+
     /// <summary>
     /// Retrieves all favorites for a specific user.
     /// </summary>
@@ -17,14 +31,7 @@ public class BaseFavoriteService(StudHunterDbContext context) : BaseService(cont
     {
         var favorites = await _context.Favorites
         .Where(f => f.UserId == userId)
-        .Select(f => new FavoriteDto
-        {
-            Id = f.Id,
-            UserId = f.UserId,
-            VacancyId = f.VacancyId,
-            ResumeId = f.ResumeId,
-            AddedAt = f.AddedAt
-        })
+        .Select(f => MapToFavoriteDto(f))
         .ToListAsync();
 
         return (favorites, null, null);
@@ -40,20 +47,11 @@ public class BaseFavoriteService(StudHunterDbContext context) : BaseService(cont
     {
         var favorite = await _context.Favorites
         .Where(f => f.Id == favoriteId && f.UserId == userId)
-        .Select(f => new FavoriteDto
-        {
-            Id = f.Id,
-            UserId = f.UserId,
-            VacancyId = f.VacancyId,
-            ResumeId = f.ResumeId,
-            AddedAt = f.AddedAt
-        })
+        .Select(f => MapToFavoriteDto(f))
         .FirstOrDefaultAsync();
 
-        #region Serializers
         if (favorite == null)
-            return (null, StatusCodes.Status404NotFound, ErrorMessages.NotFound(nameof(Favorite)));
-        #endregion
+            return (null, StatusCodes.Status404NotFound, ErrorMessages.EntityNotFound(nameof(Favorite)));
 
         return (favorite, null, null);
     }

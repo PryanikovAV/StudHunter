@@ -12,9 +12,15 @@ public class Favorite : IEntity
 
     public Guid? ResumeId { get; set; }
 
+    public Guid? EmployerId { get; set; }
+
+    public Guid? StudentId { get; set; }
+
     public DateTime AddedAt { get; set; }
 
     public virtual User User { get; set; } = null!;
     public virtual Vacancy? Vacancy { get; set; }
     public virtual Resume? Resume { get; set; }
+    public virtual Employer? Employer { get; set; }
+    public virtual Student? Student { get; set; }
 }

@@ -41,7 +41,7 @@ public class AdminMessageController(AdminMessagesService adminMessagesService) :
     /// <response code="200">Messages retrieved successfully.</response>
     /// <response code="401">User is not authenticated.</response>
     /// <response code="403">User lacks Administrator role.</response>
-    [HttpGet("sent/{userId}")]
+    [HttpGet("user/{userId}/sent")]
     [ProducesResponseType(typeof(List<MessageDto>), StatusCodes.Status200OK)]
     [ProducesResponseType(typeof(object), StatusCodes.Status401Unauthorized)]
     [ProducesResponseType(typeof(object), StatusCodes.Status403Forbidden)]
@@ -59,7 +59,7 @@ public class AdminMessageController(AdminMessagesService adminMessagesService) :
     /// <response code="200">Messages retrieved successfully.</response>
     /// <response code="401">User is not authenticated.</response>
     /// <response code="403">User lacks Administrator role.</response>
-    [HttpGet("received/{userId}")]
+    [HttpGet("user/{userId}/received")]
     [ProducesResponseType(typeof(List<MessageDto>), StatusCodes.Status200OK)]
     [ProducesResponseType(typeof(object), StatusCodes.Status401Unauthorized)]
     [ProducesResponseType(typeof(object), StatusCodes.Status403Forbidden)]
@@ -67,6 +67,17 @@ public class AdminMessageController(AdminMessagesService adminMessagesService) :
     {
         var (messages, statusCode, errorMessage) = await _adminMessagesService.GetMessagesByUserAsync(userId, sent: false);
         return CreateAPIError(messages, statusCode, errorMessage);
+    }
+
+    [HttpGet("{id}")]
+    [ProducesResponseType(typeof(MessageDto), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(object), StatusCodes.Status401Unauthorized)]
+    [ProducesResponseType(typeof(object), StatusCodes.Status403Forbidden)]
+    [ProducesResponseType(typeof(object), StatusCodes.Status404NotFound)]
+    public async Task<IActionResult> GetMessage(Guid id)
+    {
+        var (message, statusCode, errorMessage) = await _adminMessagesService.GetMessageAsync(id);
+        return CreateAPIError(message, statusCode, errorMessage);
     }
 
     /// <summary>

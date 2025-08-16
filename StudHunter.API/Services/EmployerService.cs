@@ -1,46 +1,50 @@
 ﻿using Microsoft.EntityFrameworkCore;
 using StudHunter.API.Common;
+using StudHunter.API.ModelsDto.Auth;
 using StudHunter.API.ModelsDto.Employer;
 using StudHunter.API.Services.BaseServices;
 using StudHunter.DB.Postgres;
 using StudHunter.DB.Postgres.Models;
+using System.ComponentModel.DataAnnotations;
 
 namespace StudHunter.API.Services;
 
 /// <summary>
 /// Service for managing employers.
 /// </summary>
-public class EmployerService(StudHunterDbContext context, UserAchievementService userAchievementService, IPasswordHasher passwordHasher)
-: BaseEmployerService(context, userAchievementService)
+public class EmployerService(StudHunterDbContext context, IPasswordHasher passwordHasher, AuthService authService) : BaseEmployerService(context)
 {
     private readonly IPasswordHasher _passwordHasher = passwordHasher;
+    private readonly IAuthService _authService = authService;
 
     /// <summary>
-    /// Creates a new employer.
+    /// Registers a new employer with minimal details (email, password, name).
     /// </summary>
-    /// <param name="dto">The data transfer object containing employer details.</param>
-    /// <returns>A tuple containing the created employer, an optional status code, and an optional error message.</returns>
-    public async Task<(EmployerDto? Entity, int? StatusCode, string? ErrorMessage)> CreateEmployerAsync(CreateEmployerDto dto)
+    /// <param name="dto">The data transfer object containing employer registration details.</param>
+    /// <returns>A tuple containing the employer DTO, an optional status code, and an optional error message.</returns>
+    public async Task<(EmployerDto? Entity, int? StatusCode, string? ErrorMessage)> CreateEmployerAsync(RegisterEmployerDto dto)
     {
-        #region Serializers
-        if (await _context.Employers.AnyAsync(e => e.Email == dto.Email))
-            return (null, StatusCodes.Status409Conflict, ErrorMessages.AlreadyExists(nameof(Employer), "email"));
-        #endregion
+        if (!new EmailAddressAttribute().IsValid(dto.Email))
+            return (null, StatusCodes.Status400BadRequest, ErrorMessages.InvalidData("email format"));
+
+        if (await _context.Users.AnyAsync(u => u.Email == dto.Email && !u.IsDeleted))
+            return (null, StatusCodes.Status409Conflict, ErrorMessages.EntityAlreadyExists(nameof(Employer), "email"));
+
+        if (string.IsNullOrEmpty(dto.Name))
+            return (null, StatusCodes.Status400BadRequest, ErrorMessages.InvalidData("name"));
 
         var employer = new Employer
         {
             Id = Guid.NewGuid(),
-            Email = dto.Email,
-            PasswordHash = _passwordHasher.HashPassword(dto.Password),
-            ContactEmail = dto.ContactEmail,
+            Name = dto.Name,
             ContactPhone = dto.ContactPhone,
             CreatedAt = DateTime.UtcNow,
+            IsDeleted = false,
             AccreditationStatus = false,
-            Name = dto.Name,
-            Description = dto.Description,
-            Website = dto.Website,
-            Specialization = dto.Specialization
         };
+
+        employer.UpdateEmail(dto.Email);
+        employer.UpdatePassword(_passwordHasher.HashPassword(dto.Password));
 
         _context.Employers.Add(employer);
 
@@ -49,23 +53,20 @@ public class EmployerService(StudHunterDbContext context, UserAchievementService
         if (!success)
             return (null, statusCode, errorMessage);
 
-        return (new EmployerDto
-        {
-            Id = employer.Id,
-            Email = employer.Email,
-            ContactEmail = employer.ContactEmail,
-            ContactPhone = employer.ContactPhone,
-            CreatedAt = employer.CreatedAt,
-            AccreditationStatus = employer.AccreditationStatus,
-            Name = employer.Name,
-            Description = employer.Description,
-            Website = employer.Website,
-            Specialization = employer.Specialization
-        }, null, null);
+        var employerEntity = await _context.Employers
+            .Include(e => e.Vacancies)
+            .Include(e => e.Achievements).ThenInclude(a => a.AchievementTemplate)
+            .FirstOrDefaultAsync(e => e.Id == employer.Id && !e.IsDeleted);
+
+        if (employerEntity == null)
+            return (null, StatusCodes.Status500InternalServerError, ErrorMessages.FailedToRetrieve(nameof(Employer)));
+
+        var token = _authService.GenerateJwtToken(employer.Id, nameof(Employer));
+        return (MapToEmployerDto<EmployerDto>(employerEntity), null, null);
     }
 
     /// <summary>
-    /// Updates an existing employer.
+    /// Updates an employer's profile.
     /// </summary>
     /// <param name="id">The unique identifier (GUID) of the employer.</param>
     /// <param name="dto">The data transfer object containing updated employer details.</param>
@@ -73,22 +74,20 @@ public class EmployerService(StudHunterDbContext context, UserAchievementService
     public async Task<(bool Success, int? StatusCode, string? ErrorMessage)> UpdateEmployerAsync(Guid id, UpdateEmployerDto dto)
     {
         var employer = await _context.Employers.FindAsync(id);
-
-        #region Serializers
         if (employer == null)
-            return (false, StatusCodes.Status404NotFound, ErrorMessages.NotFound(nameof(Employer)));
+            return (false, StatusCodes.Status404NotFound, ErrorMessages.EntityNotFound(nameof(Employer)));
+
+        if (dto.Email != null && await _context.Employers.AnyAsync(s => s.Email == dto.Email && s.Id != id))
+            return (false, StatusCodes.Status409Conflict, ErrorMessages.EntityAlreadyExists(nameof(Employer), "email"));
+
+        if (dto.Name != null && string.IsNullOrWhiteSpace(dto.Name))
+            return (false, StatusCodes.Status400BadRequest, ErrorMessages.InvalidData("name"));
 
         if (dto.Email != null)
-        {
-            if (await _context.Employers.AnyAsync(s => s.Email == dto.Email && s.Id != id))
-                return (false, StatusCodes.Status409Conflict, ErrorMessages.AlreadyExists(nameof(Employer), "email"));
-        }
-        #endregion
-
-        if (dto.Email != null)
-            employer.Email = dto.Email;
+            employer.UpdateEmail(dto.Email);
         if (dto.Password != null)
-            employer.PasswordHash = _passwordHasher.HashPassword(dto.Password);
+            employer.UpdatePassword(_passwordHasher.HashPassword(dto.Password));
+
         if (dto.ContactPhone != null)
             employer.ContactPhone = dto.ContactPhone;
         if (dto.ContactEmail != null)
@@ -102,9 +101,7 @@ public class EmployerService(StudHunterDbContext context, UserAchievementService
         if (dto.Specialization != null)
             employer.Specialization = dto.Specialization;
 
-        var (success, statusCode, errorMessage) = await SaveChangesAsync<Employer>();
-
-        return (success, statusCode, errorMessage);
+        return await SaveChangesAsync<Employer>();
     }
 
     /// <summary>

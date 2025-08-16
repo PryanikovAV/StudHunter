@@ -1,7 +1,5 @@
-﻿using System.ComponentModel.DataAnnotations;
-
-namespace StudHunter.API.ModelsDto.Message;
-
+﻿namespace StudHunter.API.ModelsDto.Message;
+// TODO: add XML configuration
 /// <summary>
 /// Data transfer object for a message.
 /// </summary>
@@ -11,6 +9,8 @@ public class MessageDto
     /// The unique identifier (GUID) of the message.
     /// </summary>
     public Guid Id { get; set; }
+
+    public Guid ChatId { get; set; }
 
     /// <summary>
     /// The unique identifier (GUID) of the sender.
@@ -23,21 +23,11 @@ public class MessageDto
     public string SenderEmail { get; set; } = string.Empty;
 
     /// <summary>
-    /// The unique identifier (GUID) of the receiver.
-    /// </summary>
-    public Guid ReceiverId { get; set; }
-
-    /// <summary>
-    /// The email address of the receiver.
-    /// </summary>
-    public string ReceiverEmail { get; set; } = string.Empty;
-
-    /// <summary>
     /// The content of the message.
     /// </summary>
-    [Required]
-    [StringLength(1000)]
-    public string Context { get; set; } = string.Empty;
+    public string Content { get; set; } = string.Empty;
+
+    public Guid? InvitationId { get; set; }
 
     /// <summary>
     /// The date and time the message was sent.

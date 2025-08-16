@@ -39,10 +39,8 @@ public class CourseService(StudHunterDbContext context) : BaseService(context)
     {
         var course = await _context.Courses.FindAsync(id);
 
-        #region Serializers
         if (course == null)
-            return (null, StatusCodes.Status404NotFound, ErrorMessages.NotFound(nameof(Course)));
-        #endregion
+            return (null, StatusCodes.Status404NotFound, ErrorMessages.EntityNotFound(nameof(Course)));
 
         return (new CourseDto
         {

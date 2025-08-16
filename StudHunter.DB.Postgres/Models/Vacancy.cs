@@ -24,7 +24,6 @@ public class Vacancy : ISoftDeletable
 
     public virtual Employer Employer { get; set; } = null!;
     public virtual ICollection<VacancyCourse> Courses { get; set; } = new List<VacancyCourse>();
-    public virtual ICollection<Favorite> Favorites { get; set; } = new List<Favorite>();
     public virtual ICollection<Invitation> Invitations { get; set; } = new List<Invitation>();
 
     public enum VacancyType

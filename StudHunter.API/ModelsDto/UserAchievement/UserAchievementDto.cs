@@ -16,9 +16,9 @@ public class UserAchievementDto
     public Guid UserId { get; set; }
 
     /// <summary>
-    /// The order number of the achievement template.
+    /// 
     /// </summary>
-    public int AchievementTemplateOrderNumber { get; set; }
+    public Guid AchievementTemplateId { get; set; }
 
     /// <summary>
     /// The date and time the achievement was granted.

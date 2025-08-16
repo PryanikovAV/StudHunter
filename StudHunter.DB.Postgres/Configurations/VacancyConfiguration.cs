@@ -33,12 +33,12 @@ public class VacancyConfiguration : IEntityTypeConfiguration<Vacancy>
                .IsRequired(false);
 
         builder.Property(vc => vc.CreatedAt)
-               .HasColumnType("TIMESTAMP")
+               .HasColumnType("TIMESTAMPTZ")
                .HasDefaultValueSql("CURRENT_TIMESTAMP")
                .IsRequired();
 
         builder.Property(vc => vc.UpdatedAt)
-               .HasColumnType("TIMESTAMP")
+               .HasColumnType("TIMESTAMPTZ")
                .HasDefaultValueSql("CURRENT_TIMESTAMP")
                .IsRequired();
 
@@ -55,11 +55,6 @@ public class VacancyConfiguration : IEntityTypeConfiguration<Vacancy>
                .WithOne(vc => vc.Vacancy)
                .HasForeignKey(vc => vc.VacancyId)
                .IsRequired();
-
-        builder.HasMany(v => v.Favorites)
-               .WithOne(f => f.Vacancy)
-               .HasForeignKey(f => f.VacancyId)
-               .IsRequired(false);
 
         builder.HasMany(v => v.Invitations)
                .WithOne(i => i.Vacancy)

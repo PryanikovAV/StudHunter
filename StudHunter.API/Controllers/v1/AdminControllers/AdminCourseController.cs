@@ -68,7 +68,7 @@ public class AdminCourseController(AdminCourseService adminCourseService) : Base
     public async Task<IActionResult> CreateCourse([FromBody] CreateCourseDto dto)
     {
         if (!ModelState.IsValid)
-            return BadRequest(new { error = "Invalid request data." });
+            return ValidationError();
 
         var (course, statusCode, errorMessage) = await _adminCourseService.CreateCourseAsync(dto);
         return CreateAPIError(course, statusCode, errorMessage, nameof(GetCourse), new { id = course?.Id });
@@ -96,7 +96,7 @@ public class AdminCourseController(AdminCourseService adminCourseService) : Base
     public async Task<IActionResult> UpdateCourse(Guid id, [FromBody] UpdateCourseDto dto)
     {
         if (!ModelState.IsValid)
-            return BadRequest(new { error = "Invalid request data." });
+            return ValidationError();
 
         var (success, statusCode, errorMessage) = await _adminCourseService.UpdateCourseAsync(id, dto);
         return CreateAPIError<CourseDto>(success, statusCode, errorMessage);

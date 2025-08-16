@@ -1,11 +1,13 @@
+using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.EntityFrameworkCore;
-using Microsoft.Extensions.Logging;
+using Microsoft.IdentityModel.Tokens;
+using Microsoft.OpenApi.Models;
+using StudHunter.API.Common;
 using StudHunter.API.Services;
 using StudHunter.API.Services.AdminServices;
 using StudHunter.DB.Postgres;
 using System.Reflection;
-using Microsoft.OpenApi.Models;
-using StudHunter.API.Common;
+using System.Text;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -17,29 +19,28 @@ builder.Services.AddLogging(logging =>
 });
 
 builder.Services.AddDbContext<StudHunterDbContext>(options =>
-options.UseNpgsql(builder.Configuration.GetConnectionString("DefaultConnection")));
+    options.UseNpgsql(builder.Configuration.GetConnectionString("DefaultConnection")));
 
-//builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
-//    .AddJwtBearer(options =>
-//    {
-//        var jwtKey = builder.Configuration["Jwt:Key"];
-//        if (string.IsNullOrEmpty(jwtKey))
-//            throw new InvalidOperationException("JWT Key is not configured in appsettings.json");
+builder.Services.AddAuthentication(options =>
+{
+    options.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
+    options.DefaultChallengeScheme = JwtBearerDefaults.AuthenticationScheme;
+}).AddJwtBearer(options =>
+{
+    options.TokenValidationParameters = new TokenValidationParameters
+    {
+        ValidateIssuer = true,
+        ValidateAudience = true,
+        ValidateLifetime = true,
+        ValidateIssuerSigningKey = true,
+        ValidIssuer = builder.Configuration["Jwt:Issuer"],
+        ValidAudience = builder.Configuration["Jwt:Audience"],
+        IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(builder.Configuration["Jwt:Key"] ?? throw new InvalidOperationException("JWT Key is not configured")))
+    };
+});
+builder.Services.AddAuthorization();
 
-//        options.TokenValidationParameters = new TokenValidationParameters
-//        {
-//            ValidateIssuer = true,
-//            ValidateAudience = true,
-//            ValidateLifetime = true,
-//            ValidateIssuerSigningKey = true,
-//            ValidIssuer = builder.Configuration["Jwt:Issuer"],
-//            ValidAudience = builder.Configuration["Jwt:Audience"],
-//            IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(jwtKey))
-//        };
-//    });
-
-//builder.Services.AddAuthorization();
-
+builder.Services.AddScoped<AuthService>();
 builder.Services.AddScoped<AdminAchievementTemplateService>();
 builder.Services.AddScoped<AdminCourseService>();
 builder.Services.AddScoped<AdminEmployerService>();
@@ -51,6 +52,7 @@ builder.Services.AddScoped<AdminResumeService>();
 builder.Services.AddScoped<AdminService>();
 builder.Services.AddScoped<AdminSpecialityService>();
 builder.Services.AddScoped<AdminStudentService>();
+builder.Services.AddScoped<AdminStudyPlanService>();
 builder.Services.AddScoped<AdminUserAchievementService>();
 builder.Services.AddScoped<AdminVacancyService>();
 builder.Services.AddScoped<CourseService>();
@@ -59,13 +61,14 @@ builder.Services.AddScoped<FacultyService>();
 builder.Services.AddScoped<FavoriteService>();
 builder.Services.AddScoped<InvitationService>();
 builder.Services.AddScoped<MessageService>();
-builder.Services.AddScoped<PasswordHasher>();
 builder.Services.AddScoped<ResumeService>();
 builder.Services.AddScoped<SpecialityService>();
 builder.Services.AddScoped<StudentService>();
+builder.Services.AddScoped<StudyPlanService>();
 builder.Services.AddScoped<UserAchievementService>();
 builder.Services.AddScoped<VacancyService>();
 builder.Services.AddScoped<IPasswordHasher, PasswordHasher>();
+builder.Services.AddScoped<IAuthService, AuthService>();
 
 builder.Services.AddControllers();
 builder.Services.AddEndpointsApiExplorer();
@@ -76,11 +79,34 @@ builder.Services.AddSwaggerGen(c =>
     {
         Title = "StudHunter API",
         Version = "v1",
-        Description = "API для управления сущностями в приложении StudHunter."
+        Description = "API for managing entities in the StudHunter application."
     });
     var xmlFile = $"{Assembly.GetExecutingAssembly().GetName().Name}.xml";
     var xmlPath = Path.Combine(AppContext.BaseDirectory, xmlFile);
     c.IncludeXmlComments(xmlPath, includeControllerXmlComments: true);
+
+    c.AddSecurityDefinition("Bearer", new OpenApiSecurityScheme
+    {
+        In = ParameterLocation.Header,
+        Description = "Please enter JWT with Bearer into field (e.g. 'Bearer {token}'",
+        Name = "authorization",
+        Type = SecuritySchemeType.ApiKey,
+        Scheme = "Bearer"
+    });
+    c.AddSecurityRequirement(new OpenApiSecurityRequirement
+    {
+        {
+            new OpenApiSecurityScheme
+            {
+                Reference = new OpenApiReference
+                {
+                    Type = ReferenceType.SecurityScheme,
+                    Id = "Bearer"
+                }
+            },
+            new string[] { }
+        }
+    });
 });
 
 var app = builder.Build();
@@ -100,11 +126,9 @@ if (app.Environment.IsDevelopment())
         c.RoutePrefix = "swagger";
     });
 }
-
-//app.UseAuthentication();
-//app.UseAuthorization();
-
 app.UseRouting();
+app.UseAuthentication();
+app.UseAuthorization();
 app.MapControllers();
 app.MapGet("/", () => "StudHunter Service");
 

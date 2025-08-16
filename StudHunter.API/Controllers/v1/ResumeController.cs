@@ -55,7 +55,7 @@ public class ResumeController(ResumeService resumeService) : BaseController
     public async Task<IActionResult> CreateResume([FromBody] CreateResumeDto dto)
     {
         if (!ModelState.IsValid)
-            return BadRequest(new { error = "Invalid request data." });
+            return ValidationError();
 
         var studentId = Guid.NewGuid(); // TODO: Replace Guid.NewGuid() with User.FindFirstValue(ClaimTypes.NameIdentifier) after implementing JWT
         var (resume, statusCode, errorMessage) = await _resumeService.CreateResumeAsync(studentId, dto);
@@ -82,7 +82,7 @@ public class ResumeController(ResumeService resumeService) : BaseController
     public async Task<IActionResult> UpdateResume(Guid id, [FromBody] UpdateResumeDto dto)
     {
         if (!ModelState.IsValid)
-            return BadRequest(new { error = "Invalid request data." });
+            return ValidationError();
 
         var (success, statusCode, errorMessage) = await _resumeService.UpdateResumeAsync(id, dto);
         return CreateAPIError<ResumeDto>(success, statusCode, errorMessage);

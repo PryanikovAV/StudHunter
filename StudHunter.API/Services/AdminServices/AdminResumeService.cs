@@ -10,28 +10,33 @@ namespace StudHunter.API.Services.AdminServices;
 /// <summary>
 /// Service for managing resumes with administrative privileges.
 /// </summary>
-public class AdminResumeService(StudHunterDbContext context, UserAchievementService userAchievementService) : BaseResumeService(context, userAchievementService)
+public class AdminResumeService(StudHunterDbContext context) : BaseResumeService (context)
 {
     /// <summary>
-    /// Retrieves all resumes.
+    /// Retrieves all resumes include deleted.
     /// </summary>
     /// <returns>A tuple containing a list of all resumes, an optional status code, and an optional error message.</returns>
     public async Task<(List<AdminResumeDto>? Entities, int? StatusCode, string? ErrorMessage)> GetAllResumesAsync()
     {
-        var resumes = await _context.Resumes
-        .Select(r => new AdminResumeDto
-        {
-            Id = r.Id,
-            StudentId = r.StudentId,
-            Title = r.Title,
-            Description = r.Description,
-            CreatedAt = r.CreatedAt,
-            UpdatedAt = r.UpdatedAt,
-            IsDeleted = r.IsDeleted
-        })
-        .ToListAsync();
+        var resumes = await _context.Resumes.ToListAsync();
+        var dtos = resumes.Select(MapToResumeDto<AdminResumeDto>).ToList();
 
-        return (resumes, null, null);
+        return (dtos, null, null);
+    }
+
+    /// <summary>
+    /// Retrieves a resume by its ID.
+    /// </summary>
+    /// <param name="id">The unique identifier (GUID) of the resume.</param>
+    /// <returns>A tuple containing the resume, an optional status code, and an optional error message.</returns>
+    public async Task<(AdminResumeDto? Entity, int? StatusCode, string? ErrorMessage)> GetResumeAsync(Guid id)
+    {
+        var resume = await _context.Resumes.FindAsync(id);
+
+        if (resume == null)
+            return (null, StatusCodes.Status404NotFound, ErrorMessages.EntityNotFound(nameof(Resume)));
+
+        return (MapToResumeDto<AdminResumeDto>(resume), null, null);
     }
 
     /// <summary>
@@ -42,12 +47,10 @@ public class AdminResumeService(StudHunterDbContext context, UserAchievementServ
     /// <returns>A tuple indicating whether the update was successful, an optional status code, and an optional error message.</returns>
     public async Task<(bool Success, int? StatusCode, string? ErrorMessage)> UpdateResumeAsync(Guid id, AdminUpdateResumeDto dto)
     {
-        var resume = await _context.Resumes.FirstOrDefaultAsync(r => r.Id == id);
+        var resume = await _context.Resumes.FindAsync(id);
 
-        #region Serializers
         if (resume == null)
-            return (false, StatusCodes.Status404NotFound, ErrorMessages.NotFound(nameof(Resume)));
-        #endregion
+            return (false, StatusCodes.Status404NotFound, ErrorMessages.EntityNotFound(nameof(Resume)));
 
         if (dto.Title != null)
             resume.Title = dto.Title;
@@ -57,9 +60,7 @@ public class AdminResumeService(StudHunterDbContext context, UserAchievementServ
             resume.IsDeleted = dto.IsDeleted.Value;
         resume.UpdatedAt = DateTime.UtcNow;
 
-        var (success, statusCode, errorMessage) = await SaveChangesAsync<Resume>();
-
-        return (success, statusCode, errorMessage);
+        return await SaveChangesAsync<Resume>();
     }
 
     /// <summary>

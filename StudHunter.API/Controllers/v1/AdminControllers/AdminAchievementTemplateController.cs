@@ -31,7 +31,7 @@ public class AdminAchievementTemplateController(AdminAchievementTemplateService 
     /// <summary>
     /// Retrieves an achievement template by its order number.
     /// </summary>
-    /// <param name="orderNumber">The order number of the achievement template.</param>
+    /// <param name="id">The unique identifier (GUID) of the achievement template.</param>
     /// <returns>The achievement template.</returns>
     /// <response code="200">Achievement template retrieved successfully.</response>
     /// <response code="401">User is not authenticated.</response>
@@ -40,9 +40,9 @@ public class AdminAchievementTemplateController(AdminAchievementTemplateService 
     [ProducesResponseType(typeof(AchievementTemplateDto), StatusCodes.Status200OK)]
     [ProducesResponseType(typeof(object), StatusCodes.Status401Unauthorized)]
     [ProducesResponseType(typeof(object), StatusCodes.Status404NotFound)]
-    public async Task<IActionResult> GetAchievementTemplate(int orderNumber)
+    public async Task<IActionResult> GetAchievementTemplate(Guid id)
     {
-        var (template, statusCode, errorMessage) = await _administratorAchievementTemplateService.GetAchievementTemplateAsync(orderNumber);
+        var (template, statusCode, errorMessage) = await _administratorAchievementTemplateService.GetAchievementTemplateAsync(id);
         return CreateAPIError(template, statusCode, errorMessage);
     }
 
@@ -65,10 +65,10 @@ public class AdminAchievementTemplateController(AdminAchievementTemplateService 
     public async Task<IActionResult> CreateAchievementTemplate([FromBody] CreateAchievementTemplateDto dto)
     {
         if (!ModelState.IsValid)
-            return BadRequest(new { error = "Invalid request data." });
+            return ValidationError();
 
         var (template, statusCode, errorMessage) = await _administratorAchievementTemplateService.CreateAchievementTemplateAsync(dto);
-        return CreateAPIError(template, statusCode, errorMessage, nameof(GetAchievementTemplate), new { orderNumber = template?.OrderNumber });
+        return CreateAPIError(template, statusCode, errorMessage, nameof(GetAchievementTemplate), new { id = template?.Id });
     }
 
     /// <summary>
@@ -93,7 +93,7 @@ public class AdminAchievementTemplateController(AdminAchievementTemplateService 
     public async Task<IActionResult> UpdateAchievementTemplate(Guid id, [FromBody] UpdateAchievementTemplateDto dto)
     {
         if (!ModelState.IsValid)
-            return BadRequest(new { error = "Invalid request data." });
+            return ValidationError();
 
         var (success, statusCode, errorMessage) = await _administratorAchievementTemplateService.UpdateAchievementTemplateAsync(id, dto);
         return CreateAPIError<AchievementTemplateDto>(success, statusCode, errorMessage);

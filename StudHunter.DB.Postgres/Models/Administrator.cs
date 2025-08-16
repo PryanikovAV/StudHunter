@@ -6,11 +6,9 @@ public class Administrator : User
 
     public string LastName { get; set; } = null!;
 
-    public AdministratorLevel AdminLevel { get; set; }
+    public string? Patronymic { get; set; }
 
-    public enum AdministratorLevel
-    {
-        SuperAdmin,
-        Moderator
-    }
+    public void UpdateEmail(string email) => SetEmail(email);
+
+    public void UpdatePassword(string passwordHash) => SetPasswordHash(passwordHash);
 }

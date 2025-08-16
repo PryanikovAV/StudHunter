@@ -45,7 +45,7 @@ public class AdminEmployerController(AdminEmployerService adminEmployerService) 
     [ProducesResponseType(typeof(object), StatusCodes.Status404NotFound)]
     public async Task<IActionResult> GetEmployer(Guid id)
     {
-        var (employer, statusCode, errorMessage) = await _adminEmployerService.GetEmployerAsync(id);
+        var (employer, statusCode, errorMessage) = await _adminEmployerService.GetEmployerAsync<EmployerDto>(id);
         return CreateAPIError(employer, statusCode, errorMessage);
     }
 
@@ -71,7 +71,7 @@ public class AdminEmployerController(AdminEmployerService adminEmployerService) 
     public async Task<IActionResult> UpdateEmployer(Guid id, [FromBody] AdminUpdateEmployerDto dto)
     {
         if (!ModelState.IsValid)
-            return BadRequest(new { error = "Invalid request data." });
+            return ValidationError();
 
         var (success, statusCode, errorMessage) = await _adminEmployerService.UpdateEmployerAsync(id, dto);
         return CreateAPIError<AdminEmployerDto>(success, statusCode, errorMessage);

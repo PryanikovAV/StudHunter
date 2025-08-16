@@ -1,6 +1,7 @@
 ﻿using Microsoft.EntityFrameworkCore;
 using StudHunter.API.Common;
 using StudHunter.API.ModelsDto.Message;
+using StudHunter.API.Services.BaseServices;
 using StudHunter.DB.Postgres;
 using StudHunter.DB.Postgres.Models;
 
@@ -9,7 +10,7 @@ namespace StudHunter.API.Services.AdminServices;
 /// <summary>
 /// Service for managing messages with administrative privileges.
 /// </summary>
-public class AdminMessagesService(StudHunterDbContext context) : MessageService(context)
+public class AdminMessagesService(StudHunterDbContext context) : BaseMessageService(context)
 {
     /// <summary>
     /// Retrieves all messages.
@@ -19,21 +20,45 @@ public class AdminMessagesService(StudHunterDbContext context) : MessageService(
     {
         var messages = await _context.Messages
         .Include(m => m.Sender)
-        .Include(m => m.Receiver)
-        .Select(m => new MessageDto
-        {
-            Id = m.Id,
-            SenderId = m.SenderId,
-            SenderEmail = m.Sender.IsDeleted ? "[Deleted account]" : m.Sender.Email,
-            ReceiverId = m.ReceiverId,
-            ReceiverEmail = m.Receiver.IsDeleted ? "[Deleted account]" : m.Receiver.Email,
-            Context = m.Context,
-            SentAt = m.SentAt
-        })
-        .OrderByDescending(m => m.SentAt)
+        .Include(m => m.Invitation)
+        .Select(m => MapToMessageDto(m))
+        .OrderBy(m => m.SentAt)
         .ToListAsync();
 
         return (messages, null, null);
+    }
+
+    /// <summary>
+    /// Retrieves sent messages by user Id.
+    /// </summary>
+    /// <returns>A tuple containing a list of sent user messages, an optional status code, and an optional error message.</returns>
+    public async Task<(List<MessageDto>? Entities, int? StatusCode, string? ErrorMessage)> GetMessagesByUserAsync(Guid userId, bool sent)
+    {
+        var messageQuery = _context.Messages
+            .Include(m => m.Sender)
+            .Include(m => m.Invitation)
+            .Include(m => m.Chat)
+            .Where(m => sent ? m.SenderId == userId : (m.Chat.User1Id == userId || m.Chat.User2Id == userId) && m.SenderId != userId);
+
+        var messages = await messageQuery
+            .Select(m => MapToMessageDto(m))
+            .OrderBy(m => m.SentAt)
+            .ToListAsync();
+
+        return (messages, null, null);
+    }
+
+    public async Task<(MessageDto? Entity, int? StatusCode, string? ErrorMessage)> GetMessageAsync(Guid id)
+    {
+        var message = await _context.Messages
+        .Include(m => m.Sender)
+        .Include(m => m.Invitation)
+        .FirstOrDefaultAsync(m => m.Id == id);
+
+        if (message == null)
+            return (null, StatusCodes.Status404NotFound, ErrorMessages.EntityNotFound(nameof(Message)));
+
+        return (MapToMessageDto(message), null, null);
     }
 
     /// <summary>

@@ -10,37 +10,24 @@ namespace StudHunter.API.Services.AdminServices;
 /// <summary>
 /// Service for managing employers with administrative privileges.
 /// </summary>
-public class AdminEmployerService(StudHunterDbContext context, UserAchievementService userAchievementService) : BaseEmployerService(context, userAchievementService)
+public class AdminEmployerService(StudHunterDbContext context) : BaseEmployerService(context)
 {
     /// <summary>
-    /// Retrieves all employers.
+    /// Retrieves all employers, including deleted ones.
     /// </summary>
     /// <returns>A tuple containing a list of all employers, an optional status code, and an optional error message.</returns>
     public async Task<(List<AdminEmployerDto>? Entities, int? StatusCode, string? ErrorMessage)> GetAllEmployersAsync()
     {
         var employers = await _context.Employers
         .Include(e => e.Vacancies)
-        .Select(e => new AdminEmployerDto
-        {
-            Id = e.Id,
-            Email = e.Email,
-            ContactEmail = e.ContactEmail,
-            ContactPhone = e.ContactPhone,
-            CreatedAt = e.CreatedAt,
-            IsDeleted = e.IsDeleted,
-            AccreditationStatus = e.AccreditationStatus,
-            Name = e.Name,
-            Description = e.Description,
-            Website = e.Website,
-            Specialization = e.Specialization,
-            VacancyIds = e.Vacancies.Select(v => v.Id).ToList()
-        }).ToListAsync();
+        .ToListAsync();
 
-        return (employers, null, null);
+        var dtos = employers.Select(MapToEmployerDto<AdminEmployerDto>).ToList();
+        return (dtos, null, null);
     }
 
     /// <summary>
-    /// Updates an existing employer.
+    /// Updates an employer's profile by an administrator.
     /// </summary>
     /// <param name="id">The unique identifier (GUID) of the employer.</param>
     /// <param name="dto">The data transfer object containing updated employer details.</param>
@@ -49,16 +36,14 @@ public class AdminEmployerService(StudHunterDbContext context, UserAchievementSe
     {
         var employer = await _context.Employers.FindAsync(id);
 
-        #region Serializers
         if (employer == null)
-            return (false, StatusCodes.Status404NotFound, ErrorMessages.NotFound(nameof(Employer)));
+            return (false, StatusCodes.Status404NotFound, ErrorMessages.EntityNotFound(nameof(Employer)));
 
-        if (dto.Email != null)
-        {
-            if (await _context.Employers.AnyAsync(e => e.Email == dto.Email && e.Id != id))
-                return (false, StatusCodes.Status409Conflict, ErrorMessages.AlreadyExists(nameof(Employer), "email"));
-        }
-        #endregion
+        if (dto.Email != null && await _context.Employers.AnyAsync(e => e.Email == dto.Email && e.Id != id))
+            return (false, StatusCodes.Status409Conflict, ErrorMessages.EntityAlreadyExists(nameof(Employer), "email"));
+
+        if (dto.Name != null && string.IsNullOrWhiteSpace(dto.Name))
+            return (false, StatusCodes.Status400BadRequest, "Name is required and cannot be empty.");
 
         if (dto.ContactEmail != null)
             employer.ContactEmail = dto.ContactEmail;
@@ -72,18 +57,16 @@ public class AdminEmployerService(StudHunterDbContext context, UserAchievementSe
             employer.Website = dto.Website;
         if (dto.Specialization != null)
             employer.Specialization = dto.Specialization;
-        if (dto.IsDeleted.HasValue)
-            employer.IsDeleted = dto.IsDeleted.Value;
         if (dto.AccreditationStatus.HasValue)
             employer.AccreditationStatus = dto.AccreditationStatus.Value;
+        if (dto.IsDeleted.HasValue)
+            employer.IsDeleted = dto.IsDeleted.Value;
 
-        var (success, statusCode, errorMessage) = await SaveChangesAsync<Employer>();
-
-        return (success, statusCode, errorMessage);
+        return await SaveChangesAsync<Employer>();
     }
 
     /// <summary>
-    /// Deletes an employer (hard or soft delete).
+    /// Deletes an employer (soft or hard delete).
     /// </summary>
     /// <param name="id">The unique identifier (GUID) of the employer.</param>
     /// <param name="hardDelete">A boolean indicating whether to perform a hard delete (default is false).</param>

@@ -95,7 +95,7 @@ public class AdminVacancyController(AdminVacancyService adminVacancyService) : B
     public async Task<IActionResult> UpdateVacancy(Guid id, [FromBody] AdminUpdateVacancyDto dto)
     {
         if (!ModelState.IsValid)
-            return BadRequest(new { error = "Invalid request data." });
+            return ValidationError();
 
         var (success, statusCode, errorMessage) = await _adminVacancyService.UpdateVacancyAsync(id, dto);
         return CreateAPIError<VacancyDto>(success, statusCode, errorMessage);
@@ -123,7 +123,7 @@ public class AdminVacancyController(AdminVacancyService adminVacancyService) : B
     public async Task<IActionResult> AddCourseToVacancy(Guid vacancyId, [FromBody] Guid courseId)
     {
         if (!ModelState.IsValid)
-            return BadRequest(new { error = "Invalid request data." });
+            return ValidationError();
 
         var (success, statusCode, errorMessage) = await _adminVacancyService.AddCourseToVacancyAsync(vacancyId, courseId);
         return CreateAPIError<VacancyDto>(success, statusCode, errorMessage);
@@ -149,7 +149,7 @@ public class AdminVacancyController(AdminVacancyService adminVacancyService) : B
     public async Task<IActionResult> RemoveCourseFromVacancy(Guid vacancyId, Guid courseId)
     {
         if (!ModelState.IsValid)
-            return BadRequest(new { error = "Invalid request data." });
+            return ValidationError();
 
         var (success, statusCode, errorMessage) = await _adminVacancyService.RemoveCourseFromVacancyAsync(vacancyId, courseId);
         return CreateAPIError<VacancyDto>(success, statusCode, errorMessage);

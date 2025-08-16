@@ -14,8 +14,8 @@ public class GrantAchievementDto
     public Guid UserId { get; set; }
 
     /// <summary>
-    /// The order number of the achievement template.
+    /// 
     /// </summary>
     [Required(ErrorMessage = "{0} is required")]
-    public int AchievementTemplateOrderNumber { get; set; }
+    public Guid AchievementTemplateId { get; set; }
 }

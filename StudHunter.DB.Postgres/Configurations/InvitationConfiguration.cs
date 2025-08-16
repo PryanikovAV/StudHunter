@@ -1,5 +1,7 @@
 ﻿using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
+using StudHunter.DB.Postgres.Models;
+
 namespace StudHunter.DB.Postgres.Configurations;
 
 public class InvitationConfiguration : IEntityTypeConfiguration<Invitation>
@@ -33,62 +35,43 @@ public class InvitationConfiguration : IEntityTypeConfiguration<Invitation>
                .HasColumnType("INTEGER")
                .IsRequired();
 
-        builder.Property(i => i.Message)
-               .HasColumnType("TEXT")
-               .HasMaxLength(1000)
-               .IsRequired(false);
-
         builder.Property(i => i.Status)
                .HasColumnType("INTEGER")
                .HasDefaultValue(Invitation.InvitationStatus.Sent)
                .IsRequired();
 
         builder.Property(i => i.CreatedAt)
-               .HasColumnType("TIMESTAMP")
+               .HasColumnType("TIMESTAMPTZ")
                .HasDefaultValueSql("CURRENT_TIMESTAMP")
                .IsRequired();
 
         builder.Property(i => i.UpdatedAt)
-               .HasColumnType("TIMESTAMP")
+               .HasColumnType("TIMESTAMPTZ")
                .HasDefaultValueSql("CURRENT_TIMESTAMP")
                .IsRequired();
 
         builder.HasOne(i => i.Sender)
                .WithMany(u => u.SentInvitations)
                .HasForeignKey(i => i.SenderId)
+               .OnDelete(DeleteBehavior.Restrict)
                .IsRequired(false);
 
         builder.HasOne(i => i.Receiver)
                .WithMany(u => u.ReceivedInvitations)
                .HasForeignKey(i => i.ReceiverId)
+               .OnDelete(DeleteBehavior.Restrict)
                .IsRequired(false);
 
         builder.HasOne(i => i.Vacancy)
                .WithMany(v => v.Invitations)
                .HasForeignKey(i => i.VacancyId)
+               .OnDelete(DeleteBehavior.Restrict)
                .IsRequired(false);
 
         builder.HasOne(i => i.Resume)
                .WithMany(r => r.Invitations)
                .HasForeignKey(i => i.ResumeId)
+               .OnDelete(DeleteBehavior.Restrict)
                .IsRequired(false);
-
-        builder.HasIndex(i => new
-        {
-            i.SenderId,
-            i.ReceiverId,
-            i.VacancyId
-        })
-            .IsUnique()
-            .HasFilter("\"VacancyId\" is not NULL");
-
-        builder.HasIndex(i => new
-        {
-            i.SenderId,
-            i.ReceiverId,
-            i.ResumeId
-        })
-            .IsUnique()
-            .HasFilter("\"ResumeId\" IS NOT NULL");
     }
 }

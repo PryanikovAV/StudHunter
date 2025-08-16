@@ -1,6 +1,7 @@
 ﻿using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
 using StudHunter.DB.Postgres.Models;
+
 namespace StudHunter.DB.Postgres.Configurations;
 
 public class AdministratorConfiguration : IEntityTypeConfiguration<Administrator>
@@ -17,8 +18,9 @@ public class AdministratorConfiguration : IEntityTypeConfiguration<Administrator
                .HasMaxLength(50)
                .IsRequired();
 
-        builder.Property(s => s.AdminLevel)
-               .HasColumnType("INTEGER")
-               .IsRequired();
+        builder.Property(s => s.Patronymic)
+               .HasColumnType("VARCHAR(50)")
+               .HasMaxLength(50)
+               .IsRequired(false);
     }
 }

@@ -64,9 +64,9 @@ public class AdminDto
     public string LastName { get; set; } = string.Empty;
 
     /// <summary>
-    /// The administrator's level (SuperAdmin or Moderator).
+    /// The administrator's patronymic.
     /// </summary>
     [Required]
-    [RegularExpression("SuperAdmin|Moderator")]
-    public string AdminLevel { get; set; } = string.Empty;
+    [StringLength(50)]
+    public string? Patronymic { get; set; }
 }

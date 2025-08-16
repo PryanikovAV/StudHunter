@@ -8,7 +8,7 @@ namespace StudHunter.API.Services.BaseServices;
 /// <summary>
 /// Base service with common database operations.
 /// </summary>
-public class BaseService(StudHunterDbContext context)
+public abstract class BaseService(StudHunterDbContext context)
 {
     protected readonly StudHunterDbContext _context = context;
 
@@ -40,26 +40,22 @@ public class BaseService(StudHunterDbContext context)
     public async Task<(bool Success, int? StatusCode, string? ErrorMessage)> DeleteEntityAsync<T>(Guid id, bool hardDelete = false) where T : class, IEntity
     {
         var entity = await _context.Set<T>().FindAsync(id);
-        
-        #region Serializers
+
         if (entity == null)
-            return (false, StatusCodes.Status404NotFound, ErrorMessages.NotFound(typeof(T).Name));
-        #endregion
+            return (false, StatusCodes.Status404NotFound, ErrorMessages.EntityNotFound(typeof(T).Name));
 
         if (hardDelete)
         {
             _context.Set<T>().Remove(entity);
             return await SaveChangesAsync<T>();
         }
-        
+
         if (typeof(ISoftDeletable).IsAssignableFrom(typeof(T)))
         {
             var softDelitable = (ISoftDeletable)entity;
 
-            #region Serializers
             if (softDelitable.IsDeleted)
-                return (false, StatusCodes.Status410Gone, ErrorMessages.AlreadyDeleted(typeof(T).Name));
-            #endregion
+                return (false, StatusCodes.Status410Gone, ErrorMessages.EntityAlreadyDeleted(typeof(T).Name));
 
             softDelitable.IsDeleted = true;
             return await SaveChangesAsync<T>();

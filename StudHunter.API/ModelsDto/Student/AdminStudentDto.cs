@@ -1,12 +1,15 @@
-﻿namespace StudHunter.API.ModelsDto.Student;
+﻿using System.ComponentModel.DataAnnotations;
+
+namespace StudHunter.API.ModelsDto.Student;
 
 /// <summary>
-/// Data transfer object for a student (administrative functions).
+/// Data transfer object representing a student for administrative purposes.
 /// </summary>
 public class AdminStudentDto : StudentDto
 {
     /// <summary>
     /// Indicates whether the student is deleted.
     /// </summary>
+    [Required]
     public bool IsDeleted { get; set; }
 }

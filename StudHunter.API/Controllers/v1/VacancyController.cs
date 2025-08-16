@@ -88,7 +88,7 @@ public class VacancyController(VacancyService vacancyService) : BaseController
     public async Task<IActionResult> CreateVacancy([FromBody] CreateVacancyDto dto)
     {
         if (!ModelState.IsValid)
-            return BadRequest(new { error = "Invalid request data." });
+            return ValidationError();
 
         var employerId = Guid.NewGuid(); // TODO: Replace Guid.NewGuid() with User.FindFirstValue(ClaimTypes.NameIdentifier) after implementing JWT
         var (vacancy, statusCode, errorMessage) = await _vacancyService.CreateVacancyAsync(employerId, dto);
@@ -115,7 +115,7 @@ public class VacancyController(VacancyService vacancyService) : BaseController
     public async Task<IActionResult> UpdateVacancy(Guid id, [FromBody] UpdateVacancyDto dto)
     {
         if (!ModelState.IsValid)
-            return BadRequest(new { error = "Invalid request data." });
+            return ValidationError();
 
         var (success, statusCode, errorMessage) = await _vacancyService.UpdateVacancyAsync(id, dto);
         return CreateAPIError<VacancyDto>(success, statusCode, errorMessage);
@@ -141,7 +141,7 @@ public class VacancyController(VacancyService vacancyService) : BaseController
     public async Task<IActionResult> AddCourseToVacancy(Guid vacancyId, [FromBody] Guid courseId)
     {
         if (!ModelState.IsValid)
-            return BadRequest(new { error = "Invalid request data." });
+            return ValidationError();
 
         var (success, statusCode, errorMessage) = await _vacancyService.AddCourseToVacancyAsync(vacancyId, courseId);
         return CreateAPIError<VacancyDto>(success, statusCode, errorMessage);
@@ -165,7 +165,7 @@ public class VacancyController(VacancyService vacancyService) : BaseController
     public async Task<IActionResult> RemoveCourseFromVacancy(Guid vacancyId, Guid courseId)
     {
         if (!ModelState.IsValid)
-            return BadRequest(new { error = "Invalid request data." });
+            return ValidationError();
 
         var (success, statusCode, errorMessage) = await _vacancyService.RemoveCourseFromVacancyAsync(vacancyId, courseId);
         return CreateAPIError<VacancyDto>(success, statusCode, errorMessage);

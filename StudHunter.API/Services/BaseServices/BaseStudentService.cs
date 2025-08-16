@@ -7,61 +7,74 @@ using StudHunter.DB.Postgres.Models;
 
 namespace StudHunter.API.Services.BaseServices;
 
-public class BaseStudentService(StudHunterDbContext context, UserAchievementService userAchievementService) : BaseService(context)
+public abstract class BaseStudentService(StudHunterDbContext context) : BaseService(context)
 {
-    private readonly UserAchievementService _userAchievementService = userAchievementService;
-
     /// <summary>
-    /// Retrieves a student by their ID.
+    /// Maps a Student entity to a StudentDto.
     /// </summary>
-    /// <param name="id">The unique identifier (GUID) of the student.</param>
-    /// <returns>A tuple containing the student, an optional status code, and an optional error message.</returns>
-    public async Task<(StudentDto? Entity, int? StatusCode, string? ErrorMessage)> GetStudentAsync(Guid id)
+    /// <param name="student">The student entity to map.</param>
+    /// <returns>A TDto representing the student.</returns>
+    protected TDto MapToStudentDto<TDto>(Student student) where TDto : StudentDto, new()
     {
-        var student = await _context.Students
-        .Include(s => s.Resume)
-        .Include(s => s.StudyPlan)
-        .Include(s => s.Achievements)
-        .ThenInclude(ua => ua.AchievementTemplate)
-        .FirstOrDefaultAsync(s => s.Id == id && !s.IsDeleted);
-
-        #region Serializers
-        if (student == null)
-            return (null, StatusCodes.Status404NotFound, ErrorMessages.NotFound(nameof(Student)));
-
-        if (student.StudyPlan == null)
-            return (null, StatusCodes.Status404NotFound, ErrorMessages.NotFound(nameof(StudyPlan)));
-        #endregion
-
-        return (new StudentDto
+        var dto = new TDto
         {
             Id = student.Id,
+            Email = student.Email,
             FirstName = student.FirstName,
             LastName = student.LastName,
-            Email = student.Email,
-            Gender = student.Gender.ToString(),
-            BirthDate = student.BirthDate,
-            Photo = student.Photo,
             ContactPhone = student.ContactPhone,
             ContactEmail = student.ContactEmail,
-            IsForeign = student.IsForeign,
-            StatusId = student.StatusId,
-            ResumeId = student.Resume != null ? student.Resume.Id : null,
             CreatedAt = student.CreatedAt,
-            CourseNumber = student.StudyPlan.CourseNumber,
-            FacultyId = student.StudyPlan.FacultyId,
-            SpecialityId = student.StudyPlan.SpecialityId,
-            StudyForm = student.StudyPlan.StudyForm.ToString(),
-            BeginYear = student.StudyPlan.BeginYear,
-            Achievements = student.Achievements.Select(userAchievement => new UserAchievementDto
-            {
-                Id = userAchievement.Id,
-                UserId = userAchievement.UserId,
-                AchievementTemplateOrderNumber = userAchievement.AchievementTemplate.OrderNumber,
-                AchievementAt = userAchievement.AchievementAt,
-                AchievementName = userAchievement.AchievementTemplate.Name,
-                AchievementDescription = userAchievement.AchievementTemplate.Description
-            }).ToList()
-        }, null, null);
+            Gender = student.Gender.ToString(),
+            BirthDate = student.BirthDate == DateOnly.MinValue ? null : student.BirthDate,
+            Photo = student.Photo,
+            IsForeign = student.IsForeign,
+            Status = student.Status.ToString(),
+            ResumeId = student.Resume?.Id,
+            Achievements = student.Achievements.Select(BaseUserAchievementService.MapToUserAchievementDto).ToList(),
+        };
+
+        if (dto is AdminStudentDto adminDto)
+        {
+            adminDto.IsDeleted = student.IsDeleted;
+        }
+
+        return dto;
+    }
+
+    /// <summary>
+    /// Retrieves an student by their ID.
+    /// </summary>
+    /// <param name="id">The unique identifier (GUID) of the student.</param>
+    /// <returns>A tuple containing the student's details, an optional status code, and an optional error message.</returns>
+    public async Task<(TDto? Entity, int? StatusCode, string? ErrorMessage)> GetStudentAsync<TDto>(Guid id) where TDto : StudentDto, new()
+    {
+        var student = await _context.Students
+        .Include(s => s.Achievements).ThenInclude(a => a.AchievementTemplate)
+        .Include(s => s.Resume)
+        .FirstOrDefaultAsync(s => s.Id == id && !s.IsDeleted);
+
+        if (student == null)
+            return (null, StatusCodes.Status400BadRequest, ErrorMessages.EntityNotFound(nameof(Student)));
+
+        return (MapToStudentDto<TDto>(student), null, null);
+    }
+
+    /// <summary>
+    /// Retrieves a student by their email.
+    /// </summary>
+    /// <param name="email">The email of the student.</param>
+    /// <returns>A typle containing the student DTO, an optional status code, and an optional error message.</returns>
+    public async Task<(TDto? Entity, int? StatusCode, string? ErrorMessage)> GetStudentByEmailAsync<TDto>(string email) where TDto : StudentDto, new()
+    {
+        var student = await _context.Students
+        .Include(s => s.Achievements).ThenInclude(a => a.AchievementTemplate)
+        .Include(s => s.Resume)
+        .FirstOrDefaultAsync(s => s.Email == email && !s.IsDeleted);
+
+        if (student == null)
+            return (null, StatusCodes.Status400BadRequest, ErrorMessages.EntityNotFound(nameof(Student)));
+
+        return (MapToStudentDto<TDto>(student), null, null);
     }
 }
