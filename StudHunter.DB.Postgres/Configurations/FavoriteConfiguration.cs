@@ -40,6 +40,7 @@ public class FavoriteConfiguration : IEntityTypeConfiguration<Favorite>
         builder.HasOne(f => f.User)
                .WithMany(u => u.Favorites)
                .HasForeignKey(f => f.UserId)
+               .OnDelete(DeleteBehavior.Cascade)
                .IsRequired(false);
 
         builder.HasOne(f => f.Vacancy)

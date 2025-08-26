@@ -1,8 +1,12 @@
 ﻿using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using StudHunter.API.Common;
 using StudHunter.API.Controllers.v1.BaseControllers;
+using StudHunter.API.ModelsDto.BaseModelsDto;
 using StudHunter.API.ModelsDto.Resume;
 using StudHunter.API.Services;
+using StudHunter.DB.Postgres.Models;
+using System.Security.Claims;
 
 namespace StudHunter.API.Controllers.v1;
 
@@ -17,29 +21,32 @@ public class ResumeController(ResumeService resumeService) : BaseController
     private readonly ResumeService _resumeService = resumeService;
 
     /// <summary>
-    /// Retrieves a resume by its ID.
+    /// Retrieves a resume by student ID.
     /// </summary>
-    /// <param name="id">The unique identifier (GUID) of the resume.</param>
+    /// <param name="studentId">The unique identifier (GUID) of the student</param>
     /// <returns>The resume.</returns>
     /// <response code="200">Resume retrieved successfully.</response>
     /// <response code="401">User is not authenticated.</response>
     /// <response code="404">Resume not found.</response>
     /// <response code="410">Resume has been deleted.</response>
-    [HttpGet("{id}")]
+    [HttpGet("{studentId}")]
     [ProducesResponseType(typeof(ResumeDto), StatusCodes.Status200OK)]
-    [ProducesResponseType(typeof(object), StatusCodes.Status401Unauthorized)]
-    [ProducesResponseType(typeof(object), StatusCodes.Status404NotFound)]
-    [ProducesResponseType(typeof(object), StatusCodes.Status410Gone)]
-    public async Task<IActionResult> GetResume(Guid id)
+    [ProducesResponseType(StatusCodes.Status401Unauthorized)]
+    [ProducesResponseType(StatusCodes.Status403Forbidden)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
+    public async Task<IActionResult> GetResume(Guid studentId)
     {
-        var (resume, statusCode, errorMessage) = await _resumeService.GetResumeAsync(id);
-        return CreateAPIError(resume, statusCode, errorMessage);
+        if (!Guid.TryParse(User.FindFirstValue(ClaimTypes.NameIdentifier), out var authUserId))
+            return HandleResponse<ResumeDto>(null, StatusCodes.Status401Unauthorized, ErrorMessages.InvalidTokenUserId());
+
+        var (resume, statusCode, errorMessage) = await _resumeService.GetResumeAsync(studentId, authUserId);
+        return HandleResponse(resume, statusCode, errorMessage);
     }
 
     /// <summary>
     /// Creates a new resume.
     /// </summary>
-    /// <param name="dto">The data transfer object containing resume details.</param>
+    /// <param name="dto">The data transfer object containing resume details.</param>   
     /// <returns>The created resume.</returns>
     /// <response code="201">Resume created successfully.</response>
     /// <response code="400">Invalid request data or database error.</response>
@@ -48,24 +55,30 @@ public class ResumeController(ResumeService resumeService) : BaseController
     /// <response code="409">A resume for the student already exists.</response>
     [HttpPost]
     [ProducesResponseType(typeof(ResumeDto), StatusCodes.Status201Created)]
-    [ProducesResponseType(typeof(object), StatusCodes.Status400BadRequest)]
-    [ProducesResponseType(typeof(object), StatusCodes.Status401Unauthorized)]
-    [ProducesResponseType(typeof(object), StatusCodes.Status404NotFound)]
-    [ProducesResponseType(typeof(object), StatusCodes.Status409Conflict)]
+    [ProducesResponseType(StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(StatusCodes.Status401Unauthorized)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
+    [ProducesResponseType(StatusCodes.Status409Conflict)]
+    [ProducesResponseType(StatusCodes.Status410Gone)]
     public async Task<IActionResult> CreateResume([FromBody] CreateResumeDto dto)
     {
-        if (!ModelState.IsValid)
-            return ValidationError();
+        if (!ValidateModel())
+        {
+            var errors = ModelState.Values.SelectMany(v => v.Errors).Select(e => e.ErrorMessage).ToList();
+            return HandleResponse<ResumeDto>(null, StatusCodes.Status400BadRequest, string.Join("; ", errors));
+        }
 
-        var studentId = Guid.NewGuid(); // TODO: Replace Guid.NewGuid() with User.FindFirstValue(ClaimTypes.NameIdentifier) after implementing JWT
-        var (resume, statusCode, errorMessage) = await _resumeService.CreateResumeAsync(studentId, dto);
-        return CreateAPIError(resume, statusCode, errorMessage, nameof(GetResume), new { id = resume?.Id });
+        if (!Guid.TryParse(User.FindFirstValue(ClaimTypes.NameIdentifier), out var authUserId))
+            return HandleResponse<ResumeDto>(null, StatusCodes.Status401Unauthorized, ErrorMessages.InvalidTokenUserId());
+
+        var (resume, statusCode, errorMessage) = await _resumeService.CreateResumeAsync(authUserId, dto);
+        return HandleResponse(resume, statusCode, errorMessage, nameof(GetResume), new { studentId = resume?.StudentId });
     }
 
     /// <summary>
     /// Updates an existing resume.
     /// </summary>
-    /// <param name="id">The unique identifier (GUID) of the resume.</param>
+    /// <param name="resumeId">The unique identifier (GUID) of the resume.</param>
     /// <param name="dto">The data transfer object containing updated resume details.</param>
     /// <returns>No content if successful.</returns>
     /// <response code="204">Resume updated successfully.</response>
@@ -73,40 +86,52 @@ public class ResumeController(ResumeService resumeService) : BaseController
     /// <response code="401">User is not authenticated.</response>
     /// <response code="404">Resume not found.</response>
     /// <response code="410">Resume has been deleted.</response>
-    [HttpPut("{id}")]
+    [HttpPut("{resumeId}")]
     [ProducesResponseType(StatusCodes.Status204NoContent)]
-    [ProducesResponseType(typeof(object), StatusCodes.Status400BadRequest)]
-    [ProducesResponseType(typeof(object), StatusCodes.Status401Unauthorized)]
-    [ProducesResponseType(typeof(object), StatusCodes.Status404NotFound)]
-    [ProducesResponseType(typeof(object), StatusCodes.Status410Gone)]
-    public async Task<IActionResult> UpdateResume(Guid id, [FromBody] UpdateResumeDto dto)
+    [ProducesResponseType(StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(StatusCodes.Status401Unauthorized)]
+    [ProducesResponseType(StatusCodes.Status403Forbidden)]
+    [ProducesResponseType(StatusCodes.Status410Gone)]
+    public async Task<IActionResult> UpdateResume(Guid resumeId, [FromBody] UpdateResumeDto dto)
     {
-        if (!ModelState.IsValid)
-            return ValidationError();
+        if (!ValidateModel())
+        {
+            var errors = ModelState.Values.SelectMany(v => v.Errors).Select(e => e.ErrorMessage).ToList();
+            return HandleResponse<bool>(false, StatusCodes.Status400BadRequest, string.Join("; ", errors));
+        }
 
-        var (success, statusCode, errorMessage) = await _resumeService.UpdateResumeAsync(id, dto);
-        return CreateAPIError<ResumeDto>(success, statusCode, errorMessage);
+        if (!Guid.TryParse(User.FindFirstValue(ClaimTypes.NameIdentifier), out var authUserId))
+            return HandleResponse<ResumeDto>(null, StatusCodes.Status401Unauthorized, ErrorMessages.InvalidTokenUserId());
+
+        var (success, statusCode, errorMessage) = await _resumeService.UpdateResumeAsync(authUserId, resumeId, dto);
+        return HandleResponse(success, statusCode, errorMessage);
     }
 
     /// <summary>
-    /// Deletes a resume (soft delete).
+    /// 
     /// </summary>
-    /// <param name="id">The unique identifier (GUID) of the resume.</param>
-    /// <returns>No content if successful.</returns>
-    /// <response code="204">Resume deleted successfully.</response>
-    /// <response code="400">Invalid request data or database error.</response>
-    /// <response code="401">User is not authenticated.</response>
-    /// <response code="404">Resume not found.</response>
-    /// <response code="410">Resume has been deleted.</response>
-    [HttpDelete("{id}")]
+    /// <param name="resumeId"></param>
+    /// <param name="dto"></param>
+    /// <returns></returns>
+    [HttpPut("{resumeId}/status")]
     [ProducesResponseType(StatusCodes.Status204NoContent)]
-    [ProducesResponseType(typeof(object), StatusCodes.Status400BadRequest)]
-    [ProducesResponseType(typeof(object), StatusCodes.Status401Unauthorized)]
-    [ProducesResponseType(typeof(object), StatusCodes.Status404NotFound)]
-    [ProducesResponseType(typeof(object), StatusCodes.Status410Gone)]
-    public async Task<IActionResult> DeleteResume(Guid id)
+    [ProducesResponseType(StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(StatusCodes.Status401Unauthorized)]
+    [ProducesResponseType(StatusCodes.Status403Forbidden)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
+    [ProducesResponseType(StatusCodes.Status410Gone)]
+    public async Task<IActionResult> UpdateResumeStatus(Guid resumeId, [FromBody] UpdateStatusDto dto)
     {
-        var (success, statusCode, errorMessage) = await _resumeService.DeleteResumeAsync(id);
-        return CreateAPIError<ResumeDto>(success, statusCode, errorMessage);
+        if (!ValidateModel())
+        {
+            var errors = ModelState.Values.SelectMany(v => v.Errors).Select(e => e.ErrorMessage).ToList();
+            return HandleResponse<bool>(false, StatusCodes.Status400BadRequest, string.Join("; ", errors));
+        }
+
+        if (!Guid.TryParse(User.FindFirstValue(ClaimTypes.NameIdentifier), out var authUserId))
+            return HandleResponse<ResumeDto>(null, StatusCodes.Status401Unauthorized, ErrorMessages.InvalidTokenUserId());
+
+        var (success, statusCode, errorMessage) = await _resumeService.UpdateResumeStatusAsync(authUserId, resumeId, dto.IsDeleted);
+        return HandleResponse(success, statusCode, errorMessage, nameof(Resume));
     }
 }

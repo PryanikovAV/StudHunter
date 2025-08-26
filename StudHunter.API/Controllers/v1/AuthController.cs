@@ -20,4 +20,14 @@ public class AuthController(IAuthService authService) : BaseController
         var (result, statusCode, errorMessage) = await _authService.LoginAsync(dto);
         return CreateAPIError(result, statusCode, errorMessage);
     }
+
+    [HttpPut("recovery")]
+    public async Task<IActionResult> Recovery([FromBody] LoginDto dto)
+    {
+        if (!ModelState.IsValid)
+            return ValidationError();
+
+        var (result, statusCode, errorMessage) = await _authService.RecoverAccountAsync(dto);
+        return CreateAPIError(result, statusCode, errorMessage);
+    }
 }

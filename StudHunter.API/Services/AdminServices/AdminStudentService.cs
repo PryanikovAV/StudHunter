@@ -81,6 +81,23 @@ public class AdminStudentService(StudHunterDbContext context) : BaseStudentServi
     /// <returns>A tuple indicating whether the deletion was successful, an optional status code, and an optional error message.</returns>
     public async Task<(bool Success, int? StatusCode, string? ErrorMessage)> DeleteStudentAsync(Guid id, bool hardDelete = false)
     {
-        return await DeleteEntityAsync<Student>(id, hardDelete);
+        if (hardDelete)
+            return await DeleteEntityAsync<Student>(id, hardDelete);
+
+        var student = await _context.Students
+        .Include(s => s.StudyPlan)
+        .Include(s => s.Resume)
+        .FirstOrDefaultAsync(s => s.Id == id && !s.IsDeleted);
+
+        if (student == null)
+            return (false, StatusCodes.Status404NotFound, ErrorMessages.EntityNotFound(nameof(Student)));
+
+        student.IsDeleted = true;
+        if (student.StudyPlan != null)
+            student.StudyPlan.IsDeleted = true;
+        if (student.Resume != null)
+            student.Resume.IsDeleted = true;
+
+        return await SaveChangesAsync<Student>();
     }
 }

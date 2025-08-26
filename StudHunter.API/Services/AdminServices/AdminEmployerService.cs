@@ -73,6 +73,20 @@ public class AdminEmployerService(StudHunterDbContext context) : BaseEmployerSer
     /// <returns>A tuple indicating whether the deletion was successful, an optional status code, and an optional error message.</returns>
     public async Task<(bool Success, int? StatusCode, string? ErrorMessage)> DeleteEmployerAsync(Guid id, bool hardDelete = false)
     {
-        return await DeleteEntityAsync<Employer>(id, hardDelete);
+        if (hardDelete)
+            return await DeleteEntityAsync<Employer>(id, hardDelete);
+
+        var employer = await _context.Employers
+        .Include(e => e.Vacancies)
+        .FirstOrDefaultAsync(e => e.Id == id && !e.IsDeleted);
+
+        if (employer == null)
+            return (false, StatusCodes.Status404NotFound, ErrorMessages.EntityNotFound(nameof(Employer)));
+
+        employer.IsDeleted = true;
+        foreach (var vacancy in employer.Vacancies)
+            vacancy.IsDeleted = true;
+
+        return await SaveChangesAsync<Employer>();
     }
 }

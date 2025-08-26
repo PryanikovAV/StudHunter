@@ -7,6 +7,8 @@ namespace StudHunter.API.ModelsDto.Resume;
 /// </summary>
 public class ResumeDto
 {
+    internal readonly bool IsDeleted;
+
     /// <summary>
     /// The unique identifier (GUID) of the resume.
     /// </summary>

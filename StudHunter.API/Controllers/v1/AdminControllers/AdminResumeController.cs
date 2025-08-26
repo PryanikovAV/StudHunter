@@ -1,8 +1,10 @@
 ﻿using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using StudHunter.API.Controllers.v1.BaseControllers;
+using StudHunter.API.ModelsDto.BaseModelsDto;
 using StudHunter.API.ModelsDto.Resume;
 using StudHunter.API.Services.AdminServices;
+using StudHunter.DB.Postgres.Models;
 
 namespace StudHunter.API.Controllers.v1.AdminControllers;
 
@@ -11,7 +13,7 @@ namespace StudHunter.API.Controllers.v1.AdminControllers;
 /// </summary>
 [Route("api/v1/admin/[controller]")]
 [ApiController]
-[Authorize(Roles = "Administrator")]
+[Authorize(Roles = nameof(Administrator))]
 public class AdminResumeController(AdminResumeService adminResumeService) : BaseController
 {
     private readonly AdminResumeService _adminResumeService = adminResumeService;
@@ -25,12 +27,12 @@ public class AdminResumeController(AdminResumeService adminResumeService) : Base
     /// <response code="403">User lacks Administrator role.</response>
     [HttpGet]
     [ProducesResponseType(typeof(List<AdminResumeDto>), StatusCodes.Status200OK)]
-    [ProducesResponseType(typeof(object), StatusCodes.Status401Unauthorized)]
-    [ProducesResponseType(typeof(object), StatusCodes.Status403Forbidden)]
+    [ProducesResponseType(StatusCodes.Status401Unauthorized)]
+    [ProducesResponseType(StatusCodes.Status403Forbidden)]
     public async Task<IActionResult> GetAllResumes()
     {
         var (resumes, statusCode, errorMessage) = await _adminResumeService.GetAllResumesAsync();
-        return CreateAPIError(resumes, statusCode, errorMessage);
+        return HandleResponse(resumes, statusCode, errorMessage);
     }
 
     /// <summary>
@@ -44,15 +46,14 @@ public class AdminResumeController(AdminResumeService adminResumeService) : Base
     /// <response code="404">Resume not found.</response>
     /// <response code="410">Resume has been deleted.</response>
     [HttpGet("{id}")]
-    [ProducesResponseType(typeof(ResumeDto), StatusCodes.Status200OK)]
-    [ProducesResponseType(typeof(object), StatusCodes.Status401Unauthorized)]
-    [ProducesResponseType(typeof(object), StatusCodes.Status403Forbidden)]
-    [ProducesResponseType(typeof(object), StatusCodes.Status404NotFound)]
-    [ProducesResponseType(typeof(object), StatusCodes.Status410Gone)]
+    [ProducesResponseType(typeof(AdminResumeDto), StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status401Unauthorized)]
+    [ProducesResponseType(StatusCodes.Status403Forbidden)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
     public async Task<IActionResult> GetResume(Guid id)
     {
         var (resume, statusCode, errorMessage) = await _adminResumeService.GetResumeAsync(id);
-        return CreateAPIError(resume, statusCode, errorMessage);
+        return HandleResponse(resume, statusCode, errorMessage);
     }
 
     /// <summary>
@@ -68,24 +69,40 @@ public class AdminResumeController(AdminResumeService adminResumeService) : Base
     /// <response code="404">Resume not found.</response>
     [HttpPut("{id}")]
     [ProducesResponseType(StatusCodes.Status204NoContent)]
-    [ProducesResponseType(typeof(object), StatusCodes.Status400BadRequest)]
-    [ProducesResponseType(typeof(object), StatusCodes.Status401Unauthorized)]
-    [ProducesResponseType(typeof(object), StatusCodes.Status403Forbidden)]
-    [ProducesResponseType(typeof(object), StatusCodes.Status404NotFound)]
+    [ProducesResponseType(StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(StatusCodes.Status401Unauthorized)]
+    [ProducesResponseType(StatusCodes.Status403Forbidden)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
     public async Task<IActionResult> UpdateResume(Guid id, [FromBody] AdminUpdateResumeDto dto)
     {
-        if (!ModelState.IsValid)
-            return ValidationError();
+        var validationResult = ValidateModel();
+        if (!validationResult.IsSuccess())
+            return validationResult;
 
         var (success, statusCode, errorMessage) = await _adminResumeService.UpdateResumeAsync(id, dto);
-        return CreateAPIError<AdminResumeDto>(success, statusCode, errorMessage);
+        return HandleResponse(success, statusCode, errorMessage, nameof(Resume));
+    }
+
+    [HttpPut("{id}/status")]
+    [ProducesResponseType(StatusCodes.Status204NoContent)]
+    [ProducesResponseType(StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(StatusCodes.Status401Unauthorized)]
+    [ProducesResponseType(StatusCodes.Status403Forbidden)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
+    [ProducesResponseType(StatusCodes.Status410Gone)]
+    public async Task<IActionResult> UpdateResumeStatus(Guid id, [FromBody] UpdateStatusDto dto)
+    {
+        var validationResult = ValidateModel();
+        if (!validationResult.IsSuccess())
+                return validationResult;
+        var (success, statusCode, errorMessage) = await _adminResumeService.UpdateResumeStatusAsync(id, dto.IsDeleted);
+        return HandleResponse(success, statusCode, errorMessage, nameof(Resume));
     }
 
     /// <summary>
     /// Deletes a resume (hard delete).
     /// </summary>
     /// <param name="id">The unique identifier (GUID) of the resume.</param>
-    /// <param name="hardDelete">A boolean indicating whether to perform a hard delete (default is false).</param>
     /// <returns>No content if successful.</returns>
     /// <response code="204">Resume deleted successfully.</response>
     /// <response code="400">Invalid request data or database error.</response>
@@ -94,13 +111,13 @@ public class AdminResumeController(AdminResumeService adminResumeService) : Base
     /// <response code="404">Resume not found.</response>
     [HttpDelete("{id}")]
     [ProducesResponseType(StatusCodes.Status204NoContent)]
-    [ProducesResponseType(typeof(object), StatusCodes.Status400BadRequest)]
-    [ProducesResponseType(typeof(object), StatusCodes.Status401Unauthorized)]
-    [ProducesResponseType(typeof(object), StatusCodes.Status403Forbidden)]
-    [ProducesResponseType(typeof(object), StatusCodes.Status404NotFound)]
-    public async Task<IActionResult> DeleteResume(Guid id, bool hardDelete)
+    [ProducesResponseType(StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(StatusCodes.Status401Unauthorized)]
+    [ProducesResponseType(StatusCodes.Status403Forbidden)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
+    public async Task<IActionResult> DeleteResume(Guid id)
     {
-        var (success, statusCode, errorMessage) = await _adminResumeService.DeleteResumeAsync(id, hardDelete);
-        return CreateAPIError<AdminResumeDto>(success, statusCode, errorMessage);
+        var (success, statusCode, errorMessage) = await _adminResumeService.DeleteResumeAsync(id);
+        return HandleResponse(success, statusCode, errorMessage, nameof(Resume));
     }
 }

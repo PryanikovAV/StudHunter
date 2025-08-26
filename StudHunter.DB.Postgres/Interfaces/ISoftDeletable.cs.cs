@@ -1,6 +1,6 @@
 ﻿namespace StudHunter.DB.Postgres.Interfaces;
 
-public interface ISoftDeletable : IEntity
+public interface ISoftDeletable
 {
     bool IsDeleted { get; set; }
 }

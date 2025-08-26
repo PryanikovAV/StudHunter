@@ -14,8 +14,5 @@ public class UpdateStudyPlanDto
     [RegularExpression("FullTime|PartTime|Correspondence", ErrorMessage = "{0} must be 'FullTime', 'PartTime' or 'Correspondence'")]
     public string? StudyForm {  get; set; }
 
-    [Range(2000, 2025, ErrorMessage = "{0} must be between {1} and {2}")]
-    public DateOnly? BeginYear { get; set; }
-
     public List<Guid>? CourseIds { get; set; }
 }

@@ -3,6 +3,7 @@ using Microsoft.AspNetCore.Mvc;
 using StudHunter.API.Controllers.v1.BaseControllers;
 using StudHunter.API.ModelsDto.Invitation;
 using StudHunter.API.Services.AdminServices;
+using StudHunter.DB.Postgres.Models;
 
 namespace StudHunter.API.Controllers.v1.AdminControllers;
 
@@ -11,7 +12,7 @@ namespace StudHunter.API.Controllers.v1.AdminControllers;
 /// </summary>
 [Route("api/v1/admin/[controller]")]
 [ApiController]
-[Authorize(Roles = "Administrator")]
+[Authorize(Roles = nameof(Administrator))]
 public class AdminInvitationController(AdminInvitationService adminInvitationService) : BaseController
 {
     private readonly AdminInvitationService _adminInvitationService = adminInvitationService;
@@ -25,12 +26,23 @@ public class AdminInvitationController(AdminInvitationService adminInvitationSer
     /// <response code="403">User lacks Administrator role.</response>
     [HttpGet]
     [ProducesResponseType(typeof(List<InvitationDto>), StatusCodes.Status200OK)]
-    [ProducesResponseType(typeof(object), StatusCodes.Status401Unauthorized)]
-    [ProducesResponseType(typeof(object), StatusCodes.Status403Forbidden)]
+    [ProducesResponseType(StatusCodes.Status401Unauthorized)]
+    [ProducesResponseType(StatusCodes.Status403Forbidden)]
     public async Task<IActionResult> GetAllInvitations()
     {
         var (invitations, statusCode, errorMessage) = await _adminInvitationService.GetAllInvitationsAsync();
-        return CreateAPIError(invitations, statusCode, errorMessage);
+        return HandleResponse(invitations, statusCode, errorMessage);
+    }
+
+    [HttpGet("{id}")]
+    [ProducesResponseType(typeof(InvitationDto), StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status401Unauthorized)]
+    [ProducesResponseType(StatusCodes.Status403Forbidden)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
+    public async Task<IActionResult> GetInvitation(Guid id)
+    {
+        var (invitation, statusCode, errorMessage) = await _adminInvitationService.GetInvitationAsync(id);
+        return HandleResponse(invitation, statusCode, errorMessage);
     }
 
     /// <summary>
@@ -43,12 +55,12 @@ public class AdminInvitationController(AdminInvitationService adminInvitationSer
     /// <response code="403">User lacks Administrator role.</response>
     [HttpGet("sent/{userId}")]
     [ProducesResponseType(typeof(List<InvitationDto>), StatusCodes.Status200OK)]
-    [ProducesResponseType(typeof(object), StatusCodes.Status401Unauthorized)]
-    [ProducesResponseType(typeof(object), StatusCodes.Status403Forbidden)]
+    [ProducesResponseType(StatusCodes.Status401Unauthorized)]
+    [ProducesResponseType(StatusCodes.Status403Forbidden)]
     public async Task<IActionResult> GetSentInvitationsByUser(Guid userId)
     {
         var (invitations, statusCode, errorMessage) = await _adminInvitationService.GetInvitationsByUserAsync(userId, sent: true);
-        return CreateAPIError(invitations, statusCode, errorMessage);
+        return HandleResponse(invitations, statusCode, errorMessage);
     }
 
     /// <summary>
@@ -61,12 +73,28 @@ public class AdminInvitationController(AdminInvitationService adminInvitationSer
     /// <response code="403">User lacks Administrator role.</response>
     [HttpGet("received/{userId}")]
     [ProducesResponseType(typeof(List<InvitationDto>), StatusCodes.Status200OK)]
-    [ProducesResponseType(typeof(object), StatusCodes.Status401Unauthorized)]
-    [ProducesResponseType(typeof(object), StatusCodes.Status403Forbidden)]
+    [ProducesResponseType(StatusCodes.Status401Unauthorized)]
+    [ProducesResponseType(StatusCodes.Status403Forbidden)]
     public async Task<IActionResult> GetReceivedInvitationsByUser(Guid userId)
     {
         var (invitations, statusCode, errorMessage) = await _adminInvitationService.GetInvitationsByUserAsync(userId, sent: false);
-        return CreateAPIError(invitations, statusCode, errorMessage);
+        return HandleResponse(invitations, statusCode, errorMessage);
+    }
+
+    [HttpPut("{id}/status")]
+    [ProducesResponseType(StatusCodes.Status204NoContent)]
+    [ProducesResponseType(StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(StatusCodes.Status401Unauthorized)]
+    [ProducesResponseType(StatusCodes.Status403Forbidden)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
+    [ProducesResponseType(StatusCodes.Status409Conflict)]
+    public async Task<IActionResult> UpdateInvitationStatus(Guid id, [FromBody] UpdateInvitationDto dto)
+    {
+        var validationResult = ValidateModel();
+        if (!validationResult.IsSuccess())
+            return validationResult;
+        var (success, statusCode, errorMessage) = await _adminInvitationService.UpdateInvitationStatusAsync(id, dto.Status);
+        return HandleResponse(success, statusCode, errorMessage, nameof(Invitation));
     }
 
     /// <summary>
@@ -81,13 +109,12 @@ public class AdminInvitationController(AdminInvitationService adminInvitationSer
     /// <response code="404">Invitation not found.</response>
     [HttpDelete("{id}")]
     [ProducesResponseType(StatusCodes.Status204NoContent)]
-    [ProducesResponseType(typeof(object), StatusCodes.Status400BadRequest)]
-    [ProducesResponseType(typeof(object), StatusCodes.Status401Unauthorized)]
-    [ProducesResponseType(typeof(object), StatusCodes.Status403Forbidden)]
-    [ProducesResponseType(typeof(object), StatusCodes.Status404NotFound)]
+    [ProducesResponseType(StatusCodes.Status401Unauthorized)]
+    [ProducesResponseType(StatusCodes.Status403Forbidden)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
     public async Task<IActionResult> DeleteInvitation(Guid id)
     {
         var (success, statusCode, errorMessage) = await _adminInvitationService.DeleteInvitationAsync(id);
-        return CreateAPIError<InvitationDto>(success, statusCode, errorMessage);
+        return HandleResponse(success, statusCode, errorMessage, nameof(Invitation));
     }
 }

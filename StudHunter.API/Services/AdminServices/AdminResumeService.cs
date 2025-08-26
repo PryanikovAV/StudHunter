@@ -10,18 +10,18 @@ namespace StudHunter.API.Services.AdminServices;
 /// <summary>
 /// Service for managing resumes with administrative privileges.
 /// </summary>
-public class AdminResumeService(StudHunterDbContext context) : BaseResumeService (context)
+public class AdminResumeService(StudHunterDbContext context) : BaseResumeService(context)
 {
     /// <summary>
     /// Retrieves all resumes include deleted.
     /// </summary>
     /// <returns>A tuple containing a list of all resumes, an optional status code, and an optional error message.</returns>
-    public async Task<(List<AdminResumeDto>? Entities, int? StatusCode, string? ErrorMessage)> GetAllResumesAsync()
+    public async Task<(List<AdminResumeDto> Entities, int? StatusCode, string? ErrorMessage)> GetAllResumesAsync()
     {
-        var resumes = await _context.Resumes.ToListAsync();
-        var dtos = resumes.Select(MapToResumeDto<AdminResumeDto>).ToList();
-
-        return (dtos, null, null);
+        var resumes = await _context.Resumes
+        .Select(r => MapToResumeDto<AdminResumeDto>(r))
+        .ToListAsync();
+        return (resumes, null, null);
     }
 
     /// <summary>
@@ -31,11 +31,10 @@ public class AdminResumeService(StudHunterDbContext context) : BaseResumeService
     /// <returns>A tuple containing the resume, an optional status code, and an optional error message.</returns>
     public async Task<(AdminResumeDto? Entity, int? StatusCode, string? ErrorMessage)> GetResumeAsync(Guid id)
     {
-        var resume = await _context.Resumes.FindAsync(id);
-
+        var resume = await _context.Resumes
+        .FirstOrDefaultAsync(r => r.Id == id);
         if (resume == null)
             return (null, StatusCodes.Status404NotFound, ErrorMessages.EntityNotFound(nameof(Resume)));
-
         return (MapToResumeDto<AdminResumeDto>(resume), null, null);
     }
 
@@ -47,30 +46,59 @@ public class AdminResumeService(StudHunterDbContext context) : BaseResumeService
     /// <returns>A tuple indicating whether the update was successful, an optional status code, and an optional error message.</returns>
     public async Task<(bool Success, int? StatusCode, string? ErrorMessage)> UpdateResumeAsync(Guid id, AdminUpdateResumeDto dto)
     {
-        var resume = await _context.Resumes.FindAsync(id);
-
+        var resume = await _context.Resumes
+        .FirstOrDefaultAsync(r => r.Id == id);
         if (resume == null)
             return (false, StatusCodes.Status404NotFound, ErrorMessages.EntityNotFound(nameof(Resume)));
-
         if (dto.Title != null)
             resume.Title = dto.Title;
         if (dto.Description != null)
             resume.Description = dto.Description;
-        if (dto.IsDeleted.HasValue)
-            resume.IsDeleted = dto.IsDeleted.Value;
         resume.UpdatedAt = DateTime.UtcNow;
+        return await SaveChangesAsync<Resume>();
+    }
+
+    /// <summary>
+    /// 
+    /// </summary>
+    /// <param name="id"></param>
+    /// <param name="isDeleted"></param>
+    /// <returns></returns>
+    public async Task<(bool Success, int? StatusCode, string? ErrorMessage)> UpdateResumeStatusAsync(Guid id, bool isDeleted)
+    {
+        var resume = await _context.Resumes
+        .FirstOrDefaultAsync(r => r.Id == id);
+        if (resume == null)
+            return (false, StatusCodes.Status404NotFound, ErrorMessages.EntityNotFound(nameof(Resume)));
+        resume.IsDeleted = isDeleted;
+        resume.DeletedAt = isDeleted ? DateTime.UtcNow : null;
+
+        if (isDeleted)
+        {
+            var invitations = await _context.Invitations
+            .Where(i => i.ResumeId == id && i.Status != Invitation.InvitationStatus.Rejected)
+            .ToListAsync();
+            foreach (var invitation in invitations)
+            {
+                invitation.Status = Invitation.InvitationStatus.Rejected;
+                invitation.UpdatedAt = DateTime.UtcNow;
+            }
+        }
 
         return await SaveChangesAsync<Resume>();
     }
 
     /// <summary>
-    /// Deletes a resume (hard or soft delete).
+    /// Deletes a resume.
     /// </summary>
     /// <param name="id">The unique identifier (GUID) of the resume.</param>
-    /// <param name="hardDelete">A boolean indicating whether to perform a hard delete (true) or soft delete (false).</param>
     /// <returns>A tuple indicating whether the deletion was successful, an optional status code, and an optional error message.</returns>
-    public async Task<(bool Success, int? StatusCode, string? ErrorMessage)> DeleteResumeAsync(Guid id, bool hardDelete = false)
+    public async Task<(bool Success, int? StatusCode, string? ErrorMessage)> DeleteResumeAsync(Guid id)
     {
-        return await DeleteEntityAsync<Resume>(id, hardDelete);
+        var resume = await _context.Resumes.FindAsync(id);
+        if (resume == null)
+            return (false, StatusCodes.Status404NotFound, ErrorMessages.EntityNotFound(nameof(Resume)));
+        _context.Resumes.Remove(resume);
+        return await SaveChangesAsync<Resume>();
     }
 }

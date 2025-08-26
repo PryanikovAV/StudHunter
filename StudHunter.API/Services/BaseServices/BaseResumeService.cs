@@ -14,7 +14,7 @@ public abstract class BaseResumeService(StudHunterDbContext context) : BaseServi
     /// <returns>The mapped DTO.</returns>
     protected TDto MapToResumeDto<TDto>(Resume resume) where TDto : ResumeDto, new()
     {
-        var dto = new TDto
+        var resumeDto = new TDto
         {
             Id = resume.Id,
             StudentId = resume.StudentId,
@@ -24,11 +24,11 @@ public abstract class BaseResumeService(StudHunterDbContext context) : BaseServi
             UpdatedAt = resume.UpdatedAt
         };
 
-        if (dto is AdminResumeDto adminDto)
+        if (resumeDto is AdminResumeDto adminResumeDto)
         {
-            adminDto.IsDeleted = resume.IsDeleted;
+            adminResumeDto.IsDeleted = resume.IsDeleted;
         }
 
-        return dto;
+        return resumeDto;
     }
 }

@@ -25,11 +25,13 @@ public class VacancyCourseConfiguration : IEntityTypeConfiguration<VacancyCourse
         builder.HasOne(vc => vc.Course)
                .WithMany(c => c.VacancyCourses)
                .HasForeignKey(vc => vc.CourseId)
+               .OnDelete(DeleteBehavior.Restrict)
                .IsRequired();
 
         builder.HasOne(vc => vc.Vacancy)
                .WithMany(v => v.Courses)
                .HasForeignKey(vc => vc.VacancyId)
-               .IsRequired(false);
+               .OnDelete(DeleteBehavior.Cascade)
+               .IsRequired();
     }
 }

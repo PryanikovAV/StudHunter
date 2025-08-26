@@ -39,10 +39,14 @@ public class StudyPlanConfiguration : IEntityTypeConfiguration<StudyPlan>
                .HasDefaultValue(StudyPlan.StudyForms.fulltime)
                .IsRequired();
 
-        builder.Property(sp => sp.BeginYear)
-               .HasColumnType("DATE")
-               .HasDefaultValue(DateOnly.FromDateTime(DateTime.UtcNow))
+        builder.Property(sp => sp.IsDeleted)
+               .HasColumnName("BOOLEAN")
+               .HasDefaultValue(false)
                .IsRequired();
+
+        builder.Property(u => u.DeletedAt)
+               .HasColumnType("TIMESTAMPTZ")
+               .IsRequired(false);
 
         builder.HasOne(sp => sp.Student)
                .WithOne(s => s.StudyPlan)
@@ -70,5 +74,7 @@ public class StudyPlanConfiguration : IEntityTypeConfiguration<StudyPlan>
 
         builder.HasIndex(sp => sp.StudentId)
                .IsUnique();
+
+        builder.HasQueryFilter(sp => !sp.IsDeleted);
     }
 }

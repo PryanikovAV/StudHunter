@@ -48,7 +48,19 @@ public class StudentService(StudHunterDbContext context, IPasswordHasher passwor
         student.UpdateEmail(dto.Email);
         student.UpdatePassword(_passwordHasher.HashPassword(dto.Password));
 
+        var studyPlan = new StudyPlan
+        {
+            Id = Guid.NewGuid(),
+            StudentId = student.Id,
+            CourseNumber = 1,
+            FacultyId = Guid.Empty,
+            SpecialityId = Guid.Empty,
+            StudyForm = StudyPlan.StudyForms.fulltime,
+            IsDeleted = false
+        };
+
         _context.Students.Add(student);
+        _context.StudyPlans.Add(studyPlan);
 
         var (success, statusCode, errorMessage) = await SaveChangesAsync<Student>();
 
@@ -56,9 +68,9 @@ public class StudentService(StudHunterDbContext context, IPasswordHasher passwor
             return (null, statusCode, errorMessage);
 
         var studentEntity = await _context.Students
-        .Include(s => s.Achievements).ThenInclude(a => a.AchievementTemplate)
-        .Include(s => s.Resume)
-        .FirstOrDefaultAsync(s => s.Id == student.Id && !s.IsDeleted);
+            .Include(s => s.Achievements).ThenInclude(a => a.AchievementTemplate)
+            .Include(s => s.Resume)
+            .FirstOrDefaultAsync(s => s.Id == student.Id && !s.IsDeleted);
 
         var token = _authService.GenerateJwtToken(student.Id, nameof(Student));
 
@@ -118,6 +130,20 @@ public class StudentService(StudHunterDbContext context, IPasswordHasher passwor
     /// <returns>A tuple indicating whether the deletion was successful, an optional status code, and an optional error message.</returns>
     public async Task<(bool Success, int? StatusCode, string? ErrorMessage)> DeleteStudentAsync(Guid id)
     {
-        return await DeleteEntityAsync<Student>(id);
+        var student = await _context.Students
+        .Include(s => s.StudyPlan)
+        .Include(s => s.Resume)
+        .FirstOrDefaultAsync(s => s.Id == id && !s.IsDeleted);
+
+        if (student == null)
+            return (false, StatusCodes.Status404NotFound, ErrorMessages.EntityNotFound(nameof(Student)));
+
+        student.IsDeleted = true;
+        if (student.StudyPlan != null)
+            student.StudyPlan.IsDeleted = true;
+        if (student.Resume != null)
+            student.Resume.IsDeleted = true;
+
+        return await SaveChangesAsync<Student>();
     }
 }

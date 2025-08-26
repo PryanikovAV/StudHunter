@@ -47,6 +47,10 @@ public class VacancyConfiguration : IEntityTypeConfiguration<Vacancy>
                .HasDefaultValue(false)
                .IsRequired();
 
+        builder.Property(u => u.DeletedAt)
+               .HasColumnType("TIMESTAMPTZ")
+               .IsRequired(false);
+
         builder.Property(vc => vc.Type)
                .HasColumnType("INTEGER")
                .IsRequired();
@@ -54,7 +58,8 @@ public class VacancyConfiguration : IEntityTypeConfiguration<Vacancy>
         builder.HasMany(vc => vc.Courses)
                .WithOne(vc => vc.Vacancy)
                .HasForeignKey(vc => vc.VacancyId)
-               .IsRequired();
+               .OnDelete(DeleteBehavior.Cascade)
+               .IsRequired(false);
 
         builder.HasMany(v => v.Invitations)
                .WithOne(i => i.Vacancy)

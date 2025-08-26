@@ -44,6 +44,10 @@ public class UserConfiguration : IEntityTypeConfiguration<User>
                .HasDefaultValue(false)
                .IsRequired();
 
+        builder.Property(u => u.DeletedAt)
+               .HasColumnType("TIMESTAMPTZ")
+               .IsRequired(false);
+
         builder.HasMany(u => u.SentInvitations)
                .WithOne(i => i.Sender)
                .HasForeignKey(i => i.SenderId)

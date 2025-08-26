@@ -41,6 +41,10 @@ public class ResumeConfiguration : IEntityTypeConfiguration<Resume>
                .HasDefaultValue(false)
                .IsRequired();
 
+        builder.Property(u => u.DeletedAt)
+               .HasColumnType("TIMESTAMPTZ")
+               .IsRequired(false);
+
         builder.HasOne(r => r.Student)
                .WithOne(s => s.Resume)
                .HasForeignKey<Resume>(r => r.StudentId)

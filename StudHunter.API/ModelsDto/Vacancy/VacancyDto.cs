@@ -7,6 +7,8 @@ namespace StudHunter.API.ModelsDto.Vacancy;
 /// </summary>
 public class VacancyDto
 {
+    internal readonly bool IsDeleted;
+
     /// <summary>
     /// The unique identifier (GUID) of the vacancy.
     /// </summary>

@@ -23,8 +23,5 @@ public class StudyPlanDto
     [RegularExpression("FullTime|PartTime|Correspondence")]
     public string StudyForm { get; set; } = string.Empty;
 
-    [Required]
-    public DateOnly BeginYear { get; set; }
-
     public List<Guid> CourseIds { get; set; } = new List<Guid>();
 }

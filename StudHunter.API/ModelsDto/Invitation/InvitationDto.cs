@@ -17,10 +17,14 @@ public class InvitationDto
     /// </summary>
     public Guid SenderId { get; set; }
 
+    public string SenderEmail { get; set; } = string.Empty;
+
     /// <summary>
     /// The unique identifier (GUID) of the receiver.
     /// </summary>
     public Guid ReceiverId { get; set; }
+
+    public string ReceiverEmail { get; set; } = string.Empty;
 
     /// <summary>
     /// The unique identifier (GUID) of the vacancy.

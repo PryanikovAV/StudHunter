@@ -18,6 +18,9 @@ public class Resume : ISoftDeletable
 
     public bool IsDeleted { get; set; }
 
+    public DateTime? DeletedAt { get; set; }
+
     public virtual Student Student { get; set; } = null!;
+
     public virtual ICollection<Invitation> Invitations { get; set; } = new List<Invitation>();
 }

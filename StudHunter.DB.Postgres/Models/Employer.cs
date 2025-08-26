@@ -15,5 +15,6 @@ public class Employer : User
     public virtual ICollection<Vacancy> Vacancies { get; set; } = new List<Vacancy>();
 
     public void UpdateEmail(string email) => SetEmail(email);
+
     public void UpdatePassword(string passwordHash) => SetPasswordHash(passwordHash);
 }

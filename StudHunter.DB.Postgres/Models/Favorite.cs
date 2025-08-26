@@ -1,8 +1,6 @@
-﻿using StudHunter.DB.Postgres.Interfaces;
+﻿namespace StudHunter.DB.Postgres.Models;
 
-namespace StudHunter.DB.Postgres.Models;
-
-public class Favorite : IEntity
+public class Favorite
 {
     public Guid Id { get; set; }
 

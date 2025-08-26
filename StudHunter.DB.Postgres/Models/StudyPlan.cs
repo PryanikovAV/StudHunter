@@ -1,8 +1,8 @@
 ﻿using StudHunter.DB.Postgres.Interfaces;
-using System.ComponentModel.DataAnnotations;
+
 namespace StudHunter.DB.Postgres.Models;
 
-public class StudyPlan : IEntity
+public class StudyPlan : ISoftDeletable
 {
     public Guid Id { get; set; }
 
@@ -16,7 +16,9 @@ public class StudyPlan : IEntity
 
     public StudyForms StudyForm { get; set; } = StudyForms.fulltime;
 
-    public DateOnly BeginYear { get; set; } = DateOnly.FromDateTime(DateTime.UtcNow);
+    public bool IsDeleted { get; set; } = false;
+
+    public DateTime? DeletedAt { get; set; }
 
     public virtual Student Student { get; set; } = null!;
     public virtual Faculty Faculty { get; set; } = null!;

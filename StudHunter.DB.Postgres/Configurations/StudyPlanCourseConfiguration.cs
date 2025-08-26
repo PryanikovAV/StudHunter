@@ -25,6 +25,7 @@ public class StudyPlanCourseConfiguration : IEntityTypeConfiguration<StudyPlanCo
         builder.HasOne(spc => spc.Course)
                .WithMany(c => c.StudyPlanCourses)
                .HasForeignKey(spc => spc.CourseId)
+               .OnDelete(DeleteBehavior.Restrict)
                .IsRequired();
     }
 }
