@@ -40,7 +40,6 @@ public class StudyPlanService(StudHunterDbContext context) : BaseStudyPlanServic
             FacultyId = dto.FacultyId,
             SpecialityId = dto.SpecialityId,
             StudyForm = Enum.Parse<StudyPlan.StudyForms>(dto.StudyForm),
-            BeginYear = dto.BeginYear,
             StudyPlanCourses = dto.CourseIds.Select(courseId => new StudyPlanCourse
             {
                 StudyPlanId = Guid.NewGuid(),
@@ -106,8 +105,6 @@ public class StudyPlanService(StudHunterDbContext context) : BaseStudyPlanServic
             studyPlan.SpecialityId = dto.SpecialityId.Value;
         if (dto.StudyForm != null)
             studyPlan.StudyForm = Enum.Parse<StudyPlan.StudyForms>(dto.StudyForm);
-        if (dto.BeginYear.HasValue)
-            studyPlan.BeginYear = dto.BeginYear.Value;
 
         return await SaveChangesAsync<StudyPlan>();
     }

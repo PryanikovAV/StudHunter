@@ -31,9 +31,9 @@ public class ResumeController(ResumeService resumeService) : BaseController
     /// <response code="410">Resume has been deleted.</response>
     [HttpGet("{studentId}")]
     [ProducesResponseType(typeof(ResumeDto), StatusCodes.Status200OK)]
-    [ProducesResponseType(StatusCodes.Status401Unauthorized)]
-    [ProducesResponseType(StatusCodes.Status403Forbidden)]
-    [ProducesResponseType(StatusCodes.Status404NotFound)]
+    [ProducesResponseType(typeof(ErrorResponse), StatusCodes.Status401Unauthorized)]
+    [ProducesResponseType(typeof(ErrorResponse), StatusCodes.Status403Forbidden)]
+    [ProducesResponseType(typeof(ErrorResponse), StatusCodes.Status404NotFound)]
     public async Task<IActionResult> GetResume(Guid studentId)
     {
         if (!Guid.TryParse(User.FindFirstValue(ClaimTypes.NameIdentifier), out var authUserId))
@@ -55,11 +55,11 @@ public class ResumeController(ResumeService resumeService) : BaseController
     /// <response code="409">A resume for the student already exists.</response>
     [HttpPost]
     [ProducesResponseType(typeof(ResumeDto), StatusCodes.Status201Created)]
-    [ProducesResponseType(StatusCodes.Status400BadRequest)]
-    [ProducesResponseType(StatusCodes.Status401Unauthorized)]
-    [ProducesResponseType(StatusCodes.Status404NotFound)]
-    [ProducesResponseType(StatusCodes.Status409Conflict)]
-    [ProducesResponseType(StatusCodes.Status410Gone)]
+    [ProducesResponseType(typeof(ErrorResponse), StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(typeof(ErrorResponse), StatusCodes.Status401Unauthorized)]
+    [ProducesResponseType(typeof(ErrorResponse), StatusCodes.Status404NotFound)]
+    [ProducesResponseType(typeof(ErrorResponse), StatusCodes.Status409Conflict)]
+    [ProducesResponseType(typeof(ErrorResponse), StatusCodes.Status410Gone)]
     public async Task<IActionResult> CreateResume([FromBody] CreateResumeDto dto)
     {
         if (!ValidateModel())
@@ -87,11 +87,11 @@ public class ResumeController(ResumeService resumeService) : BaseController
     /// <response code="404">Resume not found.</response>
     /// <response code="410">Resume has been deleted.</response>
     [HttpPut("{resumeId}")]
-    [ProducesResponseType(StatusCodes.Status204NoContent)]
-    [ProducesResponseType(StatusCodes.Status400BadRequest)]
-    [ProducesResponseType(StatusCodes.Status401Unauthorized)]
-    [ProducesResponseType(StatusCodes.Status403Forbidden)]
-    [ProducesResponseType(StatusCodes.Status410Gone)]
+    [ProducesResponseType(typeof(ErrorResponse), StatusCodes.Status204NoContent)]
+    [ProducesResponseType(typeof(ErrorResponse), StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(typeof(ErrorResponse), StatusCodes.Status401Unauthorized)]
+    [ProducesResponseType(typeof(ErrorResponse), StatusCodes.Status403Forbidden)]
+    [ProducesResponseType(typeof(ErrorResponse), StatusCodes.Status410Gone)]
     public async Task<IActionResult> UpdateResume(Guid resumeId, [FromBody] UpdateResumeDto dto)
     {
         if (!ValidateModel())
@@ -114,12 +114,12 @@ public class ResumeController(ResumeService resumeService) : BaseController
     /// <param name="dto"></param>
     /// <returns></returns>
     [HttpPut("{resumeId}/status")]
-    [ProducesResponseType(StatusCodes.Status204NoContent)]
-    [ProducesResponseType(StatusCodes.Status400BadRequest)]
-    [ProducesResponseType(StatusCodes.Status401Unauthorized)]
-    [ProducesResponseType(StatusCodes.Status403Forbidden)]
-    [ProducesResponseType(StatusCodes.Status404NotFound)]
-    [ProducesResponseType(StatusCodes.Status410Gone)]
+    [ProducesResponseType(typeof(ErrorResponse), StatusCodes.Status204NoContent)]
+    [ProducesResponseType(typeof(ErrorResponse), StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(typeof(ErrorResponse), StatusCodes.Status401Unauthorized)]
+    [ProducesResponseType(typeof(ErrorResponse), StatusCodes.Status403Forbidden)]
+    [ProducesResponseType(typeof(ErrorResponse), StatusCodes.Status404NotFound)]
+    [ProducesResponseType(typeof(ErrorResponse), StatusCodes.Status410Gone)]
     public async Task<IActionResult> UpdateResumeStatus(Guid resumeId, [FromBody] UpdateStatusDto dto)
     {
         if (!ValidateModel())

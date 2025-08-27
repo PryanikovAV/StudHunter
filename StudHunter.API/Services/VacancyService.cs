@@ -145,6 +145,18 @@ public class VacancyService(StudHunterDbContext context) : BaseVacancyService(co
         vacancy.IsDeleted = isDeleted;
         vacancy.DeletedAt = isDeleted ? DateTime.UtcNow : null;
 
+        if (isDeleted)
+        {
+            var invitations = await _context.Invitations
+                .Where(i => i.VacancyId == vacancyId && i.Status != Invitation.InvitationStatus.Rejected)
+                .ToListAsync();
+            foreach (var invitation in invitations)
+            {
+                invitation.Status = Invitation.InvitationStatus.Rejected;
+                invitation.UpdatedAt = DateTime.UtcNow;
+            }
+        }
+
         return await SaveChangesAsync<Vacancy>();
     }
 }

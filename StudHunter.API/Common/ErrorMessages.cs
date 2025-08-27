@@ -1,4 +1,6 @@
-﻿namespace StudHunter.API.Common;
+﻿using Microsoft.DotNet.Scaffolding.Shared.CodeModifier.CodeChange;
+
+namespace StudHunter.API.Common;
 
 public static class ErrorMessages
 {
@@ -25,9 +27,9 @@ public static class ErrorMessages
     public static string EntityAlreadyExists(string entityName, string field) => FormatErrorMessage($"{entityName} with this {field} already exists.");
 
     /// <summary>
-    /// Entity is already deleted.
+    /// Entity is already deleted. Use method to restore.
     /// </summary>
-    public static string EntityAlreadyDeleted(string entityName) => FormatErrorMessage($"{entityName} is already deleted.");
+    public static string EntityAlreadyDeleted(string entityName, string methodName) => FormatErrorMessage($"{entityName} is already deleted. Use {methodName} to restore.");
 
     /// <summary>
     /// Cannot delete entity due to associations with another entity or field.

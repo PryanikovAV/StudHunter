@@ -16,72 +16,135 @@ public class StudentController(StudentService studentService) : BaseController
 {
     private readonly StudentService _studentService = studentService;
 
-    [HttpGet("{id}")]
+    /// <summary>
+    /// Retrieves a student by their ID.
+    /// </summary>
+    /// <param name="studentId">The unique identifier (GUID) of the student.</param>
+    /// <returns>The student details.</returns>
+    /// <response code="200">Student retrieved successfully.</response>
+    /// <response code="401">User is not authenticated.</response>
+    /// <response code="403">User is not authorized to access this student.</response>
+    /// <response code="404">Student not found.</response>
+    [HttpGet("{studentId}")]
     [ProducesResponseType(typeof(StudentDto), StatusCodes.Status200OK)]
-    [ProducesResponseType(typeof(object), StatusCodes.Status401Unauthorized)]
-    [ProducesResponseType(typeof(object), StatusCodes.Status404NotFound)]
-    public async Task<IActionResult> GetStudent(Guid id)
+    [ProducesResponseType(typeof(ErrorResponse), StatusCodes.Status401Unauthorized)]
+    [ProducesResponseType(typeof(ErrorResponse), StatusCodes.Status403Forbidden)]
+    [ProducesResponseType(typeof(ErrorResponse), StatusCodes.Status404NotFound)]
+    public async Task<IActionResult> GetStudent(Guid studentId)
     {
-        var (student, statusCode, errorMessage) = await _studentService.GetStudentAsync<StudentDto>(id);
-        return CreateAPIError(student, statusCode, errorMessage);
+        if (!Guid.TryParse(User.FindFirstValue(ClaimTypes.NameIdentifier), out var authUserId))
+            return HandleResponse<bool>(false, StatusCodes.Status401Unauthorized, ErrorMessages.InvalidTokenUserId());
+
+        var (student, statusCode, errorMessage) = await _studentService.GetStudentAsync(studentId, authUserId);
+        return HandleResponse(student, statusCode, errorMessage);
     }
 
+    /// <summary>
+    /// Retrieves a student by their email.
+    /// </summary>
+    /// <param name="email">The email address of the student.</param>
+    /// <returns>The student details.</returns>
+    /// <response code="200">Student retrieved successfully.</response>
+    /// <response code="401">User is not authenticated.</response>
+    /// <response code="403">User is not authorized to access this student.</response>
+    /// <response code="404">Student not found.</response>
+    [HttpGet("student/{email}")]
+    [ProducesResponseType(typeof(StudentDto), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(ErrorResponse), StatusCodes.Status401Unauthorized)]
+    [ProducesResponseType(typeof(ErrorResponse), StatusCodes.Status403Forbidden)]
+    [ProducesResponseType(typeof(ErrorResponse), StatusCodes.Status404NotFound)]
+    public async Task<IActionResult> GetStudent(string email)
+    {
+        if (!Guid.TryParse(User.FindFirstValue(ClaimTypes.NameIdentifier), out var authUserId))
+            return HandleResponse<bool>(false, StatusCodes.Status401Unauthorized, ErrorMessages.InvalidTokenUserId());
+
+        var (student, statusCode, errorMessage) = await _studentService.GetStudentAsync(email, authUserId);
+        return HandleResponse(student, statusCode, errorMessage);
+    }
+
+    /// <summary>
+    /// Creates a new student.
+    /// </summary>
+    /// <param name="dto">The data transfer object containing student details.</param>
+    /// <returns>The created student.</returns>
+    /// <response code="201">Student created successfully.</response>
+    /// <response code="400">Invalid request data.</response>
+    /// <response code="409">Email already exists.</response>
     [HttpPost]
     [AllowAnonymous]
     [ProducesResponseType(typeof(StudentDto), StatusCodes.Status201Created)]
-    [ProducesResponseType(typeof(object), StatusCodes.Status400BadRequest)]
-    [ProducesResponseType(typeof(object), StatusCodes.Status401Unauthorized)]
-    [ProducesResponseType(typeof(object), StatusCodes.Status404NotFound)]
-    [ProducesResponseType(typeof(object), StatusCodes.Status409Conflict)]
+    [ProducesResponseType(typeof(ErrorResponse), StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(typeof(ErrorResponse), StatusCodes.Status409Conflict)]
     public async Task<IActionResult> CreateStudent([FromBody] RegisterStudentDto dto)
     {
-        if (!ModelState.IsValid)
-            return ValidationError();
+        if (!ValidateModel())
+        {
+            var errors = ModelState.Values.SelectMany(v => v.Errors).Select(e => e.ErrorMessage).ToList();
+            return HandleResponse<StudentDto>(null, StatusCodes.Status400BadRequest, string.Join("; ", errors));
+        }
 
         var (student, statusCode, errorMessage) = await _studentService.CreateStudentAsync(dto);
-        return CreateAPIError(student, statusCode, errorMessage, nameof(GetStudent), new { id = student?.Id });
+        return HandleResponse(student, statusCode, errorMessage, nameof(GetStudent), new { studentId = student?.Id });
     }
 
-    [HttpPut("{id}")]
-    [ProducesResponseType(StatusCodes.Status204NoContent)]
-    [ProducesResponseType(typeof(object), StatusCodes.Status400BadRequest)]
-    [ProducesResponseType(typeof(object), StatusCodes.Status401Unauthorized)]
-    [ProducesResponseType(typeof(object), StatusCodes.Status403Forbidden)]
-    [ProducesResponseType(typeof(object), StatusCodes.Status404NotFound)]
-    [ProducesResponseType(typeof(object), StatusCodes.Status409Conflict)]
-    public async Task<IActionResult> UpdateStudent(Guid id, [FromBody] UpdateStudentDto dto)
+    /// <summary>
+    /// Updates an existing student.
+    /// </summary>
+    /// <param name="studentId">The unique identifier (GUID) of the student.</param>
+    /// <param name="dto">The data transfer object containing updated student details.</param>
+    /// <returns>No content if successful.</returns>
+    /// <response code="204">Student updated successfully.</response>
+    /// <response code="400">Invalid request data.</response>
+    /// <response code="401">User is not authenticated.</response>
+    /// <response code="403">User is not authorized to update this student.</response>
+    /// <response code="404">Student not found.</response>
+    /// <response code="409">Email or phone number already exists.</response>
+    /// <response code="410">Student has been deleted.</response>
+    [HttpPut("{studentId}")]
+    [ProducesResponseType(typeof(ErrorResponse), StatusCodes.Status204NoContent)]
+    [ProducesResponseType(typeof(ErrorResponse), StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(typeof(ErrorResponse), StatusCodes.Status401Unauthorized)]
+    [ProducesResponseType(typeof(ErrorResponse), StatusCodes.Status403Forbidden)]
+    [ProducesResponseType(typeof(ErrorResponse), StatusCodes.Status404NotFound)]
+    [ProducesResponseType(typeof(ErrorResponse), StatusCodes.Status409Conflict)]
+    [ProducesResponseType(typeof(ErrorResponse), StatusCodes.Status410Gone)]
+    public async Task<IActionResult> UpdateStudent(Guid studentId, [FromBody] UpdateStudentDto dto)
     {
-        if (!ModelState.IsValid)
-            return ValidationError();
+        if (!ValidateModel())
+        {
+            var errors = ModelState.Values.SelectMany(v => v.Errors).Select(e => e.ErrorMessage).ToList();
+            return HandleResponse<bool>(false, StatusCodes.Status400BadRequest, string.Join("; ", errors));
+        }
 
-        var userString = User.FindFirstValue(ClaimTypes.NameIdentifier);
-        if (!Guid.TryParse(userString, out var userId))
-            return CreateAPIError<StudentDto>(null, StatusCodes.Status401Unauthorized, ErrorMessages.InvalidTokenUserId());
+        if (!Guid.TryParse(User.FindFirstValue(ClaimTypes.NameIdentifier), out var authUserId))
+            return HandleResponse<bool>(false, StatusCodes.Status401Unauthorized, ErrorMessages.InvalidTokenUserId());
 
-        if (userId != id)
-            return CreateAPIError<StudentDto>(null, StatusCodes.Status403Forbidden, ErrorMessages.RestrictOwnProfileAction("update", "profile"));
-
-        var (success, statusCode, errorMessage) = await _studentService.UpdateStudentAsync(id, dto);
-        return CreateAPIError<StudentDto>(success, statusCode, errorMessage);
+        var (success, statusCode, errorMessage) = await _studentService.UpdateStudentAsync(authUserId, studentId, dto);
+        return HandleResponse(success, statusCode, errorMessage);
     }
 
-    [HttpDelete("{id}")]
-    [ProducesResponseType(StatusCodes.Status204NoContent)]
-    [ProducesResponseType(typeof(object), StatusCodes.Status400BadRequest)]
-    [ProducesResponseType(typeof(object), StatusCodes.Status401Unauthorized)]
-    [ProducesResponseType(typeof(object), StatusCodes.Status403Forbidden)]
-    [ProducesResponseType(typeof(object), StatusCodes.Status404NotFound)]
-    [ProducesResponseType(typeof(object), StatusCodes.Status410Gone)]
-    public async Task<IActionResult> DeleteStudent(Guid id)
+    /// <summary>
+    /// Deletes a student (soft delete).
+    /// </summary>
+    /// <param name="studentId">The unique identifier (GUID) of the student.</param>
+    /// <returns>No content if successful.</returns>
+    /// <response code="204">Student deleted successfully.</response>
+    /// <response code="401">User is not authenticated.</response>
+    /// <response code="403">User is not authorized to delete this student.</response>
+    /// <response code="404">Student not found.</response>
+    /// <response code="410">Student has already been deleted.</response>
+    [HttpDelete("{studentId}")]
+    [ProducesResponseType(typeof(ErrorResponse), StatusCodes.Status204NoContent)]
+    [ProducesResponseType(typeof(ErrorResponse), StatusCodes.Status401Unauthorized)]
+    [ProducesResponseType(typeof(ErrorResponse), StatusCodes.Status403Forbidden)]
+    [ProducesResponseType(typeof(ErrorResponse), StatusCodes.Status404NotFound)]
+    [ProducesResponseType(typeof(ErrorResponse), StatusCodes.Status410Gone)]
+    public async Task<IActionResult> DeleteStudent(Guid studentId)
     {
-        var userString = User.FindFirstValue(ClaimTypes.NameIdentifier);
-        if (!Guid.TryParse(userString, out var userId))
-            return CreateAPIError<StudentDto>(null, StatusCodes.Status401Unauthorized, ErrorMessages.InvalidTokenUserId());
+        if (!Guid.TryParse(User.FindFirstValue(ClaimTypes.NameIdentifier), out var authUserId))
+            return HandleResponse<bool>(false, StatusCodes.Status401Unauthorized, ErrorMessages.InvalidTokenUserId());
 
-        if (userId != id)
-            return CreateAPIError<StudentDto>(null, StatusCodes.Status403Forbidden, ErrorMessages.RestrictOwnProfileAction("delete", "profile"));
-
-        var (success, statusCode, errorMessage) = await _studentService.DeleteStudentAsync(id);
-        return CreateAPIError<StudentDto>(success, statusCode, errorMessage);
+        var (success, statusCode, errorMessage) = await _studentService.DeleteStudentAsync(authUserId, studentId);
+        return HandleResponse(success, statusCode, errorMessage);
     }
 }
