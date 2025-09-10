@@ -1,7 +1,7 @@
 ﻿using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using StudHunter.API.Common;
-using StudHunter.API.ModelsDto.Auth;
+using StudHunter.API.ModelsDto.AuthDto;
 using StudHunter.API.Services.BaseServices;
 using StudHunter.DB.Postgres;
 using StudHunter.DB.Postgres.Models;
@@ -45,13 +45,17 @@ public class AuthService(StudHunterDbContext context, IPasswordHasher passwordHa
     public async Task<(AuthResultDto? Result, int? StatusCode, string? ErrorMessage)> RecoverAccountAsync(LoginDto dto)
     {
         var user = await _context.Users
+            .IgnoreQueryFilters()
             .Include(u => ((Student)u).Resume)
             .Include(u => ((Student)u).StudyPlan)
             .Include(u => ((Employer)u).Vacancies)
             .FirstOrDefaultAsync(u => u.Email == dto.Email);
 
-        if (user == null || !passwordHasher.VerifyPassword(dto.Password, user.PasswordHash))
-            return (null, StatusCodes.Status401Unauthorized, "Incorrect login or password");
+        if (user == null)
+            return (null, StatusCodes.Status401Unauthorized, $"Incorrect {nameof(User.Email)} or {nameof(User)} not found.");
+
+        if (!passwordHasher.VerifyPassword(dto.Password, user.PasswordHash))
+            return (null, StatusCodes.Status401Unauthorized, $"Incorrect {nameof(User.PasswordHash)}");
 
         if (!user.IsDeleted)
             return (null, StatusCodes.Status400BadRequest, "Account is not deleted.");

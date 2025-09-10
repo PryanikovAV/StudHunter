@@ -1,14 +1,15 @@
 ﻿using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using StudHunter.API.Controllers.v1.BaseControllers;
-using StudHunter.API.ModelsDto.AchievementTemplate;
+using StudHunter.API.ModelsDto.AchievementTemplateDto;
 using StudHunter.API.Services.AdminServices;
+using StudHunter.DB.Postgres.Models;
 
 namespace StudHunter.API.Controllers.v1.AdminControllers;
 
 [Route("api/v1/admin/[controller]")]
 [ApiController]
-[Authorize(Roles = "Administrator")]
+[Authorize(Roles = nameof(Administrator))]
 public class AdminAchievementTemplateController(AdminAchievementTemplateService administratorAchievementTemplateService) : BaseController
 {
     private readonly AdminAchievementTemplateService _administratorAchievementTemplateService = administratorAchievementTemplateService;
@@ -25,13 +26,13 @@ public class AdminAchievementTemplateController(AdminAchievementTemplateService 
     public async Task<IActionResult> GetAllAchievementTemplates()
     {
         var (templates, statusCode, errorMessage) = await _administratorAchievementTemplateService.GetAllAchievementTemplatesAsync();
-        return CreateAPIError(templates, statusCode, errorMessage);
+        return HandleResponse(templates, statusCode, errorMessage);
     }
 
     /// <summary>
     /// Retrieves an achievement template by its order number.
     /// </summary>
-    /// <param name="id">The unique identifier (GUID) of the achievement template.</param>
+    /// <param name="templateId">The unique identifier (GUID) of the achievement template.</param>
     /// <returns>The achievement template.</returns>
     /// <response code="200">Achievement template retrieved successfully.</response>
     /// <response code="401">User is not authenticated.</response>
@@ -40,10 +41,10 @@ public class AdminAchievementTemplateController(AdminAchievementTemplateService 
     [ProducesResponseType(typeof(AchievementTemplateDto), StatusCodes.Status200OK)]
     [ProducesResponseType(typeof(object), StatusCodes.Status401Unauthorized)]
     [ProducesResponseType(typeof(object), StatusCodes.Status404NotFound)]
-    public async Task<IActionResult> GetAchievementTemplate(Guid id)
+    public async Task<IActionResult> GetAchievementTemplate(Guid templateId)
     {
-        var (template, statusCode, errorMessage) = await _administratorAchievementTemplateService.GetAchievementTemplateAsync(id);
-        return CreateAPIError(template, statusCode, errorMessage);
+        var (template, statusCode, errorMessage) = await _administratorAchievementTemplateService.GetAchievementTemplateAsync(templateId);
+        return HandleResponse(template, statusCode, errorMessage);
     }
 
     /// <summary>
@@ -64,17 +65,20 @@ public class AdminAchievementTemplateController(AdminAchievementTemplateService 
     [ProducesResponseType(typeof(object), StatusCodes.Status409Conflict)]
     public async Task<IActionResult> CreateAchievementTemplate([FromBody] CreateAchievementTemplateDto dto)
     {
-        if (!ModelState.IsValid)
-            return ValidationError();
+        if (!ValidateModel())
+        {
+            var errors = ModelState.Values.SelectMany(v => v.Errors).Select(e => e.ErrorMessage).ToList();
+            return HandleResponse<AchievementTemplateDto>(null, StatusCodes.Status400BadRequest, string.Join("; ", errors));
+        }
 
         var (template, statusCode, errorMessage) = await _administratorAchievementTemplateService.CreateAchievementTemplateAsync(dto);
-        return CreateAPIError(template, statusCode, errorMessage, nameof(GetAchievementTemplate), new { id = template?.Id });
+        return HandleResponse(template, statusCode, errorMessage, nameof(GetAchievementTemplate), new { templateId = template?.Id });
     }
 
     /// <summary>
     /// Updates an existing achievement template.
     /// </summary>
-    /// <param name="id">The unique identifier (GUID) of the achievement template.</param>
+    /// <param name="templateId">The unique identifier (GUID) of the achievement template.</param>
     /// <param name="dto">The data transfer object containing updated achievement template details.</param>
     /// <returns>No content if successful.</returns>
     /// <response code="204">Achievement template updated successfully.</response>
@@ -90,19 +94,22 @@ public class AdminAchievementTemplateController(AdminAchievementTemplateService 
     [ProducesResponseType(typeof(object), StatusCodes.Status403Forbidden)]
     [ProducesResponseType(typeof(object), StatusCodes.Status404NotFound)]
     [ProducesResponseType(typeof(object), StatusCodes.Status409Conflict)]
-    public async Task<IActionResult> UpdateAchievementTemplate(Guid id, [FromBody] UpdateAchievementTemplateDto dto)
+    public async Task<IActionResult> UpdateAchievementTemplate(Guid templateId, [FromBody] UpdateAchievementTemplateDto dto)
     {
-        if (!ModelState.IsValid)
-            return ValidationError();
+        if (!ValidateModel())
+        {
+            var errors = ModelState.Values.SelectMany(v => v.Errors).Select(e => e.ErrorMessage).ToList();
+            return HandleResponse<bool>(false, StatusCodes.Status400BadRequest, string.Join("; ", errors));
+        }
 
-        var (success, statusCode, errorMessage) = await _administratorAchievementTemplateService.UpdateAchievementTemplateAsync(id, dto);
-        return CreateAPIError<AchievementTemplateDto>(success, statusCode, errorMessage);
+        var (success, statusCode, errorMessage) = await _administratorAchievementTemplateService.UpdateAchievementTemplateAsync(templateId, dto);
+        return HandleResponse(success, statusCode, errorMessage);
     }
 
     /// <summary>
     /// Deletes an achievement template.
     /// </summary>
-    /// <param name="id">The unique identifier (GUID) of the achievement template.</param>
+    /// <param name="templateId">The unique identifier (GUID) of the achievement template.</param>
     /// <returns>No content if successful.</returns>
     /// <response code="204">Achievement template deleted successfully.</response>
     /// <response code="400">Invalid request data or database error.</response>
@@ -115,9 +122,9 @@ public class AdminAchievementTemplateController(AdminAchievementTemplateService 
     [ProducesResponseType(typeof(object), StatusCodes.Status401Unauthorized)]
     [ProducesResponseType(typeof(object), StatusCodes.Status403Forbidden)]
     [ProducesResponseType(typeof(object), StatusCodes.Status404NotFound)]
-    public async Task<IActionResult> DeleteAchievementTemplate(Guid id)
+    public async Task<IActionResult> DeleteAchievementTemplate(Guid templateId)
     {
-        var (success, statusCode, errorMessage) = await _administratorAchievementTemplateService.DeleteAchievementTemplateAsync(id);
-        return CreateAPIError<AchievementTemplateDto>(success, statusCode, errorMessage);
+        var (success, statusCode, errorMessage) = await _administratorAchievementTemplateService.DeleteAchievementTemplateAsync(templateId);
+        return HandleResponse(success, statusCode, errorMessage);
     }
 }

@@ -2,10 +2,8 @@
 using Microsoft.AspNetCore.Mvc;
 using StudHunter.API.Common;
 using StudHunter.API.Controllers.v1.BaseControllers;
-using StudHunter.API.ModelsDto.Invitation;
-using StudHunter.API.ModelsDto.Resume;
+using StudHunter.API.ModelsDto.InvitationDto;
 using StudHunter.API.Services;
-using StudHunter.DB.Postgres.Models;
 using System.Security.Claims;
 
 namespace StudHunter.API.Controllers.v1;
@@ -21,70 +19,61 @@ public class InvitationController(InvitationService invitationService) : BaseCon
     private readonly InvitationService _invitationService = invitationService;
 
     /// <summary>
-    /// Retrieves sent invitations for a specific user.
+    /// Retrieves sent invitations for the authenticated user.
     /// </summary>
-    /// <param name="userId">The unique identifier (GUID) of the user.</param>
     /// <returns>A list of sent invitations.</returns>
     /// <response code="200">Invitations retrieved successfully.</response>
     /// <response code="401">User is not authenticated.</response>
-    [HttpGet("sent/{userId}")]
+    /// <response code="403">User is not authorized to access this invitations.</response>
+    [HttpGet("sent")]
     [ProducesResponseType(typeof(List<InvitationDto>), StatusCodes.Status200OK)]
-    [ProducesResponseType(StatusCodes.Status401Unauthorized)]
-    [ProducesResponseType(StatusCodes.Status403Forbidden)]
-    public async Task<IActionResult> GetSentInvitationsByUser(Guid userId)
+    [ProducesResponseType(typeof(ErrorResponse), StatusCodes.Status401Unauthorized)]
+    [ProducesResponseType(typeof(ErrorResponse), StatusCodes.Status403Forbidden)]
+    public async Task<IActionResult> GetSentInvitationsByUser()
     {
         if (!Guid.TryParse(User.FindFirstValue(ClaimTypes.NameIdentifier), out var authUserId))
             return HandleResponse<List<InvitationDto>>(null, StatusCodes.Status401Unauthorized, ErrorMessages.InvalidTokenUserId());
 
-        if (userId != authUserId)
-            return HandleResponse<InvitationDto>(null, StatusCodes.Status403Forbidden, ErrorMessages.RestrictOwnProfileAction("get sent invitations", nameof(Invitation)));
-
-        var (invitations, statusCode, errorMessage) = await _invitationService.GetInvitationsByUserAsync(userId, sent: true);
+        var (invitations, statusCode, errorMessage) = await _invitationService.GetInvitationsByUserAsync(authUserId, sent: true);
         return HandleResponse(invitations, statusCode, errorMessage);
     }
 
     /// <summary>
-    /// Retrieves received invitations for a specific user.
+    /// Retrieves received invitations for the authenticated user.
     /// </summary>
-    /// <param name="userId">The unique identifier (GUID) of the user.</param>
     /// <returns>A list of received invitations.</returns>
     /// <response code="200">Invitations retrieved successfully.</response>
     /// <response code="401">User is not authenticated.</response>
-    [HttpGet("received/{userId}")]
+    [HttpGet("received")]
     [ProducesResponseType(typeof(List<InvitationDto>), StatusCodes.Status200OK)]
-    [ProducesResponseType(StatusCodes.Status401Unauthorized)]
-    [ProducesResponseType(StatusCodes.Status403Forbidden)]
-    public async Task<IActionResult> GetReceivedInvitationsByUser(Guid userId)
+    [ProducesResponseType(typeof(ErrorResponse), StatusCodes.Status401Unauthorized)]
+    public async Task<IActionResult> GetReceivedInvitationsByUser()
     {
         if (!Guid.TryParse(User.FindFirstValue(ClaimTypes.NameIdentifier), out var authUserId))
             return HandleResponse<InvitationDto>(null, StatusCodes.Status401Unauthorized, ErrorMessages.InvalidTokenUserId());
 
-        if (userId != authUserId)
-            return HandleResponse<InvitationDto>(null, StatusCodes.Status403Forbidden, ErrorMessages.RestrictOwnProfileAction("get received invitations", nameof(Invitation)));
-
-        var (invitations, statusCode, errorMessage) = await _invitationService.GetInvitationsByUserAsync(userId, sent: false);
+        var (invitations, statusCode, errorMessage) = await _invitationService.GetInvitationsByUserAsync(authUserId, sent: false);
         return HandleResponse(invitations, statusCode, errorMessage);
     }
 
     /// <summary>
     /// Retrieves an invitation by its ID for the authenticated user.
     /// </summary>
-    /// <param name="id">The unique identifier (GUID) of the invitation.</param>
+    /// <param name="invitationId">The unique identifier (GUID) of the invitation.</param>
     /// <returns>The invitation.</returns>
     /// <response code="200">Invitation retrieved successfully.</response>
     /// <response code="401">User is not authenticated.</response>
     /// <response code="404">Invitation not found.</response>
-    [HttpGet("{id}")]
+    [HttpGet("{invitationId}")]
     [ProducesResponseType(typeof(InvitationDto), StatusCodes.Status200OK)]
-    [ProducesResponseType(StatusCodes.Status401Unauthorized)]
-    [ProducesResponseType(StatusCodes.Status403Forbidden)]
-    [ProducesResponseType(StatusCodes.Status404NotFound)]
-    public async Task<IActionResult> GetInvitation(Guid id)
+    [ProducesResponseType(typeof(ErrorResponse), StatusCodes.Status401Unauthorized)]
+    [ProducesResponseType(typeof(ErrorResponse), StatusCodes.Status404NotFound)]
+    public async Task<IActionResult> GetInvitation(Guid invitationId)
     {
         if (!Guid.TryParse(User.FindFirstValue(ClaimTypes.NameIdentifier), out var authUserId))
             return HandleResponse<InvitationDto>(null, StatusCodes.Status401Unauthorized, ErrorMessages.InvalidTokenUserId());
 
-        var (invitation, statusCode, errorMessage) = await _invitationService.GetInvitationAsync(authUserId, id);
+        var (invitation, statusCode, errorMessage) = await _invitationService.GetInvitationAsync(authUserId, invitationId);
         return HandleResponse(invitation, statusCode, errorMessage);
     }
 
@@ -94,17 +83,18 @@ public class InvitationController(InvitationService invitationService) : BaseCon
     /// <param name="dto">The data transfer object containing invitation details.</param>
     /// <returns>The created invitation.</returns>
     /// <response code="201">Invitation created successfully.</response>
-    /// <response code="400">Invalid request data or database error.</response>
+    /// <response code="400">Invalid request data.</response>
     /// <response code="401">User is not authenticated.</response>
-    /// <response code="404">Sender, receiver, vacancy, or resume not found.</response>
-    /// <response code="409">An invitation with the specified senderId, receiverId, and vacancyId/resumeId already exists.</response>
+    /// <response code="403">User is not authorized to create this invitation.</response>
+    /// <response code="404">Sender, receiver, vacancy or resume not found.</response>
+    /// <response code="409">Invitation already exists.</response>
     [HttpPost]
     [ProducesResponseType(typeof(InvitationDto), StatusCodes.Status201Created)]
-    [ProducesResponseType(StatusCodes.Status400BadRequest)]
-    [ProducesResponseType(StatusCodes.Status401Unauthorized)]
-    [ProducesResponseType(StatusCodes.Status403Forbidden)]
-    [ProducesResponseType(StatusCodes.Status404NotFound)]
-    [ProducesResponseType(StatusCodes.Status409Conflict)]
+    [ProducesResponseType(typeof(ErrorResponse), StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(typeof(ErrorResponse), StatusCodes.Status401Unauthorized)]
+    [ProducesResponseType(typeof(ErrorResponse), StatusCodes.Status403Forbidden)]
+    [ProducesResponseType(typeof(ErrorResponse), StatusCodes.Status404NotFound)]
+    [ProducesResponseType(typeof(ErrorResponse), StatusCodes.Status409Conflict)]
     public async Task<IActionResult> CreateInvitation([FromBody] CreateInvitationDto dto)
     {
         if (!ValidateModel())
@@ -117,30 +107,30 @@ public class InvitationController(InvitationService invitationService) : BaseCon
             return HandleResponse<InvitationDto>(null, StatusCodes.Status401Unauthorized, ErrorMessages.InvalidTokenUserId());
 
         var (invitation, statusCode, errorMessage) = await _invitationService.CreateInvitationAsync(authUserId, dto);
-        return HandleResponse(invitation, statusCode, errorMessage, nameof(GetInvitation), new { id = invitation?.Id });
+        return HandleResponse(invitation, statusCode, errorMessage, nameof(GetInvitation), new { invitationId = invitation?.Id });
     }
 
     /// <summary>
-    /// 
+    /// Updates the status of an invitation.
     /// </summary>
-    /// <param name="id"></param>
-    /// <param name="dto"></param>
-    /// <param name="receiverId"></param>
-    /// <returns></returns>
+    /// <param name="invitationId">The unique identifier (GUID) of the invitation.</param>
+    /// <param name="dto">The data transfer object containing the updated status.</param>
+    /// <param name="receiverId">The unique identifier (GUID) of the receiver.</param>
     /// <returns>No content if successful.</returns>
     /// <response code="204">Invitation status updated successfully.</response>
-    /// <response code="400">Invalid request data or database error.</response>
+    /// <response code="400">Invalid request data.</response>
     /// <response code="401">User is not authenticated.</response>
+    /// <response code="403">User is not authorized to update this invitation.</response>
     /// <response code="404">Invitation not found.</response>
     /// <response code="409">Invitation status cannot be changed.</response>
-    [HttpPut("{id}/status")]
+    [HttpPut("{invitationId}/status")]
     [ProducesResponseType(StatusCodes.Status204NoContent)]
-    [ProducesResponseType(StatusCodes.Status400BadRequest)]
-    [ProducesResponseType(StatusCodes.Status401Unauthorized)]
-    [ProducesResponseType(StatusCodes.Status403Forbidden)]
-    [ProducesResponseType(StatusCodes.Status404NotFound)]
-    [ProducesResponseType(StatusCodes.Status409Conflict)]
-    public async Task<IActionResult> UpdateInvitationStatus([FromQuery] Guid receiverId, Guid id, [FromBody] UpdateInvitationDto dto)
+    [ProducesResponseType(typeof(ErrorResponse), StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(typeof(ErrorResponse), StatusCodes.Status401Unauthorized)]
+    [ProducesResponseType(typeof(ErrorResponse), StatusCodes.Status403Forbidden)]
+    [ProducesResponseType(typeof(ErrorResponse), StatusCodes.Status404NotFound)]
+    [ProducesResponseType(typeof(ErrorResponse), StatusCodes.Status409Conflict)]
+    public async Task<IActionResult> UpdateInvitationStatus(Guid invitationId, [FromBody] UpdateInvitationDto dto, [FromQuery] Guid receiverId)
     {
         if (!ValidateModel())
         {
@@ -149,9 +139,9 @@ public class InvitationController(InvitationService invitationService) : BaseCon
         }
 
         if (!Guid.TryParse(User.FindFirstValue(ClaimTypes.NameIdentifier), out var authUserId))
-            return HandleResponse<ResumeDto>(null, StatusCodes.Status401Unauthorized, ErrorMessages.InvalidTokenUserId());
+            return HandleResponse<bool>(false, StatusCodes.Status401Unauthorized, ErrorMessages.InvalidTokenUserId());
 
-        var (success, statusCode, errorMessage) = await _invitationService.UpdateInvitationStatusAsync(receiverId, id, dto);
-        return HandleResponse(success, statusCode, errorMessage, nameof(Invitation));
+        var (success, statusCode, errorMessage) = await _invitationService.UpdateInvitationStatusAsync(receiverId, invitationId, dto);
+        return HandleResponse(success, statusCode, errorMessage);
     }
 }

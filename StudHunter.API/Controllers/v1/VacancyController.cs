@@ -3,7 +3,7 @@ using Microsoft.AspNetCore.Mvc;
 using StudHunter.API.Common;
 using StudHunter.API.Controllers.v1.BaseControllers;
 using StudHunter.API.ModelsDto.BaseModelsDto;
-using StudHunter.API.ModelsDto.Vacancy;
+using StudHunter.API.ModelsDto.VacancyDto;
 using StudHunter.API.Services;
 using System.Data;
 using System.Security.Claims;
@@ -54,7 +54,7 @@ public class VacancyController(VacancyService vacancyService) : BaseController
         if (!Guid.TryParse(User.FindFirstValue(ClaimTypes.NameIdentifier), out var authUserId))
             return HandleResponse<VacancyDto>(null, StatusCodes.Status401Unauthorized, ErrorMessages.InvalidTokenUserId());
 
-        var (vacancy, statusCode, errorMessage) = await _vacancyService.GetVacancyAsync(vacancyId, authUserId);
+        var (vacancy, statusCode, errorMessage) = await _vacancyService.GetVacancyAsync(authUserId, vacancyId);
         return HandleResponse(vacancy, statusCode, errorMessage);
     }
 
@@ -75,7 +75,7 @@ public class VacancyController(VacancyService vacancyService) : BaseController
         if (!Guid.TryParse(User.FindFirstValue(ClaimTypes.NameIdentifier), out var authUserId))
             return HandleResponse<List<VacancyDto>>(null, StatusCodes.Status401Unauthorized, ErrorMessages.InvalidTokenUserId());
 
-        var (vacancies, statusCode, errorMessage) = await _vacancyService.GetVacanciesByEmployerAsync(employerId, authUserId);
+        var (vacancies, statusCode, errorMessage) = await _vacancyService.GetVacanciesByEmployerAsync(authUserId, employerId);
         return HandleResponse(vacancies, statusCode, errorMessage);
     }
 
@@ -162,7 +162,7 @@ public class VacancyController(VacancyService vacancyService) : BaseController
         if (!Guid.TryParse(User.FindFirstValue(ClaimTypes.NameIdentifier), out var authUserId))
             return HandleResponse<bool>(false, StatusCodes.Status401Unauthorized, ErrorMessages.InvalidTokenUserId());
 
-        var (success, statusCode, errorMessage) = await _vacancyService.UpdateVacancyStatusAsync(authUserId, vacancyId, dto.IsDeleted);
+        var (success, statusCode, errorMessage) = await _vacancyService.UpdateVacancyStatusAsync(authUserId, vacancyId, dto);
         return HandleResponse(success, statusCode, errorMessage);
     }
 }

@@ -1,4 +1,4 @@
-﻿using StudHunter.API.ModelsDto.Student;
+﻿using StudHunter.API.ModelsDto.StudentDto;
 using StudHunter.DB.Postgres;
 using StudHunter.DB.Postgres.Models;
 

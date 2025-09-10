@@ -12,8 +12,6 @@ public class Invitation
 
     public Guid? ResumeId { get; set; }
 
-    public InvitationType Type { get; set; }
-
     public InvitationStatus Status { get; set; }
 
     public DateTime CreatedAt { get; set; }
@@ -21,15 +19,12 @@ public class Invitation
     public DateTime UpdatedAt { get; set; }
 
     public virtual User Sender { get; set; } = null!;
-    public virtual User Receiver { get; set; } = null!;
-    public virtual Vacancy? Vacancy { get; set; }
-    public virtual Resume? Resume { get; set; }
 
-    public enum InvitationType
-    {
-        EmployerToStudent,
-        StudentToEmployer
-    }
+    public virtual User Receiver { get; set; } = null!;
+
+    public virtual Vacancy? Vacancy { get; set; }
+
+    public virtual Resume? Resume { get; set; }
 
     public enum InvitationStatus
     {

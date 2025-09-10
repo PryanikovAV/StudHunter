@@ -1,6 +1,6 @@
 ﻿using Microsoft.EntityFrameworkCore;
 using StudHunter.API.Common;
-using StudHunter.API.ModelsDto.UserAchievement;
+using StudHunter.API.ModelsDto.UserAchievementDto;
 using StudHunter.DB.Postgres;
 using StudHunter.DB.Postgres.Models;
 

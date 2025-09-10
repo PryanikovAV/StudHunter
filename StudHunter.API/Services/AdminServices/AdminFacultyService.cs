@@ -1,6 +1,6 @@
 ﻿using Microsoft.EntityFrameworkCore;
 using StudHunter.API.Common;
-using StudHunter.API.ModelsDto.Faculty;
+using StudHunter.API.ModelsDto.FacultyDto;
 using StudHunter.DB.Postgres;
 using StudHunter.DB.Postgres.Models;
 
@@ -19,7 +19,7 @@ public class AdminFacultyService(StudHunterDbContext context) : FacultyService(c
     public async Task<(FacultyDto? Entity, int? StatusCode, string? ErrorMessage)> CreateFacultyAsync(CreateFacultyDto dto)
     {
         if (await _context.Faculties.AnyAsync(f => f.Name == dto.Name))
-            return (null, StatusCodes.Status409Conflict, ErrorMessages.EntityAlreadyExists(nameof(Faculty), "name"));
+            return (null, StatusCodes.Status409Conflict, ErrorMessages.EntityAlreadyExists(nameof(Faculty), nameof(Faculty.Name)));
 
         var faculty = new Faculty
         {
@@ -31,33 +31,25 @@ public class AdminFacultyService(StudHunterDbContext context) : FacultyService(c
         _context.Faculties.Add(faculty);
 
         var (success, statusCode, errorMessage) = await SaveChangesAsync<Faculty>();
-
         if (!success)
             return (null, statusCode, errorMessage);
 
-        return (new FacultyDto
-        {
-            Id = faculty.Id,
-            Name = faculty.Name,
-            Description = faculty.Description
-        }, null, null);
+        return (MapToFacultyDto(faculty), null, null);
     }
 
     /// <summary>
     /// Updates an existing faculty.
     /// </summary>
-    /// <param name="id">The unique identifier (GUID) of the faculty.</param>
+    /// <param name="facultyId">The unique identifier (GUID) of the faculty.</param>
     /// <param name="dto">The data transfer object containing updated faculty details.</param>
     /// <returns>A tuple indicating whether the update was successful, an optional status code, and an optional error message.</returns>
-    public async Task<(bool Success, int? StatusCode, string? ErrorMessage)> UpdateFacultyAsync(Guid id, UpdateFacultyDto dto)
+    public async Task<(bool Success, int? StatusCode, string? ErrorMessage)> UpdateFacultyAsync(Guid facultyId, UpdateFacultyDto dto)
     {
-        var faculty = await _context.Faculties.FindAsync(id);
-
+        var faculty = await _context.Faculties.FindAsync(facultyId);
         if (faculty == null)
             return (false, StatusCodes.Status404NotFound, ErrorMessages.EntityNotFound(nameof(Faculty)));
-
-        if (dto.Name != null && await _context.Faculties.AnyAsync(f => f.Name == dto.Name && f.Id != id))
-            return (false, StatusCodes.Status409Conflict, ErrorMessages.EntityAlreadyExists(nameof(Faculty), "name"));
+        if (dto.Name != null && await _context.Faculties.AnyAsync(f => f.Name == dto.Name && f.Id != facultyId))
+            return (false, StatusCodes.Status409Conflict, ErrorMessages.EntityAlreadyExists(nameof(Faculty), nameof(Faculty.Name)));
 
         if (dto.Name != null)
             faculty.Name = dto.Name;
@@ -70,13 +62,18 @@ public class AdminFacultyService(StudHunterDbContext context) : FacultyService(c
     /// <summary>
     /// Deletes a faculty.
     /// </summary>
-    /// <param name="id">The unique identifier (GUID) of the faculty.</param>
+    /// <param name="facultyId">The unique identifier (GUID) of the faculty.</param>
     /// <returns>A tuple indicating whether the deletion was successful, an optional status code, and an optional error message.</returns>
-    public async Task<(bool Success, int? StatusCode, string? ErrorMessage)> DeleteFacultyAsync(Guid id)
+    public async Task<(bool Success, int? StatusCode, string? ErrorMessage)> DeleteFacultyAsync(Guid facultyId)
     {
-        if (await _context.StudyPlans.AnyAsync(sp => sp.FacultyId == id))
+        var faculty = await _context.Faculties.FindAsync(facultyId);
+        if (faculty == null)
+            return (false, StatusCodes.Status404NotFound, ErrorMessages.EntityNotFound(nameof(Faculty)));
+        if (await _context.StudyPlans.AnyAsync(sp => sp.FacultyId == facultyId))
             return (false, StatusCodes.Status400BadRequest, ErrorMessages.CannotDelete(nameof(Faculty), nameof(StudyPlan)));
 
-        return await DeleteEntityAsync<Faculty>(id, hardDelete: true);
+        _context.Faculties.Remove(faculty);
+
+        return await SaveChangesAsync<Faculty>();
     }
 }

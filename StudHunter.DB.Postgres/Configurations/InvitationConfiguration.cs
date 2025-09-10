@@ -23,17 +23,11 @@ public class InvitationConfiguration : IEntityTypeConfiguration<Invitation>
 
         builder.Property(i => i.VacancyId)
                .HasColumnType("UUID")
-               .HasColumnName("VacancyId")
                .IsRequired(false);
 
         builder.Property(i => i.ResumeId)
                .HasColumnType("UUID")
-               .HasColumnName("ResumeId")
                .IsRequired(false);
-
-        builder.Property(i => i.Type)
-               .HasColumnType("INTEGER")
-               .IsRequired();
 
         builder.Property(i => i.Status)
                .HasColumnType("INTEGER")
@@ -53,25 +47,26 @@ public class InvitationConfiguration : IEntityTypeConfiguration<Invitation>
         builder.HasOne(i => i.Sender)
                .WithMany(u => u.SentInvitations)
                .HasForeignKey(i => i.SenderId)
-               .OnDelete(DeleteBehavior.Restrict)
-               .IsRequired(false);
+               .OnDelete(DeleteBehavior.Restrict);
 
         builder.HasOne(i => i.Receiver)
                .WithMany(u => u.ReceivedInvitations)
                .HasForeignKey(i => i.ReceiverId)
-               .OnDelete(DeleteBehavior.Restrict)
-               .IsRequired(false);
+               .OnDelete(DeleteBehavior.Restrict);
 
         builder.HasOne(i => i.Vacancy)
                .WithMany(v => v.Invitations)
                .HasForeignKey(i => i.VacancyId)
-               .OnDelete(DeleteBehavior.Restrict)
-               .IsRequired(false);
+               .OnDelete(DeleteBehavior.Restrict);
 
         builder.HasOne(i => i.Resume)
                .WithMany(r => r.Invitations)
                .HasForeignKey(i => i.ResumeId)
-               .OnDelete(DeleteBehavior.Restrict)
-               .IsRequired(false);
+               .OnDelete(DeleteBehavior.Restrict);
+
+        builder.HasIndex(i => i.SenderId);
+        builder.HasIndex(i => i.ReceiverId);
+        builder.HasIndex(i => i.VacancyId);
+        builder.HasIndex(i => i.ResumeId);
     }
 }

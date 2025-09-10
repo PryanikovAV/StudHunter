@@ -1,6 +1,7 @@
 ﻿using Microsoft.EntityFrameworkCore;
 using StudHunter.API.Common;
-using StudHunter.API.ModelsDto.Vacancy;
+using StudHunter.API.ModelsDto.BaseModelsDto;
+using StudHunter.API.ModelsDto.VacancyDto;
 using StudHunter.API.Services.BaseServices;
 using StudHunter.DB.Postgres;
 using StudHunter.DB.Postgres.Models;
@@ -19,26 +20,28 @@ public class VacancyService(StudHunterDbContext context) : BaseVacancyService(co
     public async Task<(List<VacancyDto>? Entities, int? StatusCode, string? ErrorMessage)> GetAllVacanciesAsync()
     {
         var vacancies = await _context.Vacancies
-            .Where(v => !v.IsDeleted)
-            .Select(v => MapToVacancyDto<VacancyDto>(v))
+            .Select(v => MapToVacancyDto(v))
             .OrderByDescending(v => v.UpdatedAt)
             .ToListAsync();
         return (vacancies, null, null);
     }
 
-    /// <returns>A tuple containing a list of vacancies, an optional status code, and an optional error message.</returns>
-    public async Task<(List<VacancyDto>? Entities, int? StatusCode, string? ErrorMessage)> GetVacanciesByEmployerAsync(Guid employerId, Guid authUserId)
+    /// <summary>
+    /// 
+    /// </summary>
+    /// <param name="employerId"></param>
+    /// <param name="authUserId"></param>
+    /// <returns></returns>
+    public async Task<(List<VacancyDto>? Entities, int? StatusCode, string? ErrorMessage)> GetVacanciesByEmployerAsync(Guid authUserId, Guid employerId)
     {
-        var employer = await _context.Employers.FindAsync(employerId);
-        if (employer == null)
+        if (employerId != authUserId && await _context.Employers.AnyAsync(e => e.Id == authUserId))
+            return (null, StatusCodes.Status403Forbidden, $"{nameof(Employer)} cannot view the {nameof(Vacancy)} of other {nameof(Employer)}.");
+        if (!await _context.Employers.AnyAsync(e => e.Id == employerId))
             return (null, StatusCodes.Status404NotFound, ErrorMessages.EntityNotFound(nameof(Employer)));
 
-        var query = _context.Vacancies.Where(v => v.EmployerId == employerId);
-        if (employerId != authUserId)
-            query = query.Where(v => !v.IsDeleted);
-
-        var vacancies = await query
-            .Select(v => MapToVacancyDto<VacancyDto>(v))
+        var vacancies = await _context.Vacancies
+            .Where(v => v.EmployerId == employerId)
+            .Select(v => MapToVacancyDto(v))
             .OrderByDescending(v => v.UpdatedAt)
             .ToListAsync();
 
@@ -51,14 +54,14 @@ public class VacancyService(StudHunterDbContext context) : BaseVacancyService(co
     /// <param name="vacancyId"></param>
     /// <param name="authUserId"></param>
     /// <returns>A tuple containing the vacancy, an optional status code, and an optional error message.</returns>
-    public async Task<(VacancyDto? Entity, int? StatusCode, string? ErrorMessage)> GetVacancyAsync(Guid vacancyId, Guid authUserId)
+    public async Task<(VacancyDto? Entity, int? StatusCode, string? ErrorMessage)> GetVacancyAsync(Guid authUserId, Guid vacancyId)
     {
         var vacancy = await _context.Vacancies.FindAsync(vacancyId);
         if (vacancy == null)
             return (null, StatusCodes.Status404NotFound, ErrorMessages.EntityNotFound(nameof(Vacancy)));
-        if (vacancy.IsDeleted && vacancy.EmployerId != authUserId)
-            return (null, StatusCodes.Status403Forbidden, ErrorMessages.RestrictOwnProfileAction("get", nameof(Vacancy)));
-        return (MapToVacancyDto<VacancyDto>(vacancy), null, null);
+        if (vacancy.EmployerId != authUserId && await _context.Employers.AnyAsync(e => e.Id == authUserId))
+            return (null, StatusCodes.Status403Forbidden, $"{nameof(Employer)} cannot view the {nameof(Vacancy)} of other {nameof(Employer)}.");
+        return (MapToVacancyDto(vacancy), null, null);
     }
 
     /// <summary>
@@ -72,8 +75,6 @@ public class VacancyService(StudHunterDbContext context) : BaseVacancyService(co
         var employer = await _context.Employers.FindAsync(authUserId);
         if (employer == null)
             return (null, StatusCodes.Status404NotFound, ErrorMessages.EntityNotFound(nameof(Employer)));
-        if (employer.IsDeleted)
-            return (null, StatusCodes.Status410Gone, ErrorMessages.EntityAlreadyDeleted(nameof(Employer)));
         if (!employer.AccreditationStatus)
             return (null, StatusCodes.Status403Forbidden, $"{nameof(Employer)} is not accredited.");
 
@@ -94,7 +95,7 @@ public class VacancyService(StudHunterDbContext context) : BaseVacancyService(co
         var (success, statusCode, errorMessage) = await SaveChangesAsync<Vacancy>();
         if (!success)
             return (null, statusCode, errorMessage);
-        return (MapToVacancyDto<VacancyDto>(vacancy), null, null);
+        return (MapToVacancyDto(vacancy), null, null);
     }
 
     /// <summary>
@@ -111,8 +112,6 @@ public class VacancyService(StudHunterDbContext context) : BaseVacancyService(co
             return (false, StatusCodes.Status404NotFound, ErrorMessages.EntityNotFound(nameof(Vacancy)));
         if (vacancy.EmployerId != authUserId)
             return (false, StatusCodes.Status403Forbidden, ErrorMessages.RestrictOwnProfileAction("update", nameof(Vacancy)));
-        if (vacancy.IsDeleted)
-            return (false, StatusCodes.Status410Gone, ErrorMessages.EntityAlreadyDeleted(nameof(Vacancy)));
 
         if (dto.Title != null)
             vacancy.Title = dto.Title;
@@ -132,20 +131,22 @@ public class VacancyService(StudHunterDbContext context) : BaseVacancyService(co
     /// </summary>
     /// <param name="vacancyId"></param>
     /// <param name="authUserId"></param>
-    /// <param name="isDeleted"></param>
+    /// <param name="dto"></param>
     /// <returns></returns>
-    public async Task<(bool Success, int? StatusCode, string? ErrorMessage)> UpdateVacancyStatusAsync(Guid authUserId, Guid vacancyId, bool isDeleted)
+    public async Task<(bool Success, int? StatusCode, string? ErrorMessage)> UpdateVacancyStatusAsync(Guid authUserId, Guid vacancyId, UpdateStatusDto dto)
     {
-        var vacancy = await _context.Vacancies.FindAsync(vacancyId);
+        var vacancy = await _context.Vacancies
+            .IgnoreQueryFilters()
+            .FirstOrDefaultAsync(v => v.Id == vacancyId);
         if (vacancy == null)
             return (false, StatusCodes.Status404NotFound, ErrorMessages.EntityNotFound(nameof(Vacancy)));
         if (vacancy.EmployerId != authUserId)
             return (false, StatusCodes.Status403Forbidden, ErrorMessages.RestrictOwnProfileAction("update status", nameof(Vacancy)));
 
-        vacancy.IsDeleted = isDeleted;
-        vacancy.DeletedAt = isDeleted ? DateTime.UtcNow : null;
+        vacancy.IsDeleted = dto.IsDeleted;
+        vacancy.DeletedAt = dto.IsDeleted ? DateTime.UtcNow : null;
 
-        if (isDeleted)
+        if (dto.IsDeleted)
         {
             var invitations = await _context.Invitations
                 .Where(i => i.VacancyId == vacancyId && i.Status != Invitation.InvitationStatus.Rejected)

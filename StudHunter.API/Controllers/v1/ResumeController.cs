@@ -3,7 +3,7 @@ using Microsoft.AspNetCore.Mvc;
 using StudHunter.API.Common;
 using StudHunter.API.Controllers.v1.BaseControllers;
 using StudHunter.API.ModelsDto.BaseModelsDto;
-using StudHunter.API.ModelsDto.Resume;
+using StudHunter.API.ModelsDto.ResumeDto;
 using StudHunter.API.Services;
 using StudHunter.DB.Postgres.Models;
 using System.Security.Claims;
@@ -23,7 +23,7 @@ public class ResumeController(ResumeService resumeService) : BaseController
     /// <summary>
     /// Retrieves a resume by student ID.
     /// </summary>
-    /// <param name="studentId">The unique identifier (GUID) of the student</param>
+    /// <param name="studentId">The unique identifier (GUID) of the student.</param>
     /// <returns>The resume.</returns>
     /// <response code="200">Resume retrieved successfully.</response>
     /// <response code="401">User is not authenticated.</response>
@@ -78,7 +78,7 @@ public class ResumeController(ResumeService resumeService) : BaseController
     /// <summary>
     /// Updates an existing resume.
     /// </summary>
-    /// <param name="resumeId">The unique identifier (GUID) of the resume.</param>
+    /// <param name="studentId">The unique identifier (GUID) of the student.</param>
     /// <param name="dto">The data transfer object containing updated resume details.</param>
     /// <returns>No content if successful.</returns>
     /// <response code="204">Resume updated successfully.</response>
@@ -92,7 +92,7 @@ public class ResumeController(ResumeService resumeService) : BaseController
     [ProducesResponseType(typeof(ErrorResponse), StatusCodes.Status401Unauthorized)]
     [ProducesResponseType(typeof(ErrorResponse), StatusCodes.Status403Forbidden)]
     [ProducesResponseType(typeof(ErrorResponse), StatusCodes.Status410Gone)]
-    public async Task<IActionResult> UpdateResume(Guid resumeId, [FromBody] UpdateResumeDto dto)
+    public async Task<IActionResult> UpdateResume(Guid studentId, [FromBody] UpdateResumeDto dto)
     {
         if (!ValidateModel())
         {
@@ -103,24 +103,24 @@ public class ResumeController(ResumeService resumeService) : BaseController
         if (!Guid.TryParse(User.FindFirstValue(ClaimTypes.NameIdentifier), out var authUserId))
             return HandleResponse<ResumeDto>(null, StatusCodes.Status401Unauthorized, ErrorMessages.InvalidTokenUserId());
 
-        var (success, statusCode, errorMessage) = await _resumeService.UpdateResumeAsync(authUserId, resumeId, dto);
+        var (success, statusCode, errorMessage) = await _resumeService.UpdateResumeAsync(authUserId, studentId, dto);
         return HandleResponse(success, statusCode, errorMessage);
     }
 
     /// <summary>
     /// 
     /// </summary>
-    /// <param name="resumeId"></param>
+    /// <param name="studentId"></param>
     /// <param name="dto"></param>
     /// <returns></returns>
-    [HttpPut("{resumeId}/status")]
+    [HttpPut("{studentId}/status")]
     [ProducesResponseType(typeof(ErrorResponse), StatusCodes.Status204NoContent)]
     [ProducesResponseType(typeof(ErrorResponse), StatusCodes.Status400BadRequest)]
     [ProducesResponseType(typeof(ErrorResponse), StatusCodes.Status401Unauthorized)]
     [ProducesResponseType(typeof(ErrorResponse), StatusCodes.Status403Forbidden)]
     [ProducesResponseType(typeof(ErrorResponse), StatusCodes.Status404NotFound)]
     [ProducesResponseType(typeof(ErrorResponse), StatusCodes.Status410Gone)]
-    public async Task<IActionResult> UpdateResumeStatus(Guid resumeId, [FromBody] UpdateStatusDto dto)
+    public async Task<IActionResult> UpdateResumeStatus(Guid studentId, [FromBody] UpdateStatusDto dto)
     {
         if (!ValidateModel())
         {
@@ -131,7 +131,7 @@ public class ResumeController(ResumeService resumeService) : BaseController
         if (!Guid.TryParse(User.FindFirstValue(ClaimTypes.NameIdentifier), out var authUserId))
             return HandleResponse<ResumeDto>(null, StatusCodes.Status401Unauthorized, ErrorMessages.InvalidTokenUserId());
 
-        var (success, statusCode, errorMessage) = await _resumeService.UpdateResumeStatusAsync(authUserId, resumeId, dto.IsDeleted);
+        var (success, statusCode, errorMessage) = await _resumeService.UpdateResumeStatusAsync(authUserId, studentId, dto);
         return HandleResponse(success, statusCode, errorMessage, nameof(Resume));
     }
 }

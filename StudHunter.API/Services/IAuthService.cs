@@ -1,4 +1,4 @@
-﻿using StudHunter.API.ModelsDto.Auth;
+﻿using StudHunter.API.ModelsDto.AuthDto;
 
 namespace StudHunter.API.Services;
 

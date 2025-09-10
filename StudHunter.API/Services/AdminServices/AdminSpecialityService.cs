@@ -1,6 +1,6 @@
 ﻿using Microsoft.EntityFrameworkCore;
 using StudHunter.API.Common;
-using StudHunter.API.ModelsDto.Speciality;
+using StudHunter.API.ModelsDto.SpecialityDto;
 using StudHunter.DB.Postgres;
 using StudHunter.DB.Postgres.Models;
 
@@ -57,7 +57,7 @@ public class AdminSpecialityService(StudHunterDbContext context) : SpecialitySer
             return (false, StatusCodes.Status404NotFound, ErrorMessages.EntityNotFound(nameof(Speciality)));
 
         if (dto.Name != null && await _context.Specialities.AnyAsync(s => s.Name == dto.Name && s.Id != id))
-            return (false, StatusCodes.Status409Conflict, ErrorMessages.EntityAlreadyExists(nameof(Speciality), "name"));
+            return (false, StatusCodes.Status409Conflict, ErrorMessages.EntityAlreadyExists(nameof(Speciality), nameof(Speciality.Name)));
 
         if (dto.Name != null)
             speciality.Name = dto.Name;
@@ -70,13 +70,17 @@ public class AdminSpecialityService(StudHunterDbContext context) : SpecialitySer
     /// <summary>
     /// Deletes a specialty.
     /// </summary>
-    /// <param name="id">The unique identifier (GUID) of the specialty.</param>
+    /// <param name="specialityId">The unique identifier (GUID) of the specialty.</param>
     /// <returns>A tuple indicating whether the deletion was successful, an optional status code, and an optional error message.</returns>
-    public async Task<(bool Success, int? StatusCode, string? ErrorMessage)> DeleteSpecialityAsync(Guid id)
+    public async Task<(bool Success, int? StatusCode, string? ErrorMessage)> DeleteSpecialityAsync(Guid specialityId)
     {
-        if (await _context.StudyPlans.AnyAsync(sp => sp.SpecialityId == id))
+        var speciality = await _context.Specialities.FindAsync(specialityId);
+        if (speciality == null)
+            return (false, StatusCodes.Status404NotFound, ErrorMessages.EntityNotFound(nameof(Speciality)));
+        if (await _context.StudyPlans.AnyAsync(sp => sp.SpecialityId == speciality.Id))
             return (false, StatusCodes.Status400BadRequest, ErrorMessages.CannotDelete(nameof(Speciality), nameof(StudyPlan)));
 
-        return await DeleteEntityAsync<Speciality>(id, hardDelete: true);
+        _context.Specialities.Remove(speciality);
+        return await SaveChangesAsync<Speciality>();
     }
 }

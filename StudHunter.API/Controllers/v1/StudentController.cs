@@ -2,8 +2,8 @@
 using Microsoft.AspNetCore.Mvc;
 using StudHunter.API.Common;
 using StudHunter.API.Controllers.v1.BaseControllers;
-using StudHunter.API.ModelsDto.Auth;
-using StudHunter.API.ModelsDto.Student;
+using StudHunter.API.ModelsDto.AuthDto;
+using StudHunter.API.ModelsDto.StudentDto;
 using StudHunter.API.Services;
 using System.Security.Claims;
 
@@ -35,7 +35,7 @@ public class StudentController(StudentService studentService) : BaseController
         if (!Guid.TryParse(User.FindFirstValue(ClaimTypes.NameIdentifier), out var authUserId))
             return HandleResponse<bool>(false, StatusCodes.Status401Unauthorized, ErrorMessages.InvalidTokenUserId());
 
-        var (student, statusCode, errorMessage) = await _studentService.GetStudentAsync(studentId, authUserId);
+        var (student, statusCode, errorMessage) = await _studentService.GetStudentAsync(authUserId, studentId);
         return HandleResponse(student, statusCode, errorMessage);
     }
 
@@ -58,7 +58,7 @@ public class StudentController(StudentService studentService) : BaseController
         if (!Guid.TryParse(User.FindFirstValue(ClaimTypes.NameIdentifier), out var authUserId))
             return HandleResponse<bool>(false, StatusCodes.Status401Unauthorized, ErrorMessages.InvalidTokenUserId());
 
-        var (student, statusCode, errorMessage) = await _studentService.GetStudentAsync(email, authUserId);
+        var (student, statusCode, errorMessage) = await _studentService.GetStudentAsync(authUserId, email);
         return HandleResponse(student, statusCode, errorMessage);
     }
 

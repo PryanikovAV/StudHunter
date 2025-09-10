@@ -1,6 +1,7 @@
 ﻿using Microsoft.EntityFrameworkCore;
 using StudHunter.API.Common;
-using StudHunter.API.ModelsDto.Vacancy;
+using StudHunter.API.ModelsDto.BaseModelsDto;
+using StudHunter.API.ModelsDto.VacancyDto;
 using StudHunter.API.Services.BaseServices;
 using StudHunter.DB.Postgres;
 using StudHunter.DB.Postgres.Models;
@@ -16,44 +17,45 @@ public class AdminVacancyService(StudHunterDbContext context) : BaseVacancyServi
     /// Retrieves all vacancies.
     /// </summary>
     /// <returns>A tuple containing a list of vacancies, an optional status code, and an optional error message.</returns>
-    public async Task<(List<AdminVacancyDto>? Entities, int? StatusCode, string? ErrorMessage)> GetAllVacanciesAsync()
+    public async Task<(List<VacancyDto>? Entities, int? StatusCode, string? ErrorMessage)> GetAllVacanciesAsync()
     {
         var vacancies = await _context.Vacancies
-        .Select(v => MapToVacancyDto<AdminVacancyDto>(v))
-        .ToListAsync();
-
+            .IgnoreQueryFilters()
+            .Select(v => MapToVacancyDto(v))
+            .ToListAsync();
         return (vacancies, null, null);
     }
 
     /// <summary>
     /// 
     /// </summary>
-    /// <param name="id"></param>
+    /// <param name="vacancyId"></param>
     /// <returns></returns>
-    public async Task<(AdminVacancyDto? Entity, int? StatusCode, string? ErrorMessage)> GetVacancyAsync(Guid id)
+    public async Task<(VacancyDto? Entity, int? StatusCode, string? ErrorMessage)> GetVacancyAsync(Guid vacancyId)
     {
         var vacancy = await _context.Vacancies
-            .FirstOrDefaultAsync(v => v.Id == id);
-
+            .IgnoreQueryFilters()
+            .FirstOrDefaultAsync(v => v.Id == vacancyId);
         if (vacancy == null)
             return (null, StatusCodes.Status404NotFound, ErrorMessages.EntityNotFound(nameof(Vacancy)));
-
-        return (MapToVacancyDto<AdminVacancyDto>(vacancy), null, null);
+        return (MapToVacancyDto(vacancy), null, null);
     }
 
     /// <summary>
     /// Updates an existing vacancy.
     /// </summary>
-    /// <param name="id">The unique identifier (GUID) of the vacancy.</param>
+    /// <param name="vacancyId">The unique identifier (GUID) of the vacancy.</param>
     /// <param name="dto">The data transfer object containing updated vacancy details.</param>
     /// <returns>A tuple indicating whether the update was successful, an optional status code, and an optional error message.</returns>
-    public async Task<(bool Success, int? StatusCode, string? ErrorMessage)> UpdateVacancyAsync(Guid id, AdminUpdateVacancyDto dto)
+    public async Task<(bool Success, int? StatusCode, string? ErrorMessage)> UpdateVacancyAsync(Guid vacancyId, UpdateVacancyDto dto)
     {
         var vacancy = await _context.Vacancies
-            .FirstOrDefaultAsync(v => v.Id == id);
-
+            .IgnoreQueryFilters()
+            .FirstOrDefaultAsync(v => v.Id == vacancyId);
         if (vacancy == null)
             return (false, StatusCodes.Status404NotFound, ErrorMessages.EntityNotFound(nameof(Vacancy)));
+        if (vacancy.IsDeleted)
+            return (false, StatusCodes.Status410Gone, ErrorMessages.EntityAlreadyDeleted(nameof(Vacancy), nameof(UpdateVacancyStatusAsync)));
 
         if (dto.Title != null)
             vacancy.Title = dto.Title;
@@ -63,43 +65,57 @@ public class AdminVacancyService(StudHunterDbContext context) : BaseVacancyServi
             vacancy.Salary = dto.Salary;
         if (dto.Type != null)
             vacancy.Type = Enum.Parse<Vacancy.VacancyType>(dto.Type);
-        if (dto.IsDeleted.HasValue)
-        {
-            vacancy.IsDeleted = dto.IsDeleted.Value;
-            vacancy.DeletedAt = dto.IsDeleted.Value ? DateTime.UtcNow : null;
-        }
         vacancy.UpdatedAt = DateTime.UtcNow;
 
         return await SaveChangesAsync<Vacancy>();
     }
 
     /// <summary>
-    /// Deletes a vacancy (hard or soft delete).
+    /// 
     /// </summary>
-    /// <param name="id">The unique identifier (GUID) of the vacancy.</param>
-    /// <param name="hardDelete">A boolean indicating whether to perform a hard delete (true) or soft delete (false).</param>
-    /// <returns>A tuple indicating whether the deletion was successful, an optional status code, and an optional error message.</returns>
-    public async Task<(bool Success, int? StatusCode, string? ErrorMessage)> DeleteVacancyAsync(Guid id, bool hardDelete = false)
+    /// <param name="vacancyId"></param>
+    /// <param name="dto"></param>
+    /// <returns></returns>
+    public async Task<(bool Success, int? StatusCode, string? ErrorMessage)> UpdateVacancyStatusAsync(Guid vacancyId, UpdateStatusDto dto)
     {
-        return await DeleteEntityAsync<Vacancy>(id, hardDelete);
+        var vacancy = await _context.Vacancies
+            .IgnoreQueryFilters()
+            .FirstOrDefaultAsync(v => v.Id == vacancyId);
+        if (vacancy == null)
+            return (false, StatusCodes.Status404NotFound, ErrorMessages.EntityNotFound(nameof(Vacancy)));
+
+        vacancy.IsDeleted = dto.IsDeleted;
+        vacancy.DeletedAt = dto.IsDeleted ? DateTime.UtcNow : null;
+
+        if (dto.IsDeleted)
+        {
+            var invitations = await _context.Invitations
+                .Where(i => i.VacancyId == vacancyId && i.Status != Invitation.InvitationStatus.Rejected)
+                .ToListAsync();
+            foreach (var invitation in invitations)
+            {
+                invitation.Status = Invitation.InvitationStatus.Rejected;
+                invitation.UpdatedAt = DateTime.UtcNow;
+            }
+        }
+
+        return await SaveChangesAsync<Vacancy>();
     }
 
     /// <summary>
-    /// Deletes a vacancyCourse.
+    /// Deletes a resume.
     /// </summary>
-    /// <param name="vacancyId">The unique identifier (GUID) of the vacancyCourse.</param>
-    /// <param name="courseId">The unique identifier (GUID) of the Course.</param>
+    /// <param name="vacancyId">The unique identifier (GUID) of the resume.</param>
     /// <returns>A tuple indicating whether the deletion was successful, an optional status code, and an optional error message.</returns>
-    public async Task<(bool Success, int? StatusCode, string? ErrorMessage)> DeleteVacancyCourseAsync(Guid vacancyId, Guid courseId)
+    public async Task<(bool Success, int? StatusCode, string? ErrorMessage)> DeleteVacancyAsync(Guid vacancyId)
     {
-        var entity = await _context.Set<VacancyCourse>()
-            .FirstOrDefaultAsync(vc => vc.VacancyId == vacancyId && vc.CourseId == courseId);
+        var vacancy = await _context.Vacancies
+            .IgnoreQueryFilters()
+            .FirstOrDefaultAsync(v => v.Id == vacancyId);
+        if (vacancy == null)
+            return (false, StatusCodes.Status404NotFound, ErrorMessages.EntityNotFound(nameof(Vacancy)));
 
-        if (entity == null)
-            return (false, StatusCodes.Status404NotFound, ErrorMessages.EntityNotFound(nameof(VacancyCourse)));
-
-        _context.Set<VacancyCourse>().Remove(entity);
-
-        return await SaveChangesAsync<VacancyCourse>();
+        _context.Vacancies.Remove(vacancy);
+        return await SaveChangesAsync<Vacancy>();
     }
 }

@@ -1,6 +1,6 @@
 ﻿using Microsoft.EntityFrameworkCore;
 using StudHunter.API.Common;
-using StudHunter.API.ModelsDto.AchievementTemplate;
+using StudHunter.API.ModelsDto.AchievementTemplateDto;
 using StudHunter.API.Services.BaseServices;
 using StudHunter.DB.Postgres;
 using StudHunter.DB.Postgres.Models;
@@ -19,8 +19,9 @@ public class AdminAchievementTemplateService(StudHunterDbContext context) : Base
     public async Task<(List<AchievementTemplateDto>? Entities, int? StatusCode, string? ErrorMessage)> GetAllAchievementTemplatesAsync()
     {
         var templates = await _context.AchievementTemplates
-        .Select(a => MapToAchievementTemplateDto(a))
-        .ToListAsync();
+            .Select(a => MapToAchievementTemplateDto(a))
+            .OrderByDescending(a => a.OrderNumber)
+            .ToListAsync();
 
         return (templates, null, null);
     }
@@ -28,11 +29,25 @@ public class AdminAchievementTemplateService(StudHunterDbContext context) : Base
     /// <summary>
     /// Retrieves an achievement template by its id.
     /// </summary>
-    /// <param name="id">The unique identifier (GUID) of the achievement template.</param>
+    /// <param name="templateId">The unique identifier (GUID) of the achievement template.</param>
     /// <returns>A tuple containing the achievement template, an optional status code, and an optional error message.</returns>
-    public async Task<(AchievementTemplateDto? Entity, int? StatusCode, string? ErrorMessage)> GetAchievementTemplateAsync(Guid id)
+    public async Task<(AchievementTemplateDto? Entity, int? StatusCode, string? ErrorMessage)> GetAchievementTemplateAsync(Guid templateId)
     {
-        var template = await _context.AchievementTemplates.FindAsync(id);
+        var template = await _context.AchievementTemplates.FindAsync(templateId);
+        if (template == null)
+            return (null, StatusCodes.Status404NotFound, ErrorMessages.EntityNotFound(nameof(AchievementTemplate)));
+
+        return (MapToAchievementTemplateDto(template), null, null);
+    }
+
+    /// <summary>
+    /// Retrieves an achievement template by its name.
+    /// </summary>
+    /// <param name="name"></param>
+    /// <returns></returns>
+    public async Task<(AchievementTemplateDto? Entity, int? StatusCode, string? ErrorMessage)> GetAchievementTemplateAsync(string name)
+    {
+        var template = await _context.AchievementTemplates.FirstOrDefaultAsync(t => t.Name == name);
         if (template == null)
             return (null, StatusCodes.Status404NotFound, ErrorMessages.EntityNotFound(nameof(AchievementTemplate)));
 
@@ -47,7 +62,7 @@ public class AdminAchievementTemplateService(StudHunterDbContext context) : Base
     public async Task<(AchievementTemplateDto? Entity, int? StatusCode, string? ErrorMessage)> CreateAchievementTemplateAsync(CreateAchievementTemplateDto dto)
     {
         if (await _context.AchievementTemplates.AnyAsync(a => a.Name == dto.Name))
-            return (null, StatusCodes.Status409Conflict, ErrorMessages.EntityAlreadyExists(nameof(AchievementTemplate), "Name"));
+            return (null, StatusCodes.Status409Conflict, ErrorMessages.EntityAlreadyExists(nameof(AchievementTemplate), nameof(AchievementTemplate.Name)));
 
         var template = new AchievementTemplate
         {
@@ -61,7 +76,6 @@ public class AdminAchievementTemplateService(StudHunterDbContext context) : Base
         _context.AchievementTemplates.Add(template);
 
         var (success, statusCode, errorMessage) = await SaveChangesAsync<AchievementTemplate>();
-
         if (!success)
             return (null, statusCode, errorMessage);
 
@@ -71,18 +85,16 @@ public class AdminAchievementTemplateService(StudHunterDbContext context) : Base
     /// <summary>
     /// Updates an existing achievement template.
     /// </summary>
-    /// <param name="id">The unique identifier (GUID) of the achievement template.</param>
+    /// <param name="templateId">The unique identifier (GUID) of the achievement template.</param>
     /// <param name="dto">The data transfer object containing updated achievement template details.</param>
     /// <returns>A tuple indicating whether the update was successful, an optional status code, and an optional error message.</returns>
-    public async Task<(bool Success, int? StatusCode, string? ErrorMessage)> UpdateAchievementTemplateAsync(Guid id, UpdateAchievementTemplateDto dto)
+    public async Task<(bool Success, int? StatusCode, string? ErrorMessage)> UpdateAchievementTemplateAsync(Guid templateId, UpdateAchievementTemplateDto dto)
     {
-        var template = await _context.AchievementTemplates.FindAsync(id);
-
+        var template = await _context.AchievementTemplates.FindAsync(templateId);
         if (template == null)
             return (false, StatusCodes.Status404NotFound, ErrorMessages.EntityNotFound(nameof(AchievementTemplate)));
-
-        if (dto.Name != null && await _context.AchievementTemplates.AnyAsync(a => a.Name == dto.Name && a.Id != id))
-            return (false, StatusCodes.Status409Conflict, ErrorMessages.EntityAlreadyExists(nameof(AchievementTemplate), "name"));
+        if (dto.Name != null && await _context.AchievementTemplates.AnyAsync(a => a.Name == dto.Name && a.Id != templateId))
+            return (false, StatusCodes.Status409Conflict, ErrorMessages.EntityAlreadyExists(nameof(AchievementTemplate), nameof(AchievementTemplate.Name)));
 
         if (dto.Name != null)
             template.Name = dto.Name;
@@ -99,10 +111,15 @@ public class AdminAchievementTemplateService(StudHunterDbContext context) : Base
     /// <summary>
     /// Deletes an achievement template.
     /// </summary>
-    /// <param name="id">The unique identifier (GUID) of the achievement template.</param>
+    /// <param name="templateId">The unique identifier (GUID) of the achievement template.</param>
     /// <returns>A tuple indicating whether the deletion was successful, an optional status code, and an optional error message.</returns>
-    public async Task<(bool Success, int? StatusCode, string? ErrorMessage)> DeleteAchievementTemplateAsync(Guid id)
+    public async Task<(bool Success, int? StatusCode, string? ErrorMessage)> DeleteAchievementTemplateAsync(Guid templateId)
     {
-        return await DeleteEntityAsync<AchievementTemplate>(id, hardDelete: true);
+        var template = await _context.AchievementTemplates.FindAsync(templateId);
+        if (template == null)
+            return (false, StatusCodes.Status404NotFound, ErrorMessages.EntityNotFound(nameof(AchievementTemplate)));
+
+        _context.AchievementTemplates.Remove(template);
+        return await SaveChangesAsync<AchievementTemplate>();
     }
 }

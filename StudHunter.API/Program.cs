@@ -40,14 +40,16 @@ builder.Services.AddAuthentication(options =>
 });
 builder.Services.AddAuthorization();
 
-builder.Services.AddScoped<AuthService>();
+builder.Services.AddScoped<AdditionalSkillService>();
 builder.Services.AddScoped<AdminAchievementTemplateService>();
+builder.Services.AddScoped<AdminAdditionalSkillService>();
+builder.Services.AddScoped<AdminChatService>();
 builder.Services.AddScoped<AdminCourseService>();
 builder.Services.AddScoped<AdminEmployerService>();
 builder.Services.AddScoped<AdminFacultyService>();
 builder.Services.AddScoped<AdminFavoriteService>();
 builder.Services.AddScoped<AdminInvitationService>();
-builder.Services.AddScoped<AdminMessagesService>();
+builder.Services.AddScoped<AdminMessageService>();
 builder.Services.AddScoped<AdminResumeService>();
 builder.Services.AddScoped<AdminService>();
 builder.Services.AddScoped<AdminSpecialityService>();
@@ -55,6 +57,8 @@ builder.Services.AddScoped<AdminStudentService>();
 builder.Services.AddScoped<AdminStudyPlanService>();
 builder.Services.AddScoped<AdminUserAchievementService>();
 builder.Services.AddScoped<AdminVacancyService>();
+builder.Services.AddScoped<AuthService>();
+builder.Services.AddScoped<ChatService>();
 builder.Services.AddScoped<CourseService>();
 builder.Services.AddScoped<EmployerService>();
 builder.Services.AddScoped<FacultyService>();

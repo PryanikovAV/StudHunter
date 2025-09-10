@@ -1,34 +1,35 @@
-﻿using StudHunter.DB.Postgres.Interfaces;
+﻿namespace StudHunter.DB.Postgres.Models;
 
-namespace StudHunter.DB.Postgres.Models;
-
-public class StudyPlan : ISoftDeletable
+public class StudyPlan
 {
     public Guid Id { get; set; }
 
     public Guid StudentId { get; set; }
 
-    public int CourseNumber { get; set; } = 1;
+    public int CourseNumber { get; set; }
 
-    public Guid FacultyId { get; set; } = Guid.Empty;
+    public Guid FacultyId { get; set; }
 
-    public Guid SpecialityId { get; set; } = Guid.Empty;
+    public Guid SpecialityId { get; set; }
 
-    public StudyForms StudyForm { get; set; } = StudyForms.fulltime;
+    public StudyPlanForm StudyForm { get; set; }
 
-    public bool IsDeleted { get; set; } = false;
+    public bool IsDeleted { get; set; }
 
     public DateTime? DeletedAt { get; set; }
 
     public virtual Student Student { get; set; } = null!;
+
     public virtual Faculty Faculty { get; set; } = null!;
+
     public virtual Speciality Speciality { get; set; } = null!;
+
     public virtual ICollection<StudyPlanCourse> StudyPlanCourses { get; set; } = new List<StudyPlanCourse>();
 
-    public enum StudyForms
+    public enum StudyPlanForm
     {
-        fulltime,
-        parttime,
-        correspondence
+        FullTime,
+        PartTime,
+        Correspondence
     }
 }

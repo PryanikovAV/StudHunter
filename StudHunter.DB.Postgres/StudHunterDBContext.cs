@@ -6,6 +6,7 @@ namespace StudHunter.DB.Postgres;
 
 public class StudHunterDbContext : DbContext
 {
+    public DbSet<AdditionalSkill> AdditionalSkills { get; set; }
     public DbSet<AchievementTemplate> AchievementTemplates { get; set; } = null!;
     public DbSet<Administrator> Administrators { get; set; } = null!;
     public DbSet<Chat> Chats { get; set; } = null!;

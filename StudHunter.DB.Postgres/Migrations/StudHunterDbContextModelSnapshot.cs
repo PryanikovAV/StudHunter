@@ -63,11 +63,11 @@ namespace StudHunter.DB.Postgres.Migrations
 
                     b.Property<DateTime>("CreatedAt")
                         .ValueGeneratedOnAdd()
-                        .HasColumnType("TIMESTAMP")
+                        .HasColumnType("TIMESTAMPTZ")
                         .HasDefaultValueSql("CURRENT_TIMESTAMP");
 
                     b.Property<DateTime?>("LastMessageAt")
-                        .HasColumnType("TIMESTAMP");
+                        .HasColumnType("TIMESTAMPTZ");
 
                     b.Property<Guid>("User1Id")
                         .HasColumnType("UUID");
@@ -142,13 +142,10 @@ namespace StudHunter.DB.Postgres.Migrations
 
                     b.Property<DateTime>("AddedAt")
                         .ValueGeneratedOnAdd()
-                        .HasColumnType("TIMESTAMP")
+                        .HasColumnType("TIMESTAMPTZ")
                         .HasDefaultValueSql("CURRENT_TIMESTAMP");
 
                     b.Property<Guid?>("EmployerId")
-                        .HasColumnType("UUID");
-
-                    b.Property<Guid?>("ResumeId")
                         .HasColumnType("UUID");
 
                     b.Property<Guid?>("StudentId")
@@ -162,21 +159,20 @@ namespace StudHunter.DB.Postgres.Migrations
 
                     b.HasKey("Id");
 
-                    b.HasIndex("EmployerId");
+                    b.HasIndex("EmployerId")
+                        .HasFilter("\"EmployerId\" IS NOT NULL");
 
-                    b.HasIndex("ResumeId");
+                    b.HasIndex("StudentId")
+                        .HasFilter("\"StudentId\" IS NOT NULL");
 
-                    b.HasIndex("StudentId");
+                    b.HasIndex("UserId");
 
-                    b.HasIndex("VacancyId");
+                    b.HasIndex("VacancyId")
+                        .HasFilter("\"EmployerId\" IS NOT NULL");
 
                     b.HasIndex("UserId", "EmployerId")
                         .IsUnique()
                         .HasFilter("\"EmployerId\" IS NOT NULL");
-
-                    b.HasIndex("UserId", "ResumeId")
-                        .IsUnique()
-                        .HasFilter("\"ResumeId\" IS NOT NULL");
 
                     b.HasIndex("UserId", "StudentId")
                         .IsUnique()
@@ -198,15 +194,14 @@ namespace StudHunter.DB.Postgres.Migrations
 
                     b.Property<DateTime>("CreatedAt")
                         .ValueGeneratedOnAdd()
-                        .HasColumnType("TIMESTAMP")
+                        .HasColumnType("TIMESTAMPTZ")
                         .HasDefaultValueSql("CURRENT_TIMESTAMP");
 
                     b.Property<Guid>("ReceiverId")
                         .HasColumnType("UUID");
 
                     b.Property<Guid?>("ResumeId")
-                        .HasColumnType("UUID")
-                        .HasColumnName("ResumeId");
+                        .HasColumnType("UUID");
 
                     b.Property<Guid>("SenderId")
                         .HasColumnType("UUID");
@@ -216,17 +211,13 @@ namespace StudHunter.DB.Postgres.Migrations
                         .HasColumnType("INTEGER")
                         .HasDefaultValue(0);
 
-                    b.Property<int>("Type")
-                        .HasColumnType("INTEGER");
-
                     b.Property<DateTime>("UpdatedAt")
                         .ValueGeneratedOnAdd()
-                        .HasColumnType("TIMESTAMP")
+                        .HasColumnType("TIMESTAMPTZ")
                         .HasDefaultValueSql("CURRENT_TIMESTAMP");
 
                     b.Property<Guid?>("VacancyId")
-                        .HasColumnType("UUID")
-                        .HasColumnName("VacancyId");
+                        .HasColumnType("UUID");
 
                     b.HasKey("Id");
 
@@ -264,7 +255,7 @@ namespace StudHunter.DB.Postgres.Migrations
 
                     b.Property<DateTime>("SentAt")
                         .ValueGeneratedOnAdd()
-                        .HasColumnType("TIMESTAMP")
+                        .HasColumnType("TIMESTAMPTZ")
                         .HasDefaultValueSql("CURRENT_TIMESTAMP");
 
                     b.Property<Guid?>("UserId")
@@ -294,8 +285,11 @@ namespace StudHunter.DB.Postgres.Migrations
 
                     b.Property<DateTime>("CreatedAt")
                         .ValueGeneratedOnAdd()
-                        .HasColumnType("TIMESTAMP")
+                        .HasColumnType("TIMESTAMPTZ")
                         .HasDefaultValueSql("CURRENT_TIMESTAMP");
+
+                    b.Property<DateTime?>("DeletedAt")
+                        .HasColumnType("TIMESTAMPTZ");
 
                     b.Property<string>("Description")
                         .HasMaxLength(2500)
@@ -316,7 +310,7 @@ namespace StudHunter.DB.Postgres.Migrations
 
                     b.Property<DateTime>("UpdatedAt")
                         .ValueGeneratedOnAdd()
-                        .HasColumnType("TIMESTAMP")
+                        .HasColumnType("TIMESTAMPTZ")
                         .HasDefaultValueSql("CURRENT_TIMESTAMP");
 
                     b.HasKey("Id");
@@ -360,25 +354,24 @@ namespace StudHunter.DB.Postgres.Migrations
                         .HasColumnType("UUID")
                         .HasDefaultValueSql("gen_random_uuid()");
 
-                    b.Property<DateOnly>("BeginYear")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("DATE")
-                        .HasDefaultValue(new DateOnly(2025, 8, 16));
-
                     b.Property<int>("CourseNumber")
                         .ValueGeneratedOnAdd()
                         .HasColumnType("INTEGER")
                         .HasDefaultValue(1);
 
+                    b.Property<DateTime?>("DeletedAt")
+                        .HasColumnType("TIMESTAMPTZ");
+
                     b.Property<Guid>("FacultyId")
+                        .HasColumnType("UUID");
+
+                    b.Property<bool>("IsDeleted")
                         .ValueGeneratedOnAdd()
-                        .HasColumnType("UUID")
-                        .HasDefaultValue(new Guid("00000000-0000-0000-0000-000000000000"));
+                        .HasColumnType("boolean")
+                        .HasDefaultValue(false);
 
                     b.Property<Guid>("SpecialityId")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("UUID")
-                        .HasDefaultValue(new Guid("00000000-0000-0000-0000-000000000000"));
+                        .HasColumnType("UUID");
 
                     b.Property<Guid>("StudentId")
                         .HasColumnType("UUID");
@@ -435,6 +428,9 @@ namespace StudHunter.DB.Postgres.Migrations
                         .HasColumnType("TIMESTAMPTZ")
                         .HasDefaultValueSql("CURRENT_TIMESTAMP");
 
+                    b.Property<DateTime?>("DeletedAt")
+                        .HasColumnType("TIMESTAMPTZ");
+
                     b.Property<string>("Email")
                         .IsRequired()
                         .HasMaxLength(255)
@@ -467,7 +463,7 @@ namespace StudHunter.DB.Postgres.Migrations
                         .HasDefaultValueSql("gen_random_uuid()");
 
                     b.Property<DateTime>("AchievementAt")
-                        .HasColumnType("TIMESTAMP");
+                        .HasColumnType("TIMESTAMPTZ");
 
                     b.Property<Guid>("AchievementTemplateId")
                         .HasColumnType("UUID");
@@ -494,8 +490,11 @@ namespace StudHunter.DB.Postgres.Migrations
 
                     b.Property<DateTime>("CreatedAt")
                         .ValueGeneratedOnAdd()
-                        .HasColumnType("TIMESTAMP")
+                        .HasColumnType("TIMESTAMPTZ")
                         .HasDefaultValueSql("CURRENT_TIMESTAMP");
+
+                    b.Property<DateTime?>("DeletedAt")
+                        .HasColumnType("TIMESTAMPTZ");
 
                     b.Property<string>("Description")
                         .HasMaxLength(2500)
@@ -524,7 +523,7 @@ namespace StudHunter.DB.Postgres.Migrations
 
                     b.Property<DateTime>("UpdatedAt")
                         .ValueGeneratedOnAdd()
-                        .HasColumnType("TIMESTAMP")
+                        .HasColumnType("TIMESTAMPTZ")
                         .HasDefaultValueSql("CURRENT_TIMESTAMP");
 
                     b.HasKey("Id");
@@ -554,9 +553,6 @@ namespace StudHunter.DB.Postgres.Migrations
                 {
                     b.HasBaseType("StudHunter.DB.Postgres.Models.User");
 
-                    b.Property<int>("AdminLevel")
-                        .HasColumnType("INTEGER");
-
                     b.Property<string>("FirstName")
                         .IsRequired()
                         .HasMaxLength(50)
@@ -564,6 +560,10 @@ namespace StudHunter.DB.Postgres.Migrations
 
                     b.Property<string>("LastName")
                         .IsRequired()
+                        .HasMaxLength(50)
+                        .HasColumnType("VARCHAR(50)");
+
+                    b.Property<string>("Patronymic")
                         .HasMaxLength(50)
                         .HasColumnType("VARCHAR(50)");
 
@@ -665,25 +665,23 @@ namespace StudHunter.DB.Postgres.Migrations
                         .HasForeignKey("EmployerId")
                         .OnDelete(DeleteBehavior.Cascade);
 
-                    b.HasOne("StudHunter.DB.Postgres.Models.Resume", "Resume")
-                        .WithMany()
-                        .HasForeignKey("ResumeId");
-
                     b.HasOne("StudHunter.DB.Postgres.Models.Student", "Student")
                         .WithMany()
-                        .HasForeignKey("StudentId");
+                        .HasForeignKey("StudentId")
+                        .OnDelete(DeleteBehavior.Cascade);
 
                     b.HasOne("StudHunter.DB.Postgres.Models.User", "User")
                         .WithMany("Favorites")
-                        .HasForeignKey("UserId");
+                        .HasForeignKey("UserId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
 
                     b.HasOne("StudHunter.DB.Postgres.Models.Vacancy", "Vacancy")
                         .WithMany()
-                        .HasForeignKey("VacancyId");
+                        .HasForeignKey("VacancyId")
+                        .OnDelete(DeleteBehavior.Cascade);
 
                     b.Navigation("Employer");
-
-                    b.Navigation("Resume");
 
                     b.Navigation("Student");
 
@@ -797,7 +795,7 @@ namespace StudHunter.DB.Postgres.Migrations
                     b.HasOne("StudHunter.DB.Postgres.Models.Course", "Course")
                         .WithMany("StudyPlanCourses")
                         .HasForeignKey("CourseId")
-                        .OnDelete(DeleteBehavior.Cascade)
+                        .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
 
                     b.HasOne("StudHunter.DB.Postgres.Models.StudyPlan", "StudyPlan")
@@ -845,12 +843,14 @@ namespace StudHunter.DB.Postgres.Migrations
                     b.HasOne("StudHunter.DB.Postgres.Models.Course", "Course")
                         .WithMany("VacancyCourses")
                         .HasForeignKey("CourseId")
-                        .OnDelete(DeleteBehavior.Cascade)
+                        .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
 
                     b.HasOne("StudHunter.DB.Postgres.Models.Vacancy", "Vacancy")
                         .WithMany("Courses")
-                        .HasForeignKey("VacancyId");
+                        .HasForeignKey("VacancyId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
 
                     b.Navigation("Course");
 

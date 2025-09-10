@@ -7,7 +7,8 @@
 - :heavy_check_mark: контроллеры и эндпоинты
 - :heavy_check_mark: XML документация: DTO, сервисы, контроллеры
 - :heavy_check_mark: Swagger
-- :hourglass_flowing_sand: jwt authentication
+- :hourglass_flowing_sand: фильтры поиска
+- :heavy_check_mark: jwt authentication
 - :x: CORS
 - :x: Логика Achievements
 - :x: Пагинация
@@ -16,7 +17,7 @@
 
 ## Требования
 
-- .NET 9.0 SDK
+- ~~.NET 9.0 SDK~~ (.NET8)
 - PostgreSQL 15+
 - Visual Studio 2022 (или IDE поддержкой .NET CLI)
 - Git

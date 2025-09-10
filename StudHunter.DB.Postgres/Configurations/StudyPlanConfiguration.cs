@@ -22,29 +22,27 @@ public class StudyPlanConfiguration : IEntityTypeConfiguration<StudyPlan>
         builder.Property(sp => sp.CourseNumber)
                .HasColumnType("INTEGER")
                .HasDefaultValue(1)
+               .HasAnnotation("Range", new[] { 1, 7 })
                .IsRequired();
 
         builder.Property(sp => sp.FacultyId)
                .HasColumnType("UUID")
-               .HasDefaultValue(Guid.Empty)
                .IsRequired();
 
         builder.Property(sp => sp.SpecialityId)
                .HasColumnType("UUID")
-               .HasDefaultValue(Guid.Empty)
                .IsRequired();
 
         builder.Property(sp => sp.StudyForm)
                .HasColumnType("INTEGER")
-               .HasDefaultValue(StudyPlan.StudyForms.fulltime)
+               .HasDefaultValue(StudyPlan.StudyPlanForm.FullTime)
                .IsRequired();
 
         builder.Property(sp => sp.IsDeleted)
-               .HasColumnName("BOOLEAN")
                .HasDefaultValue(false)
                .IsRequired();
 
-        builder.Property(u => u.DeletedAt)
+        builder.Property(sp => sp.DeletedAt)
                .HasColumnType("TIMESTAMPTZ")
                .IsRequired(false);
 
@@ -75,6 +73,6 @@ public class StudyPlanConfiguration : IEntityTypeConfiguration<StudyPlan>
         builder.HasIndex(sp => sp.StudentId)
                .IsUnique();
 
-        builder.HasQueryFilter(sp => !sp.IsDeleted);
+        builder.HasQueryFilter(sp => !sp.IsDeleted && !sp.Student.IsDeleted);
     }
 }

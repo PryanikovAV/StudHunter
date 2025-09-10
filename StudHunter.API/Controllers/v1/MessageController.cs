@@ -1,11 +1,10 @@
 ﻿using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using StudHunter.API.Common;
 using StudHunter.API.Controllers.v1.BaseControllers;
-using StudHunter.API.ModelsDto.Message;
-using StudHunter.API.ModelsDto.Chat;
+using StudHunter.API.ModelsDto.MessageDto;
 using StudHunter.API.Services;
 using System.Security.Claims;
-using StudHunter.API.Common;
 
 namespace StudHunter.API.Controllers.v1;
 
@@ -19,80 +18,74 @@ public class MessageController(MessageService messageService) : BaseController
 {
     private readonly MessageService _messageService = messageService;
 
-    [HttpGet("chats")]
-    [ProducesResponseType(typeof(List<ChatDto>), StatusCodes.Status200OK)]
-    [ProducesResponseType(typeof(object), StatusCodes.Status401Unauthorized)]
-    [ProducesResponseType(typeof(object), StatusCodes.Status404NotFound)]
-    public async Task<IActionResult> GetChatsByUser()
-    {
-        var userString = User.FindFirstValue(ClaimTypes.NameIdentifier);
-        if (!Guid.TryParse(userString, out var userId))
-            return CreateAPIError<List<ChatDto>>(null, StatusCodes.Status401Unauthorized, ErrorMessages.InvalidTokenUserId());
-
-        var (chats, statusCode, errorMessage) = await _messageService.GetChatsByUserAsync(userId);
-        return CreateAPIError(chats, statusCode, errorMessage);
-    }
-
-    [HttpGet("chats/{chatId}")]
+    /// <summary>
+    /// Retrieves all messages in a chat for the authenticated user.
+    /// </summary>
+    /// <param name="chatId">The unique identifier (GUID) of the chat.</param>
+    /// <returns>A list of messages.</returns>
+    /// <response code="200">Messages retrieved successfully.</response>
+    /// <response code="401">User is not authenticated.</response>
+    /// <response code="404">Chat not found.</response>
+    [HttpGet("chat/{chatId}")]
     [ProducesResponseType(typeof(List<MessageDto>), StatusCodes.Status200OK)]
-    [ProducesResponseType(typeof(object), StatusCodes.Status401Unauthorized)]
-    [ProducesResponseType(typeof(object), StatusCodes.Status404NotFound)]
+    [ProducesResponseType(typeof(ErrorResponse), StatusCodes.Status401Unauthorized)]
+    [ProducesResponseType(typeof(ErrorResponse), StatusCodes.Status404NotFound)]
     public async Task<IActionResult> GetMessagesByChat(Guid chatId)
     {
-        var userString = User.FindFirstValue(ClaimTypes.NameIdentifier);
-        if (!Guid.TryParse(userString, out var userId))
-            return CreateAPIError<List<MessageDto>>(null, StatusCodes.Status401Unauthorized, ErrorMessages.InvalidTokenUserId());
+        if (!Guid.TryParse(User.FindFirstValue(ClaimTypes.NameIdentifier), out var authUserId))
+            return HandleResponse<List<MessageDto>>(null, StatusCodes.Status401Unauthorized, ErrorMessages.InvalidTokenUserId());
 
-        var (messages, statusCode, errorMessage) = await _messageService.GetMessagesByChatAsync(chatId, userId);
-        return CreateAPIError(messages, statusCode, errorMessage);
+        var (messages, statusCode, errorMessage) = await _messageService.GetMessagesByChatAsync(authUserId, chatId);
+        return HandleResponse(messages, statusCode, errorMessage);
     }
 
     /// <summary>
     /// Retrieves a message by its ID for the authenticated user.
     /// </summary>
-    /// <param name="id">The unique identifier (GUID) of the message.</param>
+    /// <param name="messageId">The unique identifier (GUID) of the message.</param>
     /// <returns>The message.</returns>
     /// <response code="200">Message retrieved successfully.</response>
     /// <response code="401">User is not authenticated.</response>
     /// <response code="404">Message not found.</response>
-    [HttpGet("{id}")]
+    [HttpGet("{messageId}")]
     [ProducesResponseType(typeof(MessageDto), StatusCodes.Status200OK)]
-    [ProducesResponseType(typeof(object), StatusCodes.Status401Unauthorized)]
-    [ProducesResponseType(typeof(object), StatusCodes.Status404NotFound)]
-    public async Task<IActionResult> GetMessage(Guid id)
+    [ProducesResponseType(typeof(ErrorResponse), StatusCodes.Status401Unauthorized)]
+    [ProducesResponseType(typeof(ErrorResponse), StatusCodes.Status404NotFound)]
+    public async Task<IActionResult> GetMessage(Guid messageId)
     {
-        var userString = User.FindFirstValue(ClaimTypes.NameIdentifier);
-        if (!Guid.TryParse(userString, out var userId))
-            return CreateAPIError<MessageDto>(null, StatusCodes.Status401Unauthorized, ErrorMessages.InvalidTokenUserId());
+        if (!Guid.TryParse(User.FindFirstValue(ClaimTypes.NameIdentifier), out var authUserId))
+            return HandleResponse<MessageDto>(null, StatusCodes.Status401Unauthorized, ErrorMessages.InvalidTokenUserId());
 
-        var (message, statusCode, errorMessage) = await _messageService.GetMessageAsync(id, userId);
-        return CreateAPIError(message, statusCode, errorMessage);
+        var (message, statusCode, errorMessage) = await _messageService.GetMessageByIdAsync(authUserId, messageId);
+        return HandleResponse(message, statusCode, errorMessage);
     }
 
     /// <summary>
-    /// Creates a new message.
+    /// Creates a new message for the authenticated user.
     /// </summary>
     /// <param name="dto">The data transfer object containing message details.</param>
     /// <returns>The created message.</returns>
     /// <response code="201">Message created successfully.</response>
-    /// <response code="400">Invalid request data or database error.</response>
+    /// <response code="400">Invalid request data.</response>
     /// <response code="401">User is not authenticated.</response>
-    /// <response code="404">Sender or receiver not found.</response>
+    /// <response code="404">Receiver not found.</response>
     [HttpPost]
     [ProducesResponseType(typeof(MessageDto), StatusCodes.Status201Created)]
-    [ProducesResponseType(typeof(object), StatusCodes.Status400BadRequest)]
-    [ProducesResponseType(typeof(object), StatusCodes.Status401Unauthorized)]
-    [ProducesResponseType(typeof(object), StatusCodes.Status404NotFound)]
+    [ProducesResponseType(typeof(ErrorResponse), StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(typeof(ErrorResponse), StatusCodes.Status401Unauthorized)]
+    [ProducesResponseType(typeof(ErrorResponse), StatusCodes.Status404NotFound)]
     public async Task<IActionResult> CreateMessage([FromBody] CreateMessageDto dto)
     {
-        if (!ModelState.IsValid)
-            return ValidationError();
+        if (!ValidateModel())
+        {
+            var errors = ModelState.Values.SelectMany(v => v.Errors).Select(e => e.ErrorMessage).ToList();
+            return HandleResponse<MessageDto>(null, StatusCodes.Status400BadRequest, string.Join("; ", errors));
+        }
 
-        var userString = User.FindFirstValue(ClaimTypes.NameIdentifier);
-        if (!Guid.TryParse(userString, out var senderId))
-            return CreateAPIError<MessageDto>(null, StatusCodes.Status401Unauthorized, ErrorMessages.InvalidTokenUserId());
+        if (!Guid.TryParse(User.FindFirstValue(ClaimTypes.NameIdentifier), out var authUserId))
+            return HandleResponse<MessageDto>(null, StatusCodes.Status401Unauthorized, ErrorMessages.InvalidTokenUserId());
 
-        var (message, statusCode, errorMessage) = await _messageService.CreateMessageAsync(senderId, dto);
-        return CreateAPIError(message, statusCode, errorMessage, nameof(GetMessage), new { id = message?.Id });
+        var (message, statusCode, errorMessage) = await _messageService.CreateMessageAsync(authUserId, dto);
+        return HandleResponse(message, statusCode, errorMessage, nameof(GetMessage), new { messageId = message?.Id });
     }
 }

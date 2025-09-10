@@ -1,10 +1,10 @@
 ﻿using Microsoft.EntityFrameworkCore;
 using StudHunter.API.Common;
-using StudHunter.API.ModelsDto.Student;
+using StudHunter.API.ModelsDto.StudentDto;
 using StudHunter.API.Services.BaseServices;
 using StudHunter.DB.Postgres;
 using StudHunter.DB.Postgres.Models;
-using StudHunter.API.ModelsDto.Auth;
+using StudHunter.API.ModelsDto.AuthDto;
 
 namespace StudHunter.API.Services;
 
@@ -22,21 +22,16 @@ public class StudentService(StudHunterDbContext context, IPasswordHasher passwor
     /// <param name="studentId">The unique identifier (GUID) of the student.</param>
     /// <param name="authUserId">The unique identifier (GUID) of the user.</param>
     /// <returns>A tuple containing the student's details, an optional status code, and an optional error message.</returns>
-    public async Task<(StudentDto? Entity, int? StatusCode, string? ErrorMessage)> GetStudentAsync(Guid studentId, Guid authUserId)
+    public async Task<(StudentDto? Entity, int? StatusCode, string? ErrorMessage)> GetStudentAsync(Guid authUserId, Guid studentId)
     {
         var student = await _context.Students
             .Include(s => s.Achievements).ThenInclude(a => a.AchievementTemplate)
             .Include(s => s.Resume)
-            .FirstOrDefaultAsync(s => s.Id == studentId && !s.IsDeleted);
-
+            .FirstOrDefaultAsync(s => s.Id == studentId);
         if (student == null)
             return (null, StatusCodes.Status404NotFound, ErrorMessages.EntityNotFound(nameof(Student)));
-        if (student.Id != authUserId)
-        {
-            var isEmployer = await _context.Employers.AnyAsync(e => e.Id == authUserId && !e.IsDeleted);
-            if (!isEmployer || student.Resume == null || student.Resume.IsDeleted)
-                return (null, StatusCodes.Status403Forbidden, ErrorMessages.RestrictOwnProfileAction("get", nameof(Student)));
-        }
+        if (student.Id != authUserId && await _context.Students.AnyAsync(s => s.Id == authUserId))
+            return (null, StatusCodes.Status403Forbidden, ErrorMessages.RestrictOwnProfileAction("get", nameof(Student)));
 
         return (MapToStudentDto<StudentDto>(student), null, null);
     }
@@ -47,21 +42,16 @@ public class StudentService(StudHunterDbContext context, IPasswordHasher passwor
     /// <param name="email">The email of the student.</param>
     /// <param name="authUserId">The unique identifier (GUID) of the user.</param>
     /// <returns>A typle containing the student DTO, an optional status code, and an optional error message.</returns>
-    public async Task<(StudentDto? Entity, int? StatusCode, string? ErrorMessage)> GetStudentAsync(string email, Guid authUserId)
+    public async Task<(StudentDto? Entity, int? StatusCode, string? ErrorMessage)> GetStudentAsync(Guid authUserId, string email)
     {
         var student = await _context.Students
             .Include(s => s.Achievements).ThenInclude(a => a.AchievementTemplate)
             .Include(s => s.Resume)
-            .FirstOrDefaultAsync(s => s.Email == email && !s.IsDeleted);
-
+            .FirstOrDefaultAsync(s => s.Email == email);
         if (student == null)
             return (null, StatusCodes.Status404NotFound, ErrorMessages.EntityNotFound(nameof(Student)));
-        if (student.Id != authUserId)
-        {
-            var isEmployer = await _context.Employers.AnyAsync(e => e.Id == authUserId && !e.IsDeleted);
-            if (!isEmployer || student.Resume == null || student.Resume.IsDeleted)
-                return (null, StatusCodes.Status403Forbidden, ErrorMessages.RestrictOwnProfileAction("get", nameof(Student)));
-        }
+        if (student.Id != authUserId && await _context.Students.AnyAsync(s => s.Id == authUserId))
+            return (null, StatusCodes.Status403Forbidden, ErrorMessages.RestrictOwnProfileAction("get", nameof(Student)));
 
         return (MapToStudentDto<StudentDto>(student), null, null);
     }
@@ -73,8 +63,8 @@ public class StudentService(StudHunterDbContext context, IPasswordHasher passwor
     /// <returns>A tuple containing the student DTO, an optional status code, and an optional error message.</returns>
     public async Task<(StudentDto? Entity, int? StatusCode, string? ErrorMessage)> CreateStudentAsync(RegisterStudentDto dto)
     {
-        if (await _context.Users.AnyAsync(u => u.Email == dto.Email))
-            return (null, StatusCodes.Status409Conflict, ErrorMessages.EntityAlreadyExists(nameof(User), "email"));
+        if (await _context.Users.IgnoreQueryFilters().AnyAsync(u => u.Email == dto.Email))
+            return (null, StatusCodes.Status409Conflict, ErrorMessages.EntityAlreadyExists(nameof(User), nameof(User.Email)));
 
         var student = new Student
         {
@@ -101,7 +91,7 @@ public class StudentService(StudHunterDbContext context, IPasswordHasher passwor
             CourseNumber = 1,
             FacultyId = Guid.Empty,
             SpecialityId = Guid.Empty,
-            StudyForm = StudyPlan.StudyForms.fulltime,
+            StudyForm = StudyPlan.StudyPlanForm.FullTime,
             IsDeleted = false
         };
 
@@ -134,9 +124,7 @@ public class StudentService(StudHunterDbContext context, IPasswordHasher passwor
             return (false, StatusCodes.Status404NotFound, ErrorMessages.EntityNotFound(nameof(Student)));
         if (student.Id != authUserId)
             return (false, StatusCodes.Status403Forbidden, ErrorMessages.RestrictOwnProfileAction("update", nameof(Student)));
-        if (student.IsDeleted)
-            return (false, StatusCodes.Status410Gone, ErrorMessages.EntityAlreadyDeleted(nameof(Student), nameof(AuthService.RecoverAccountAsync)));
-        if (dto.Email != null && await _context.Students.AnyAsync(s => s.Email == dto.Email && s.Id != studentId))
+        if (dto.Email != null && await _context.Students.IgnoreQueryFilters().AnyAsync(s => s.Email == dto.Email && s.Id != studentId))
             return (false, StatusCodes.Status409Conflict, ErrorMessages.EntityAlreadyExists(nameof(Student), nameof(Student.Email)));
         if (dto.ContactPhone != null && await _context.Students.AnyAsync(s => s.ContactPhone == dto.ContactPhone && s.Id != studentId))
             return (false, StatusCodes.Status409Conflict, ErrorMessages.EntityAlreadyExists(nameof(Student), nameof(Student.ContactPhone)));
@@ -178,14 +166,11 @@ public class StudentService(StudHunterDbContext context, IPasswordHasher passwor
         var student = await _context.Students
             .Include(s => s.StudyPlan)
             .Include(s => s.Resume)
-            .FirstOrDefaultAsync(s => s.Id == studentId && !s.IsDeleted);
-
+            .FirstOrDefaultAsync(s => s.Id == studentId);
         if (student == null)
             return (false, StatusCodes.Status404NotFound, ErrorMessages.EntityNotFound(nameof(Student)));
         if (student.Id != authUserId)
             return (false, StatusCodes.Status403Forbidden, ErrorMessages.RestrictOwnProfileAction("delete", nameof(Student)));
-        if (student.IsDeleted)
-            return (false, StatusCodes.Status410Gone, ErrorMessages.EntityAlreadyDeleted(nameof(Student), nameof(AuthService.RecoverAccountAsync)));
 
         student.IsDeleted = true;
         student.DeletedAt = DateTime.UtcNow;

@@ -1,6 +1,6 @@
 ﻿using Microsoft.AspNetCore.Mvc;
 using StudHunter.API.Controllers.v1.BaseControllers;
-using StudHunter.API.ModelsDto.Auth;
+using StudHunter.API.ModelsDto.AuthDto;
 using StudHunter.API.Services;
 
 namespace StudHunter.API.Controllers.v1;
@@ -14,20 +14,26 @@ public class AuthController(IAuthService authService) : BaseController
     [HttpPost("login")]
     public async Task<IActionResult> Login([FromBody] LoginDto dto)
     {
-        if (!ModelState.IsValid)
-            return ValidationError();
+        if (!ValidateModel())
+        {
+            var errors = ModelState.Values.SelectMany(v => v.Errors).Select(e => e.ErrorMessage).ToList();
+            return HandleResponse<LoginDto>(null, StatusCodes.Status400BadRequest, string.Join("; ", errors));
+        }
 
         var (result, statusCode, errorMessage) = await _authService.LoginAsync(dto);
-        return CreateAPIError(result, statusCode, errorMessage);
+        return HandleResponse(result, statusCode, errorMessage);
     }
 
     [HttpPut("recovery")]
     public async Task<IActionResult> Recovery([FromBody] LoginDto dto)
     {
-        if (!ModelState.IsValid)
-            return ValidationError();
+        if (!ValidateModel())
+        {
+            var errors = ModelState.Values.SelectMany(v => v.Errors).Select(e => e.ErrorMessage).ToList();
+            return HandleResponse<bool>(false, StatusCodes.Status400BadRequest, string.Join("; ", errors));
+        }
 
         var (result, statusCode, errorMessage) = await _authService.RecoverAccountAsync(dto);
-        return CreateAPIError(result, statusCode, errorMessage);
+        return HandleResponse(result, statusCode, errorMessage);
     }
 }

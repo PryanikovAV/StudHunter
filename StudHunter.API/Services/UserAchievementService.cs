@@ -1,6 +1,6 @@
 ﻿using Microsoft.EntityFrameworkCore;
 using StudHunter.API.Common;
-using StudHunter.API.ModelsDto.UserAchievement;
+using StudHunter.API.ModelsDto.UserAchievementDto;
 using StudHunter.API.Services.BaseServices;
 using StudHunter.DB.Postgres;
 using StudHunter.DB.Postgres.Models;
@@ -23,11 +23,11 @@ public class UserAchievementService(StudHunterDbContext context) : BaseUserAchie
             return (null, StatusCodes.Status404NotFound, ErrorMessages.EntityNotFound(nameof(User)));
 
         var userAchievements = await _context.UserAchievements
-        .Where(ua => ua.UserId == userId)
-        .Include(ua => ua.AchievementTemplate)
-        .Select(ua => MapToUserAchievementDto(ua))
-        .OrderBy(ua => ua.AchievementAt)
-        .ToListAsync();
+            .Where(ua => ua.UserId == userId)
+            .Include(ua => ua.AchievementTemplate)
+            .Select(ua => MapToUserAchievementDto(ua))
+            .OrderBy(ua => ua.AchievementAt)
+            .ToListAsync();
 
         return (userAchievements, null, null);
     }

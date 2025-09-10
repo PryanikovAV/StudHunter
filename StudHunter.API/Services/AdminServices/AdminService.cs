@@ -1,6 +1,6 @@
 ﻿using Microsoft.EntityFrameworkCore;
 using StudHunter.API.Common;
-using StudHunter.API.ModelsDto.Admin;
+using StudHunter.API.ModelsDto.AdminDto;
 using StudHunter.API.Services.BaseServices;
 using StudHunter.DB.Postgres;
 using StudHunter.DB.Postgres.Models;
@@ -10,7 +10,7 @@ namespace StudHunter.API.Services.AdminServices;
 /// <summary>
 /// Service for managing administrators.
 /// </summary>
-public class AdminService(StudHunterDbContext context, IPasswordHasher passwordHasher) : BaseService(context)
+public class AdminService(StudHunterDbContext context, IPasswordHasher passwordHasher) : BaseAdminService(context)
 {
     private readonly IPasswordHasher _passwordHasher = passwordHasher;
 
@@ -21,20 +21,8 @@ public class AdminService(StudHunterDbContext context, IPasswordHasher passwordH
     public async Task<(List<AdminDto>? Entities, int? StatusCode, string? ErrorMessage)> GetAllAdministratorsAsync()
     {
         var administrators = await _context.Administrators
-        .Where(a => !a.IsDeleted)
-        .Select(a => new AdminDto
-        {
-            Id = a.Id,
-            Email = a.Email,
-            ContactEmail = a.ContactEmail,
-            ContactPhone = a.ContactPhone,
-            CreatedAt = a.CreatedAt,
-            IsDeleted = a.IsDeleted,
-            FirstName = a.FirstName,
-            LastName = a.LastName,
-            Patronymic = a.Patronymic
-        })
-        .ToListAsync();
+            .Select(a => MapToAdminDto(a))
+            .ToListAsync();
 
         return (administrators, null, null);
     }
@@ -42,25 +30,14 @@ public class AdminService(StudHunterDbContext context, IPasswordHasher passwordH
     /// <summary>
     /// Retrieves an administrator by their ID.
     /// </summary>
-    /// <param name="id">The unique identifier (GUID) of the administrator.</param>
+    /// <param name="adminId">The unique identifier (GUID) of the administrator.</param>
     /// <returns>A tuple containing the administrator, an optional status code, and an optional error message.</returns>
-    public async Task<(AdminDto? Entity, int? StatusCode, string? ErrorMessage)> GetAdministratorAsync(Guid id)
+    public async Task<(AdminDto? Entity, int? StatusCode, string? ErrorMessage)> GetAdministratorAsync(Guid adminId)
     {
         var administrator = await _context.Administrators
-        .Where(a => a.Id == id && !a.IsDeleted)
-        .Select(a => new AdminDto
-        {
-            Id = a.Id,
-            Email = a.Email,
-            ContactEmail = a.ContactEmail,
-            ContactPhone = a.ContactPhone,
-            CreatedAt = a.CreatedAt,
-            IsDeleted = a.IsDeleted,
-            FirstName = a.FirstName,
-            LastName = a.LastName,
-            Patronymic = a.Patronymic
-        })
-        .FirstOrDefaultAsync();
+            .Where(a => a.Id == adminId && !a.IsDeleted)
+            .Select(a => MapToAdminDto(a))
+            .FirstOrDefaultAsync();
 
         if (administrator == null)
             return (null, StatusCodes.Status404NotFound, ErrorMessages.EntityNotFound(nameof(Administrator)));
@@ -71,21 +48,21 @@ public class AdminService(StudHunterDbContext context, IPasswordHasher passwordH
     /// <summary>
     /// Updates an existing administrator.
     /// </summary>
-    /// <param name="id">The unique identifier (GUID) of the administrator.</param>
+    /// <param name="adminId">The unique identifier (GUID) of the administrator.</param>
     /// <param name="dto">The data transfer object containing updated administrator details.</param>
     /// <returns>A tuple indicating whether the update was successful, an optional status code, and an optional error message.</returns>
-    public async Task<(bool Success, int? StatusCode, string? ErrorMessage)> UpdateAdministratorAsync(Guid id, UpdateAdminDto dto)
+    public async Task<(bool Success, int? StatusCode, string? ErrorMessage)> UpdateAdministratorAsync(Guid adminId, UpdateAdminDto dto)
     {
         var administrator = await _context.Administrators
-        .FirstOrDefaultAsync(a => a.Id == id && !a.IsDeleted);
+            .FirstOrDefaultAsync(a => a.Id == adminId && !a.IsDeleted);
 
         if (administrator == null)
             return (false, StatusCodes.Status404NotFound, ErrorMessages.EntityNotFound(nameof(Administrator)));
 
         if (dto.Email != null)
         {
-            if (await _context.Administrators.AnyAsync(e => e.Email == dto.Email && e.Id != id))
-                return (false, StatusCodes.Status409Conflict, ErrorMessages.EntityAlreadyExists(nameof(Administrator), "email"));
+            if (await _context.Administrators.AnyAsync(e => e.Email == dto.Email && e.Id != adminId))
+                return (false, StatusCodes.Status409Conflict, ErrorMessages.EntityAlreadyExists(nameof(Administrator), nameof(Administrator.Email)));
         }
 
         if (dto.Email != null)

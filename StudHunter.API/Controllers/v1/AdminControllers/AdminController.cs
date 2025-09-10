@@ -1,14 +1,15 @@
 ﻿using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using StudHunter.API.Controllers.v1.BaseControllers;
-using StudHunter.API.ModelsDto.Admin;
+using StudHunter.API.ModelsDto.AdminDto;
 using StudHunter.API.Services.AdminServices;
+using StudHunter.DB.Postgres.Models;
 
 namespace StudHunter.API.Controllers.v1.AdminControllers;
 
 [Route("api/v1/admin/[controller]")]
 [ApiController]
-[Authorize(Roles = "Administrator")]
+[Authorize(Roles = nameof(Administrator))]
 public class AdminController(AdminService administratorService) : BaseController
 {
     private readonly AdminService _administratorService = administratorService;
@@ -25,13 +26,13 @@ public class AdminController(AdminService administratorService) : BaseController
     public async Task<IActionResult> GetAllAdministrators()
     {
         var (administrators, statusCode, errorMessage) = await _administratorService.GetAllAdministratorsAsync();
-        return CreateAPIError(administrators, statusCode, errorMessage);
+        return HandleResponse(administrators, statusCode, errorMessage);
     }
 
     /// <summary>
     /// Retrieves an administrator by their ID.
     /// </summary>
-    /// <param name="id">The unique identifier (GUID) of the administrator.</param>
+    /// <param name="adminId">The unique identifier (GUID) of the administrator.</param>
     /// <returns>The administrator.</returns>
     /// <response code="200">Administrator retrieved successfully.</response>
     /// <response code="401">User is not authenticated.</response>
@@ -40,16 +41,16 @@ public class AdminController(AdminService administratorService) : BaseController
     [ProducesResponseType(typeof(AdminDto), StatusCodes.Status200OK)]
     [ProducesResponseType(typeof(object), StatusCodes.Status401Unauthorized)]
     [ProducesResponseType(typeof(object), StatusCodes.Status404NotFound)]
-    public async Task<IActionResult> GetAdministrator(Guid id)
+    public async Task<IActionResult> GetAdministrator(Guid adminId)
     {
-        var (administrator, statusCode, errorMessage) = await _administratorService.GetAdministratorAsync(id);
-        return CreateAPIError(administrator, statusCode, errorMessage);
+        var (administrator, statusCode, errorMessage) = await _administratorService.GetAdministratorAsync(adminId);
+        return HandleResponse(administrator, statusCode, errorMessage);
     }
 
     /// <summary>
     /// Updates an existing administrator.
     /// </summary>
-    /// <param name="id">The unique identifier (GUID) of the administrator.</param>
+    /// <param name="adminId">The unique identifier (GUID) of the administrator.</param>
     /// <param name="dto">The data transfer object containing updated administrator details.</param>
     /// <returns>No content if successful.</returns>
     /// <response code="204">Administrator updated successfully.</response>
@@ -65,12 +66,15 @@ public class AdminController(AdminService administratorService) : BaseController
     [ProducesResponseType(typeof(object), StatusCodes.Status403Forbidden)]
     [ProducesResponseType(typeof(object), StatusCodes.Status404NotFound)]
     [ProducesResponseType(typeof(object), StatusCodes.Status409Conflict)]
-    public async Task<IActionResult> UpdateAdministrator(Guid id, [FromBody] UpdateAdminDto dto)
+    public async Task<IActionResult> UpdateAdministrator(Guid adminId, [FromBody] UpdateAdminDto dto)
     {
-        if (!ModelState.IsValid)
-            return ValidationError();
+        if (!ValidateModel())
+        {
+            var errors = ModelState.Values.SelectMany(v => v.Errors).Select(e => e.ErrorMessage).ToList();
+            return HandleResponse<bool>(false, StatusCodes.Status400BadRequest, string.Join("; ", errors));
+        }
 
-        var (success, statusCode, errorMessage) = await _administratorService.UpdateAdministratorAsync(id, dto);
-        return CreateAPIError<AdminDto>(success, statusCode, errorMessage);
+        var (success, statusCode, errorMessage) = await _administratorService.UpdateAdministratorAsync(adminId, dto);
+        return HandleResponse(success, statusCode, errorMessage);
     }
 }

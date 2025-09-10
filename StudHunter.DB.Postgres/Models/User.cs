@@ -1,8 +1,6 @@
-﻿using StudHunter.DB.Postgres.Interfaces;
+﻿namespace StudHunter.DB.Postgres.Models;
 
-namespace StudHunter.DB.Postgres.Models;
-
-public abstract class User : ISoftDeletable
+public abstract class User
 {
     public Guid Id { get; set; }
 

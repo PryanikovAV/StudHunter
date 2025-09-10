@@ -1,8 +1,9 @@
 ﻿using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using StudHunter.API.Controllers.v1.BaseControllers;
-using StudHunter.API.ModelsDto.Course;
+using StudHunter.API.ModelsDto.CourseDto;
 using StudHunter.API.Services;
+using StudHunter.DB.Postgres.Models;
 
 namespace StudHunter.API.Controllers.v1;
 
@@ -28,24 +29,42 @@ public class CourseController(CourseService courseService) : BaseController
     public async Task<IActionResult> GetAllCourses()
     {
         var (courses, statusCode, errorMessage) = await _courseService.GetAllCoursesAsync();
-        return CreateAPIError(courses, statusCode, errorMessage);
+        return HandleResponse(courses, statusCode, errorMessage);
     }
 
     /// <summary>
     /// Retrieves a course by its ID.
     /// </summary>
-    /// <param name="id">The unique identifier (GUID) of the course.</param>
+    /// <param name="courseId">The unique identifier (GUID) of the course.</param>
     /// <returns>The course.</returns>
     /// <response code="200">Course retrieved successfully.</response>
     /// <response code="401">User is not authenticated.</response>
     /// <response code="404">Course not found.</response>
-    [HttpGet("{id}")]
+    [HttpGet("{courseId}")]
     [ProducesResponseType(typeof(CourseDto), StatusCodes.Status200OK)]
     [ProducesResponseType(typeof(object), StatusCodes.Status401Unauthorized)]
     [ProducesResponseType(typeof(object), StatusCodes.Status404NotFound)]
-    public async Task<IActionResult> GetCourse(Guid id)
+    public async Task<IActionResult> GetCourse(Guid courseId)
     {
-        var (course, statusCode, errorMessage) = await _courseService.GetCourseAsync(id);
-        return CreateAPIError(course, statusCode, errorMessage);
+        var (course, statusCode, errorMessage) = await _courseService.GetCourseAsync(courseId);
+        return HandleResponse(course, statusCode, errorMessage);
+    }
+
+    /// <summary>
+    /// Retrieves a course by its name.
+    /// </summary>
+    /// <param name="courseName"></param>
+    /// <returns>The course.</returns>
+    /// <response code="200">Course retrieved successfully.</response>
+    /// <response code="401">User is not authenticated.</response>
+    /// <response code="404">Course not found.</response>
+    [HttpGet("course/{courseName}")]
+    [ProducesResponseType(typeof(CourseDto), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(object), StatusCodes.Status401Unauthorized)]
+    [ProducesResponseType(typeof(object), StatusCodes.Status404NotFound)]
+    public async Task<IActionResult> GetCourse(string courseName)
+    {
+        var (course, statusCode, errorMessage) = await _courseService.GetCourseAsync(courseName);
+        return HandleResponse(course, statusCode, errorMessage);
     }
 }

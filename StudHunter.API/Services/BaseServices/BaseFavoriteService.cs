@@ -1,7 +1,4 @@
-﻿using Microsoft.EntityFrameworkCore;
-using StudHunter.API.Common;
-using StudHunter.API.ModelsDto.AchievementTemplate;
-using StudHunter.API.ModelsDto.Favorite;
+﻿using StudHunter.API.ModelsDto.FavoriteDto;
 using StudHunter.DB.Postgres;
 using StudHunter.DB.Postgres.Models;
 
@@ -18,41 +15,23 @@ public abstract class BaseFavoriteService(StudHunterDbContext context) : BaseSer
             VacancyId = favorite.VacancyId,
             EmployerId = favorite.EmployerId,
             StudentId = favorite.StudentId,
-            AddedAt = favorite.AddedAt
+            AddedAt = favorite.AddedAt,
+            Vacancy = favorite.Vacancy != null ? new VacancySummaryDto
+            {
+                Id = favorite.Vacancy.Id,
+                Title = favorite.Vacancy.Title
+            } : null,
+            Employer = favorite.Employer != null ? new EmployerSummaryDto
+            {
+                Id = favorite.Employer.Id,
+                Name = favorite.Employer.Name
+            } : null,
+            Student = favorite.Student != null ? new StudentSummaryDto
+            {
+                Id = favorite.Student.Id,
+                FirstName = favorite.Student.FirstName,
+                LastName = favorite.Student.LastName
+            } : null
         };
-    }
-
-    /// <summary>
-    /// Retrieves all favorites for a specific user.
-    /// </summary>
-    /// <param name="userId">The unique identifier (GUID) of the user.</param>
-    /// <returns>A tuple containing a list of favorites, an optional status code, and an optional error message.</returns>
-    public async Task<(List<FavoriteDto>? Entities, int? StatusCode, string? ErrorMessage)> GetAllFavoritesByUserAsync(Guid userId)
-    {
-        var favorites = await _context.Favorites
-        .Where(f => f.UserId == userId)
-        .Select(f => MapToFavoriteDto(f))
-        .ToListAsync();
-
-        return (favorites, null, null);
-    }
-
-    /// <summary>
-    /// Retrieves a favorite by its ID for a specific user.
-    /// </summary>
-    /// <param name="favoriteId">The unique identifier (GUID) of the favorite.</param>
-    /// <param name="userId">The unique identifier (GUID) of the user.</param>
-    /// <returns>A tuple containing the favorite, an optional status code, and an optional error message.</returns>
-    public async Task<(FavoriteDto? Entity, int? StatusCode, string? ErrorMessage)> GetFavoriteAsync(Guid favoriteId, Guid userId)
-    {
-        var favorite = await _context.Favorites
-        .Where(f => f.Id == favoriteId && f.UserId == userId)
-        .Select(f => MapToFavoriteDto(f))
-        .FirstOrDefaultAsync();
-
-        if (favorite == null)
-            return (null, StatusCodes.Status404NotFound, ErrorMessages.EntityNotFound(nameof(Favorite)));
-
-        return (favorite, null, null);
     }
 }

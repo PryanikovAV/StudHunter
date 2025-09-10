@@ -2,8 +2,8 @@
 using Microsoft.AspNetCore.Mvc;
 using StudHunter.API.Common;
 using StudHunter.API.Controllers.v1.BaseControllers;
-using StudHunter.API.ModelsDto.Auth;
-using StudHunter.API.ModelsDto.Employer;
+using StudHunter.API.ModelsDto.AuthDto;
+using StudHunter.API.ModelsDto.EmployerDto;
 using StudHunter.API.Services;
 using System.ComponentModel.DataAnnotations;
 using System.Security.Claims;

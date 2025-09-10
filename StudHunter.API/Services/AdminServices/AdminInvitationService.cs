@@ -1,6 +1,6 @@
 ﻿using Microsoft.EntityFrameworkCore;
 using StudHunter.API.Common;
-using StudHunter.API.ModelsDto.Invitation;
+using StudHunter.API.ModelsDto.InvitationDto;
 using StudHunter.API.Services.BaseServices;
 using StudHunter.DB.Postgres;
 using StudHunter.DB.Postgres.Models;
@@ -19,27 +19,27 @@ public class AdminInvitationService(StudHunterDbContext context) : BaseInvitatio
     public async Task<(List<InvitationDto>? Entities, int? StatusCode, string? ErrorMessage)> GetAllInvitationsAsync()
     {
         var invitations = await _context.Invitations
-        .Include(i => i.Vacancy)
-        .Include(i => i.Resume)
-        .Select(i => MapToInvitationDto(i))
-        .OrderByDescending(i => i.CreatedAt)
-        .ToListAsync();
+            .Include(i => i.Vacancy)
+            .Include(i => i.Resume)
+            .Select(i => MapToInvitationDto(i))
+            .OrderByDescending(i => i.CreatedAt)
+            .ToListAsync();
         return (invitations, null, null);
     }
 
     /// <summary>
     /// 
     /// </summary>
-    /// <param name="id"></param>
+    /// <param name="invitationId"></param>
     /// <returns></returns>
-    public async Task<(InvitationDto? Entity, int? StatusCode, string? ErrorMessage)> GetInvitationAsync(Guid id)
+    public async Task<(InvitationDto? Entity, int? StatusCode, string? ErrorMessage)> GetInvitationAsync(Guid invitationId)
     {
         var invitation = await _context.Invitations
-        .Include(i => i.Sender)
-        .Include(i => i.Receiver)
-        .Include(i => i.Vacancy)
-        .Include(i => i.Resume)
-        .FirstOrDefaultAsync(i => i.Id == id);
+            .Include(i => i.Sender)
+            .Include(i => i.Receiver)
+            .Include(i => i.Vacancy)
+            .Include(i => i.Resume)
+            .FirstOrDefaultAsync(i => i.Id == invitationId);
         if (invitation == null)
             return (null, StatusCodes.Status404NotFound, ErrorMessages.EntityNotFound(nameof(Invitation)));
         return (MapToInvitationDto(invitation), null, null);
@@ -58,13 +58,13 @@ public class AdminInvitationService(StudHunterDbContext context) : BaseInvitatio
         : _context.Invitations.Where(i => i.ReceiverId == userId);
 
         var invitations = await query
-        .Include(i => i.Sender)
-        .Include(i => i.Receiver)
-        .Include(i => i.Vacancy)
-        .Include(i => i.Resume)
-        .Select(i => MapToInvitationDto(i))
-        .OrderByDescending(i => i.CreatedAt)
-        .ToListAsync();
+            .Include(i => i.Sender)
+            .Include(i => i.Receiver)
+            .Include(i => i.Vacancy)
+            .Include(i => i.Resume)
+            .Select(i => MapToInvitationDto(i))
+            .OrderByDescending(i => i.CreatedAt)
+            .ToListAsync();
         return (invitations, null, null);
     }
 
@@ -77,7 +77,7 @@ public class AdminInvitationService(StudHunterDbContext context) : BaseInvitatio
     public async Task<(bool Success, int? StatusCode, string? ErrorMessage)> UpdateInvitationStatusAsync(Guid id, string status)
     {
         var invitation = await _context.Invitations
-        .FirstOrDefaultAsync(i => i.Id == id);
+            .FirstOrDefaultAsync(i => i.Id == id);
         if (invitation == null)
             return (false, StatusCodes.Status404NotFound, ErrorMessages.EntityNotFound(nameof(Invitation)));
         if (!Enum.TryParse<Invitation.InvitationStatus>(status, out var newStatus))

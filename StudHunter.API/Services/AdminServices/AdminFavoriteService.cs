@@ -1,6 +1,4 @@
-﻿using Microsoft.EntityFrameworkCore;
-using StudHunter.API.ModelsDto.Favorite;
-using StudHunter.API.Services.BaseServices;
+﻿using StudHunter.API.Services.BaseServices;
 using StudHunter.DB.Postgres;
 
 namespace StudHunter.API.Services.AdminServices;

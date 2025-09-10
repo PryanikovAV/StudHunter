@@ -1,7 +1,7 @@
 ﻿using Microsoft.EntityFrameworkCore;
 using StudHunter.API.Common;
-using StudHunter.API.ModelsDto.Auth;
-using StudHunter.API.ModelsDto.Employer;
+using StudHunter.API.ModelsDto.AuthDto;
+using StudHunter.API.ModelsDto.EmployerDto;
 using StudHunter.API.Services.BaseServices;
 using StudHunter.DB.Postgres;
 using StudHunter.DB.Postgres.Models;
@@ -27,14 +27,14 @@ public class EmployerService(StudHunterDbContext context, IPasswordHasher passwo
         var employer = await _context.Employers
             .Include(s => s.Achievements).ThenInclude(ua => ua.AchievementTemplate)
             .Include(e => e.Vacancies)
-            .FirstOrDefaultAsync(e => e.Id == employerId && !e.IsDeleted);
+            .FirstOrDefaultAsync(e => e.Id == employerId);
 
         if (employer == null)
             return (null, StatusCodes.Status404NotFound, ErrorMessages.EntityNotFound(nameof(Employer)));
 
         if (employer.Id != authUserId)
         {
-            var isStudent = await _context.Students.AnyAsync(s => s.Id == authUserId && !s.IsDeleted);
+            var isStudent = await _context.Students.AnyAsync(s => s.Id == authUserId);
             if (!isStudent || !employer.AccreditationStatus)
                 return (null, StatusCodes.Status403Forbidden, ErrorMessages.RestrictOwnProfileAction("get", nameof(Employer)));
         }
@@ -53,7 +53,7 @@ public class EmployerService(StudHunterDbContext context, IPasswordHasher passwo
         var employer = await _context.Employers
             .Include(s => s.Achievements).ThenInclude(ua => ua.AchievementTemplate)
             .Include(e => e.Vacancies)
-            .FirstOrDefaultAsync(e => e.Email == email && !e.IsDeleted);
+            .FirstOrDefaultAsync(e => e.Email == email);
 
         if (employer == null)
             return (null, StatusCodes.Status404NotFound, ErrorMessages.EntityNotFound(nameof(Employer)));
@@ -76,13 +76,9 @@ public class EmployerService(StudHunterDbContext context, IPasswordHasher passwo
     /// <returns>A tuple containing the employer's details, an optional status code, and an optional error message.</returns>
     public async Task<(List<EmployerDto>? Entities, int? StatusCode, string? ErrorMessage)> GetEmployersBySpecializationAsync(string? specialization, Guid authUserId)
     {
-        var isUser = await _context.Users.FirstOrDefaultAsync(u => u.Id == authUserId && !u.IsDeleted);
+        var isUser = await _context.Users.FindAsync(authUserId);
         if (isUser == null)
-            return (null, StatusCodes.Status401Unauthorized, "Invalid user ID.");
-        if (isUser is Student && isUser.IsDeleted)
-            return (null, StatusCodes.Status403Forbidden, ErrorMessages.EntityAlreadyDeleted(nameof(Student), nameof(AuthService.RecoverAccountAsync)));
-        if (isUser is Employer && isUser.IsDeleted)
-            return (null, StatusCodes.Status403Forbidden, ErrorMessages.EntityAlreadyDeleted(nameof(Employer), nameof(AuthService.RecoverAccountAsync)));
+            return (null, StatusCodes.Status401Unauthorized, $"Invalid {nameof(User.Id)}.");
         if (isUser is Employer isEmployer && !isEmployer.AccreditationStatus)
             return (null, StatusCodes.Status403Forbidden, $"{nameof(Employer)} is not accredited.");
 
@@ -90,7 +86,7 @@ public class EmployerService(StudHunterDbContext context, IPasswordHasher passwo
             .Include(e => e.Achievements).ThenInclude(ua => ua.AchievementTemplate)
             .Include(e => e.Vacancies)
             .OrderByDescending(e => e.Name)
-            .Where(e => !e.IsDeleted && e.AccreditationStatus);
+            .Where(e => e.AccreditationStatus);
 
         if (!string.IsNullOrEmpty(specialization))
             query = query.Where(e => e.Specialization != null && e.Specialization.Contains(specialization));
@@ -109,8 +105,11 @@ public class EmployerService(StudHunterDbContext context, IPasswordHasher passwo
     /// <returns>A tuple containing the employer DTO, an optional status code, and an optional error message.</returns>
     public async Task<(EmployerDto? Entity, int? StatusCode, string? ErrorMessage)> CreateEmployerAsync(RegisterEmployerDto dto)
     {
-        if (await _context.Users.AnyAsync(u => u.Email == dto.Email))
-            return (null, StatusCodes.Status409Conflict, ErrorMessages.EntityAlreadyExists(nameof(User), "email"));
+        var userExists = await _context.Users
+            .IgnoreQueryFilters()
+            .AnyAsync(u => u.Email == dto.Email);
+        if (userExists)
+            return (null, StatusCodes.Status409Conflict, ErrorMessages.EntityAlreadyExists(nameof(User), nameof(User.Email)));
 
         var employer = new Employer
         {
@@ -146,14 +145,12 @@ public class EmployerService(StudHunterDbContext context, IPasswordHasher passwo
         var employer = await _context.Employers
             .Include(s => s.Achievements).ThenInclude(ua => ua.AchievementTemplate)
             .Include(e => e.Vacancies)
-            .FirstOrDefaultAsync(e => e.Id == employerId && !e.IsDeleted);
+            .FirstOrDefaultAsync(e => e.Id == employerId);
 
         if (employer == null)
             return (false, StatusCodes.Status404NotFound, ErrorMessages.EntityNotFound(nameof(Employer)));
         if (employer.Id != authUserId)
             return (false, StatusCodes.Status403Forbidden, ErrorMessages.RestrictOwnProfileAction("update", nameof(Employer)));
-        if (employer.IsDeleted)
-            return (false, StatusCodes.Status410Gone, ErrorMessages.EntityAlreadyDeleted(nameof(Employer), nameof(AuthService.RecoverAccountAsync)));
         if (dto.Email != null && await _context.Employers.AnyAsync(s => s.Email == dto.Email && s.Id != employerId))
             return (false, StatusCodes.Status409Conflict, ErrorMessages.EntityAlreadyExists(nameof(Employer), nameof(Employer.Email)));
         if (dto.ContactPhone != null && await _context.Employers.AnyAsync(e => e.ContactPhone == dto.ContactPhone && e.Id != employerId))
@@ -191,14 +188,12 @@ public class EmployerService(StudHunterDbContext context, IPasswordHasher passwo
         var employer = await _context.Employers
             .Include(s => s.Achievements).ThenInclude(ua => ua.AchievementTemplate)
             .Include(e => e.Vacancies)
-            .FirstOrDefaultAsync(e => e.Id == employerId && !e.IsDeleted);
+            .FirstOrDefaultAsync(e => e.Id == employerId);
 
         if (employer == null)
             return (false, StatusCodes.Status404NotFound, ErrorMessages.EntityNotFound(nameof(Employer)));
         if (employer.Id != authUserId)
             return (false, StatusCodes.Status403Forbidden, ErrorMessages.RestrictOwnProfileAction("delete", nameof(Employer)));
-        if (employer.IsDeleted)
-            return (false, StatusCodes.Status410Gone, ErrorMessages.EntityAlreadyDeleted(nameof(Employer), nameof(AuthService.RecoverAccountAsync)));
 
         employer.IsDeleted = true;
         employer.DeletedAt = DateTime.UtcNow;
@@ -206,7 +201,7 @@ public class EmployerService(StudHunterDbContext context, IPasswordHasher passwo
         if (employer.Vacancies != null)
         {
             var vacancies = await _context.Vacancies
-                .Where(v => v.EmployerId == employer.Id && !v.IsDeleted)
+                .Where(v => v.EmployerId == employer.Id)
                 .ToListAsync();
 
             foreach (var vacancy in vacancies)

@@ -1,8 +1,9 @@
 ﻿using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using StudHunter.API.Controllers.v1.BaseControllers;
-using StudHunter.API.ModelsDto.UserAchievement;
+using StudHunter.API.ModelsDto.UserAchievementDto;
 using StudHunter.API.Services.AdminServices;
+using StudHunter.DB.Postgres.Models;
 
 namespace StudHunter.API.Controllers.v1.AdminControllers;
 
@@ -11,7 +12,7 @@ namespace StudHunter.API.Controllers.v1.AdminControllers;
 /// </summary>
 [Route("api/v1/admin/[controller]")]
 [ApiController]
-[Authorize(Roles = "Administrator")]
+[Authorize(Roles = nameof(Administrator))]
 public class AdminUserAchievementController(AdminUserAchievementService adminUserAchievementService) : BaseController
 {
     private readonly AdminUserAchievementService _adminUserAchievementService = adminUserAchievementService;
@@ -30,7 +31,7 @@ public class AdminUserAchievementController(AdminUserAchievementService adminUse
     public async Task<IActionResult> GetAllUserAchievements()
     {
         var (achievements, statusCode, errorMessage) = await _adminUserAchievementService.GetAllUserAchievementsAsync();
-        return CreateAPIError(achievements, statusCode, errorMessage);
+        return HandleResponse(achievements, statusCode, errorMessage);
     }
 
     /// <summary>
@@ -51,7 +52,7 @@ public class AdminUserAchievementController(AdminUserAchievementService adminUse
     public async Task<IActionResult> GetUserAchievement(Guid userId, Guid achievementTemplateId)
     {
         var (achievement, statusCode, errorMessage) = await _adminUserAchievementService.GetUserAchievementAsync(userId, achievementTemplateId);
-        return CreateAPIError(achievement, statusCode, errorMessage);
+        return HandleResponse(achievement, statusCode, errorMessage);
     }
 
     /// <summary>
@@ -74,11 +75,14 @@ public class AdminUserAchievementController(AdminUserAchievementService adminUse
     [ProducesResponseType(typeof(object), StatusCodes.Status409Conflict)]
     public async Task<IActionResult> GrantAchievement([FromBody] GrantAchievementDto dto)
     {
-        if (!ModelState.IsValid)
-            return ValidationError();
+        if (!ValidateModel())
+        {
+            var errors = ModelState.Values.SelectMany(v => v.Errors).Select(e => e.ErrorMessage).ToList();
+            return HandleResponse<bool>(false, StatusCodes.Status400BadRequest, string.Join("; ", errors));
+        }
 
         var (success, statusCode, errorMessage) = await _adminUserAchievementService.GrantAchievementAsync(dto.UserId, dto.AchievementTemplateId);
-        return CreateAPIError<UserAchievementDto>(success, statusCode, errorMessage);
+        return HandleResponse(success, statusCode, errorMessage);
     }
 
     /// <summary>
@@ -101,6 +105,6 @@ public class AdminUserAchievementController(AdminUserAchievementService adminUse
     public async Task<IActionResult> DeleteUserAchievement(Guid userId, Guid achievementTemplateId)
     {
         var (success, statusCode, errorMessage) = await _adminUserAchievementService.DeleteUserAchievementAsync(userId, achievementTemplateId);
-        return CreateAPIError<UserAchievementDto>(success, statusCode, errorMessage);
+        return HandleResponse(success, statusCode, errorMessage);
     }
 }

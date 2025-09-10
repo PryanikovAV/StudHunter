@@ -2,7 +2,7 @@
 using Microsoft.AspNetCore.Mvc;
 using StudHunter.API.Common;
 using StudHunter.API.Controllers.v1.BaseControllers;
-using StudHunter.API.ModelsDto.UserAchievement;
+using StudHunter.API.ModelsDto.UserAchievementDto;
 using StudHunter.API.Services;
 using System.Security.Claims;
 
@@ -31,11 +31,10 @@ public class UserAchievementController(UserAchievementService userAchievementSer
     [ProducesResponseType(typeof(object), StatusCodes.Status404NotFound)]
     public async Task<IActionResult> GetAllUserAchievements()
     {
-        var userIdString = User.FindFirstValue(ClaimTypes.NameIdentifier);
-        if (!Guid.TryParse(userIdString, out var userId))
-            return CreateAPIError<List<UserAchievementDto>>(null, StatusCodes.Status401Unauthorized, ErrorMessages.InvalidTokenUserId());
+        if (!Guid.TryParse(User.FindFirstValue(ClaimTypes.NameIdentifier), out var authUserId))
+            return HandleResponse<bool>(false, StatusCodes.Status401Unauthorized, ErrorMessages.InvalidTokenUserId());
 
-        var (achievements, statusCode, errorMessage) = await _userAchievementService.GetAllUserAchievementsByUserAsync(userId);
-        return CreateAPIError(achievements, statusCode, errorMessage);
+        var (achievements, statusCode, errorMessage) = await _userAchievementService.GetAllUserAchievementsByUserAsync(authUserId);
+        return HandleResponse(achievements, statusCode, errorMessage);
     }
 }

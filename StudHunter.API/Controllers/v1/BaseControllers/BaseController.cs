@@ -27,11 +27,11 @@ public class BaseController : ControllerBase
     {
         if (statusCode.HasValue)
             return StatusCode(statusCode.Value, new { error = errorMessage, errorCode = statusCode.Value });
-        if (entity == null)
-            return Ok();
+
         if (!string.IsNullOrEmpty(actionName))
             return CreatedAtAction(actionName, routeValues, entity);
-        return Ok();
+        
+        return Ok(entity);
     }
 
     // PUT, DELETE

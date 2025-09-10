@@ -1,4 +1,4 @@
-﻿using StudHunter.API.ModelsDto.Vacancy;
+﻿using StudHunter.API.ModelsDto.VacancyDto;
 using StudHunter.DB.Postgres;
 using StudHunter.DB.Postgres.Models;
 
@@ -6,9 +6,9 @@ namespace StudHunter.API.Services.BaseServices;
 
 public abstract class BaseVacancyService(StudHunterDbContext context) : BaseService(context)
 {
-    protected TDto MapToVacancyDto<TDto>(Vacancy vacancy) where TDto : VacancyDto, new()
+    protected VacancyDto MapToVacancyDto(Vacancy vacancy)
     {
-        var dto = new TDto
+        return new VacancyDto
         {
             Id = vacancy.Id,
             EmployerId = vacancy.EmployerId,
@@ -19,12 +19,5 @@ public abstract class BaseVacancyService(StudHunterDbContext context) : BaseServ
             UpdatedAt = vacancy.UpdatedAt,
             Type = vacancy.Type.ToString()
         };
-
-        if (dto is AdminVacancyDto adminVacancyDto)
-        {
-            adminVacancyDto.IsDeleted = vacancy.IsDeleted;
-        }
-
-        return dto;
     }
 }

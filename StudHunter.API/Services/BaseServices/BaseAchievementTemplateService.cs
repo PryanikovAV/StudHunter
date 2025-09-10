@@ -1,4 +1,4 @@
-﻿using StudHunter.API.ModelsDto.AchievementTemplate;
+﻿using StudHunter.API.ModelsDto.AchievementTemplateDto;
 using StudHunter.DB.Postgres;
 using StudHunter.DB.Postgres.Models;
 

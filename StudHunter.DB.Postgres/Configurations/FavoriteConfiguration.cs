@@ -20,10 +20,6 @@ public class FavoriteConfiguration : IEntityTypeConfiguration<Favorite>
                .HasColumnType("UUID")
                .IsRequired(false);
 
-        builder.Property(f => f.ResumeId)
-               .HasColumnType("UUID")
-               .IsRequired(false);
-
         builder.Property(f => f.EmployerId)
                .HasColumnType("UUID")
                .IsRequired(false);
@@ -41,16 +37,12 @@ public class FavoriteConfiguration : IEntityTypeConfiguration<Favorite>
                .WithMany(u => u.Favorites)
                .HasForeignKey(f => f.UserId)
                .OnDelete(DeleteBehavior.Cascade)
-               .IsRequired(false);
+               .IsRequired();
 
         builder.HasOne(f => f.Vacancy)
                .WithMany()
                .HasForeignKey(f => f.VacancyId)
-               .IsRequired(false);
-
-        builder.HasOne(f => f.Resume)
-               .WithMany()
-               .HasForeignKey(f => f.ResumeId)
+               .OnDelete(DeleteBehavior.Cascade)
                .IsRequired(false);
 
         builder.HasOne(f => f.Employer)
@@ -62,15 +54,23 @@ public class FavoriteConfiguration : IEntityTypeConfiguration<Favorite>
         builder.HasOne(f => f.Student)
                .WithMany()
                .HasForeignKey(f => f.StudentId)
+               .OnDelete(DeleteBehavior.Cascade)
                .IsRequired(false);
+
+        builder.HasIndex(f => f.UserId);
+
+        builder.HasIndex(f => f.VacancyId)
+               .HasFilter("\"EmployerId\" IS NOT NULL");
+
+        builder.HasIndex(f => f.EmployerId)
+               .HasFilter("\"EmployerId\" IS NOT NULL");
+
+        builder.HasIndex(f => f.StudentId)
+               .HasFilter("\"StudentId\" IS NOT NULL");
 
         builder.HasIndex(f => new { f.UserId, f.VacancyId })
                .IsUnique()
                .HasFilter("\"VacancyId\" IS NOT NULL");
-
-        builder.HasIndex(f => new { f.UserId, f.ResumeId })
-               .IsUnique()
-               .HasFilter("\"ResumeId\" IS NOT NULL");
 
         builder.HasIndex(f => new { f.UserId, f.EmployerId })
                .IsUnique()
