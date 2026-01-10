@@ -1,0 +1,738 @@
+{
+  "settings": {
+    "components": {
+      "code": false,
+      "binaries": false
+    },
+    "targetId": "net10.0",
+    "targetDisplayName": ".NETCoreApp,Version=v10.0"
+  },
+  "analysisStartTime": "2025-12-18T10:41:28.8092685Z",
+  "analysisEndTime": "2025-12-18T10:41:31.7852655Z",
+  "privacyModeHelpUrl": "https://go.microsoft.com/fwlink/?linkid=2270980",
+  "stats": {
+    "summary": {
+      "projects": 2,
+      "issues": 6,
+      "incidents": 24,
+      "effort": 24
+    },
+    "charts": {
+      "severity": {
+        "Mandatory": 7,
+        "Optional": 0,
+        "Potential": 17,
+        "Information": 0
+      },
+      "category": {
+        "NuGet": 9,
+        "Project": 2,
+        "Api": 13
+      }
+    }
+  },
+  "projects": [
+    {
+      "path": "StudHunter.API\\StudHunter.API.csproj",
+      "startingProject": true,
+      "issues": 5,
+      "storyPoints": 18,
+      "properties": {
+        "appName": "StudHunter.API",
+        "projectKind": "AspNetCore",
+        "frameworks": [
+          "net8.0"
+        ],
+        "languages": [
+          "C#"
+        ],
+        "tools": [
+          "MSBuild"
+        ],
+        "isSdkStyle": true,
+        "numberOfFiles": 138,
+        "numberOfCodeFiles": 136,
+        "linesTotal": 9054,
+        "linesOfCode": 9032,
+        "totalApiScanned": 9920,
+        "minLinesOfCodeToChange": 13,
+        "maxLinesOfCodeToChange": 13
+      },
+      "ruleInstances": [
+        {
+          "incidentId": "a5be1ab6-d05a-4cfc-aa23-fca15591a963",
+          "ruleId": "NuGet.0002",
+          "projectPath": "StudHunter.API\\StudHunter.API.csproj",
+          "state": "Active",
+          "location": {
+            "snippetModel": {
+              "unrestricted": "Microsoft.AspNetCore.Authentication.JwtBearer, 8.0.19\n\n\u0420\u0435\u043A\u043E\u043C\u0435\u043D\u0434\u0430\u0446\u0438\u044F:\n\nRemove Microsoft.AspNetCore.Authentication.JwtBearer, and replace with new package Microsoft.AspNetCore.Authentication.JwtBearer 10.0.1",
+              "protected": "Microsoft.AspNetCore.Authentication.JwtBearer, 8.0.19\n\n\u0420\u0435\u043A\u043E\u043C\u0435\u043D\u0434\u0430\u0446\u0438\u044F:\n\nRemove Microsoft.AspNetCore.Authentication.JwtBearer, and replace with new package Microsoft.AspNetCore.Authentication.JwtBearer 10.0.1"
+            },
+            "kind": "File",
+            "path": "StudHunter.API\\StudHunter.API.csproj",
+            "snippet": "Microsoft.AspNetCore.Authentication.JwtBearer, 8.0.19\n\n\u0420\u0435\u043A\u043E\u043C\u0435\u043D\u0434\u0430\u0446\u0438\u044F:\n\nRemove Microsoft.AspNetCore.Authentication.JwtBearer, and replace with new package Microsoft.AspNetCore.Authentication.JwtBearer 10.0.1",
+            "protectedSnippet": "Microsoft.AspNetCore.Authentication.JwtBearer, 8.0.19\n\n\u0420\u0435\u043A\u043E\u043C\u0435\u043D\u0434\u0430\u0446\u0438\u044F:\n\nRemove Microsoft.AspNetCore.Authentication.JwtBearer, and replace with new package Microsoft.AspNetCore.Authentication.JwtBearer 10.0.1",
+            "label": "Microsoft.AspNetCore.Authentication.JwtBearer 8.0.19",
+            "properties": {
+              "PackageId": "Microsoft.AspNetCore.Authentication.JwtBearer",
+              "PackageVersion": "8.0.19",
+              "PackageNewVersion": "10.0.1",
+              "PackageReplacements": null
+            }
+          }
+        },
+        {
+          "incidentId": "9a986d1b-f6e3-4a32-9aa8-543a42ae8643",
+          "ruleId": "NuGet.0002",
+          "projectPath": "StudHunter.API\\StudHunter.API.csproj",
+          "state": "Active",
+          "location": {
+            "snippetModel": {
+              "unrestricted": "Microsoft.EntityFrameworkCore.Design, 9.0.8\n\n\u0420\u0435\u043A\u043E\u043C\u0435\u043D\u0434\u0430\u0446\u0438\u044F:\n\nRemove Microsoft.EntityFrameworkCore.Design, and replace with new package Microsoft.EntityFrameworkCore.Design 10.0.1",
+              "protected": "Microsoft.EntityFrameworkCore.Design, 9.0.8\n\n\u0420\u0435\u043A\u043E\u043C\u0435\u043D\u0434\u0430\u0446\u0438\u044F:\n\nRemove Microsoft.EntityFrameworkCore.Design, and replace with new package Microsoft.EntityFrameworkCore.Design 10.0.1"
+            },
+            "kind": "File",
+            "path": "StudHunter.API\\StudHunter.API.csproj",
+            "snippet": "Microsoft.EntityFrameworkCore.Design, 9.0.8\n\n\u0420\u0435\u043A\u043E\u043C\u0435\u043D\u0434\u0430\u0446\u0438\u044F:\n\nRemove Microsoft.EntityFrameworkCore.Design, and replace with new package Microsoft.EntityFrameworkCore.Design 10.0.1",
+            "protectedSnippet": "Microsoft.EntityFrameworkCore.Design, 9.0.8\n\n\u0420\u0435\u043A\u043E\u043C\u0435\u043D\u0434\u0430\u0446\u0438\u044F:\n\nRemove Microsoft.EntityFrameworkCore.Design, and replace with new package Microsoft.EntityFrameworkCore.Design 10.0.1",
+            "label": "Microsoft.EntityFrameworkCore.Design 9.0.8",
+            "properties": {
+              "PackageId": "Microsoft.EntityFrameworkCore.Design",
+              "PackageVersion": "9.0.8",
+              "PackageNewVersion": "10.0.1",
+              "PackageReplacements": null
+            }
+          }
+        },
+        {
+          "incidentId": "2bfbed89-a86a-4e57-8107-e7e6e9d2aa73",
+          "ruleId": "NuGet.0002",
+          "projectPath": "StudHunter.API\\StudHunter.API.csproj",
+          "state": "Active",
+          "location": {
+            "snippetModel": {
+              "unrestricted": "Microsoft.EntityFrameworkCore.Tools, 9.0.8\n\n\u0420\u0435\u043A\u043E\u043C\u0435\u043D\u0434\u0430\u0446\u0438\u044F:\n\nRemove Microsoft.EntityFrameworkCore.Tools, and replace with new package Microsoft.EntityFrameworkCore.Tools 10.0.1",
+              "protected": "Microsoft.EntityFrameworkCore.Tools, 9.0.8\n\n\u0420\u0435\u043A\u043E\u043C\u0435\u043D\u0434\u0430\u0446\u0438\u044F:\n\nRemove Microsoft.EntityFrameworkCore.Tools, and replace with new package Microsoft.EntityFrameworkCore.Tools 10.0.1"
+            },
+            "kind": "File",
+            "path": "StudHunter.API\\StudHunter.API.csproj",
+            "snippet": "Microsoft.EntityFrameworkCore.Tools, 9.0.8\n\n\u0420\u0435\u043A\u043E\u043C\u0435\u043D\u0434\u0430\u0446\u0438\u044F:\n\nRemove Microsoft.EntityFrameworkCore.Tools, and replace with new package Microsoft.EntityFrameworkCore.Tools 10.0.1",
+            "protectedSnippet": "Microsoft.EntityFrameworkCore.Tools, 9.0.8\n\n\u0420\u0435\u043A\u043E\u043C\u0435\u043D\u0434\u0430\u0446\u0438\u044F:\n\nRemove Microsoft.EntityFrameworkCore.Tools, and replace with new package Microsoft.EntityFrameworkCore.Tools 10.0.1",
+            "label": "Microsoft.EntityFrameworkCore.Tools 9.0.8",
+            "properties": {
+              "PackageId": "Microsoft.EntityFrameworkCore.Tools",
+              "PackageVersion": "9.0.8",
+              "PackageNewVersion": "10.0.1",
+              "PackageReplacements": null
+            }
+          }
+        },
+        {
+          "incidentId": "902d1169-a284-4814-b210-91e9be2b27f9",
+          "ruleId": "NuGet.0002",
+          "projectPath": "StudHunter.API\\StudHunter.API.csproj",
+          "state": "Active",
+          "location": {
+            "snippetModel": {
+              "unrestricted": "Microsoft.VisualStudio.Web.CodeGeneration.Design, 9.0.0\n\n\u0420\u0435\u043A\u043E\u043C\u0435\u043D\u0434\u0430\u0446\u0438\u044F:\n\nRemove Microsoft.VisualStudio.Web.CodeGeneration.Design, and replace with new package Microsoft.VisualStudio.Web.CodeGeneration.Design 10.0.0",
+              "protected": "Microsoft.VisualStudio.Web.CodeGeneration.Design, 9.0.0\n\n\u0420\u0435\u043A\u043E\u043C\u0435\u043D\u0434\u0430\u0446\u0438\u044F:\n\nRemove Microsoft.VisualStudio.Web.CodeGeneration.Design, and replace with new package Microsoft.VisualStudio.Web.CodeGeneration.Design 10.0.0"
+            },
+            "kind": "File",
+            "path": "StudHunter.API\\StudHunter.API.csproj",
+            "snippet": "Microsoft.VisualStudio.Web.CodeGeneration.Design, 9.0.0\n\n\u0420\u0435\u043A\u043E\u043C\u0435\u043D\u0434\u0430\u0446\u0438\u044F:\n\nRemove Microsoft.VisualStudio.Web.CodeGeneration.Design, and replace with new package Microsoft.VisualStudio.Web.CodeGeneration.Design 10.0.0",
+            "protectedSnippet": "Microsoft.VisualStudio.Web.CodeGeneration.Design, 9.0.0\n\n\u0420\u0435\u043A\u043E\u043C\u0435\u043D\u0434\u0430\u0446\u0438\u044F:\n\nRemove Microsoft.VisualStudio.Web.CodeGeneration.Design, and replace with new package Microsoft.VisualStudio.Web.CodeGeneration.Design 10.0.0",
+            "label": "Microsoft.VisualStudio.Web.CodeGeneration.Design 9.0.0",
+            "properties": {
+              "PackageId": "Microsoft.VisualStudio.Web.CodeGeneration.Design",
+              "PackageVersion": "9.0.0",
+              "PackageNewVersion": "10.0.0",
+              "PackageReplacements": null
+            }
+          }
+        },
+        {
+          "incidentId": "4cb768f8-d6ac-424d-b4c7-ff7b6d2c2140",
+          "ruleId": "Project.0002",
+          "projectPath": "StudHunter.API\\StudHunter.API.csproj",
+          "state": "Active",
+          "location": {
+            "snippetModel": {
+              "unrestricted": "\u0422\u0435\u043A\u0443\u0449\u0430\u044F \u0446\u0435\u043B\u0435\u0432\u0430\u044F \u043F\u043B\u0430\u0442\u0444\u043E\u0440\u043C\u0430: net8.0\n\u0420\u0435\u043A\u043E\u043C\u0435\u043D\u0434\u0443\u0435\u043C\u0430\u044F \u0446\u0435\u043B\u0435\u0432\u0430\u044F \u043F\u043B\u0430\u0442\u0444\u043E\u0440\u043C\u0430: net10.0",
+              "protected": "\u0422\u0435\u043A\u0443\u0449\u0430\u044F \u0446\u0435\u043B\u0435\u0432\u0430\u044F \u043F\u043B\u0430\u0442\u0444\u043E\u0440\u043C\u0430: net8.0\n\u0420\u0435\u043A\u043E\u043C\u0435\u043D\u0434\u0443\u0435\u043C\u0430\u044F \u0446\u0435\u043B\u0435\u0432\u0430\u044F \u043F\u043B\u0430\u0442\u0444\u043E\u0440\u043C\u0430: net10.0"
+            },
+            "kind": "File",
+            "path": "StudHunter.API\\StudHunter.API.csproj",
+            "snippet": "\u0422\u0435\u043A\u0443\u0449\u0430\u044F \u0446\u0435\u043B\u0435\u0432\u0430\u044F \u043F\u043B\u0430\u0442\u0444\u043E\u0440\u043C\u0430: net8.0\n\u0420\u0435\u043A\u043E\u043C\u0435\u043D\u0434\u0443\u0435\u043C\u0430\u044F \u0446\u0435\u043B\u0435\u0432\u0430\u044F \u043F\u043B\u0430\u0442\u0444\u043E\u0440\u043C\u0430: net10.0",
+            "protectedSnippet": "\u0422\u0435\u043A\u0443\u0449\u0430\u044F \u0446\u0435\u043B\u0435\u0432\u0430\u044F \u043F\u043B\u0430\u0442\u0444\u043E\u0440\u043C\u0430: net8.0\n\u0420\u0435\u043A\u043E\u043C\u0435\u043D\u0434\u0443\u0435\u043C\u0430\u044F \u0446\u0435\u043B\u0435\u0432\u0430\u044F \u043F\u043B\u0430\u0442\u0444\u043E\u0440\u043C\u0430: net10.0",
+            "properties": {
+              "CurrentTargetFramework": "net8.0",
+              "RecommendedTargetFramework": "net10.0"
+            }
+          }
+        },
+        {
+          "incidentId": "584e55de-09a3-4f43-8a81-d80a945038f7",
+          "ruleId": "Api.0001",
+          "description": "API is unavailable in net8.0 ",
+          "projectPath": "StudHunter.API\\StudHunter.API.csproj",
+          "state": "Active",
+          "location": {
+            "snippetModel": {
+              "unrestricted": "return new JwtSecurityTokenHandler().WriteToken(token);",
+              "protected": "T:System.IdentityModel.Tokens.Jwt.JwtSecurityTokenHandler"
+            },
+            "kind": "File",
+            "path": "StudHunter.API\\Services\\AuthService.cs",
+            "snippet": "return new JwtSecurityTokenHandler().WriteToken(token);",
+            "protectedSnippet": "T:System.IdentityModel.Tokens.Jwt.JwtSecurityTokenHandler",
+            "label": "T:System.IdentityModel.Tokens.Jwt.JwtSecurityTokenHandler",
+            "line": 141,
+            "column": 8
+          }
+        },
+        {
+          "incidentId": "83fd307d-3478-4e85-a12c-3d9667d77cef",
+          "ruleId": "Api.0001",
+          "description": "API is unavailable in net8.0 ",
+          "projectPath": "StudHunter.API\\StudHunter.API.csproj",
+          "state": "Active",
+          "location": {
+            "snippetModel": {
+              "unrestricted": "return new JwtSecurityTokenHandler().WriteToken(token);",
+              "protected": "M:System.IdentityModel.Tokens.Jwt.JwtSecurityTokenHandler.#ctor"
+            },
+            "kind": "File",
+            "path": "StudHunter.API\\Services\\AuthService.cs",
+            "snippet": "return new JwtSecurityTokenHandler().WriteToken(token);",
+            "protectedSnippet": "M:System.IdentityModel.Tokens.Jwt.JwtSecurityTokenHandler.#ctor",
+            "label": "M:System.IdentityModel.Tokens.Jwt.JwtSecurityTokenHandler.#ctor",
+            "line": 141,
+            "column": 8
+          }
+        },
+        {
+          "incidentId": "fc2a361c-a2ea-4df1-ba6a-44d6ab3a1b9e",
+          "ruleId": "Api.0001",
+          "description": "API is unavailable in net8.0 ",
+          "projectPath": "StudHunter.API\\StudHunter.API.csproj",
+          "state": "Active",
+          "location": {
+            "snippetModel": {
+              "unrestricted": "return new JwtSecurityTokenHandler().WriteToken(token);",
+              "protected": "M:System.IdentityModel.Tokens.Jwt.JwtSecurityTokenHandler.WriteToken(Microsoft.IdentityModel.Tokens.SecurityToken)"
+            },
+            "kind": "File",
+            "path": "StudHunter.API\\Services\\AuthService.cs",
+            "snippet": "return new JwtSecurityTokenHandler().WriteToken(token);",
+            "protectedSnippet": "M:System.IdentityModel.Tokens.Jwt.JwtSecurityTokenHandler.WriteToken(Microsoft.IdentityModel.Tokens.SecurityToken)",
+            "label": "M:System.IdentityModel.Tokens.Jwt.JwtSecurityTokenHandler.WriteToken(Microsoft.IdentityModel.Tokens.SecurityToken)",
+            "line": 141,
+            "column": 8
+          }
+        },
+        {
+          "incidentId": "e7e72475-b30b-4ecb-a53f-d3d51eb028fe",
+          "ruleId": "Api.0001",
+          "description": "API is unavailable in net8.0 ",
+          "projectPath": "StudHunter.API\\StudHunter.API.csproj",
+          "state": "Active",
+          "location": {
+            "snippetModel": {
+              "unrestricted": "var token = new JwtSecurityToken(\r\n        issuer: issuer,\r\n        audience: audience,\r\n        claims: claims,\r\n        expires: DateTime.Now.AddDays(1),\r\n        signingCredentials: creds);",
+              "protected": "T:System.IdentityModel.Tokens.Jwt.JwtSecurityToken"
+            },
+            "kind": "File",
+            "path": "StudHunter.API\\Services\\AuthService.cs",
+            "snippet": "var token = new JwtSecurityToken(\r\n        issuer: issuer,\r\n        audience: audience,\r\n        claims: claims,\r\n        expires: DateTime.Now.AddDays(1),\r\n        signingCredentials: creds);",
+            "protectedSnippet": "T:System.IdentityModel.Tokens.Jwt.JwtSecurityToken",
+            "label": "T:System.IdentityModel.Tokens.Jwt.JwtSecurityToken",
+            "line": 134,
+            "column": 8
+          }
+        },
+        {
+          "incidentId": "9153d77a-8c5d-4793-87c9-2146957397b7",
+          "ruleId": "Api.0001",
+          "description": "API is unavailable in net8.0 ",
+          "projectPath": "StudHunter.API\\StudHunter.API.csproj",
+          "state": "Active",
+          "location": {
+            "snippetModel": {
+              "unrestricted": "var token = new JwtSecurityToken(\r\n        issuer: issuer,\r\n        audience: audience,\r\n        claims: claims,\r\n        expires: DateTime.Now.AddDays(1),\r\n        signingCredentials: creds);",
+              "protected": "M:System.IdentityModel.Tokens.Jwt.JwtSecurityToken.#ctor(System.String,System.String,System.Collections.Generic.IEnumerable{System.Security.Claims.Claim},System.Nullable{System.DateTime},System.Nullable{System.DateTime},Microsoft.IdentityModel.Tokens.SigningCredentials)"
+            },
+            "kind": "File",
+            "path": "StudHunter.API\\Services\\AuthService.cs",
+            "snippet": "var token = new JwtSecurityToken(\r\n        issuer: issuer,\r\n        audience: audience,\r\n        claims: claims,\r\n        expires: DateTime.Now.AddDays(1),\r\n        signingCredentials: creds);",
+            "protectedSnippet": "M:System.IdentityModel.Tokens.Jwt.JwtSecurityToken.#ctor(System.String,System.String,System.Collections.Generic.IEnumerable{System.Security.Claims.Claim},System.Nullable{System.DateTime},System.Nullable{System.DateTime},Microsoft.IdentityModel.Tokens.SigningCredentials)",
+            "label": "M:System.IdentityModel.Tokens.Jwt.JwtSecurityToken.#ctor(System.String,System.String,System.Collections.Generic.IEnumerable{System.Security.Claims.Claim},System.Nullable{System.DateTime},System.Nullable{System.DateTime},Microsoft.IdentityModel.Tokens.SigningCredentials)",
+            "line": 134,
+            "column": 8
+          }
+        },
+        {
+          "incidentId": "32f30833-32da-4e6b-b333-9006f1c5b1fa",
+          "ruleId": "Api.0002",
+          "description": "API is available in package Microsoft.AspNetCore.Authentication.JwtBearer, 8.0.6. Add package reference to Microsoft.AspNetCore.Authentication.JwtBearer, 8.0.6",
+          "projectPath": "StudHunter.API\\StudHunter.API.csproj",
+          "state": "Active",
+          "location": {
+            "snippetModel": {
+              "unrestricted": "options.TokenValidationParameters = new TokenValidationParameters\r\n    {\r\n        ValidateIssuer = true,\r\n        ValidateAudience = true,\r\n        ValidateLifetime = true,\r\n        ValidateIssuerSigningKey = true,\r\n        ValidIssuer = builder.Configuration[\u0022Jwt:Issuer\u0022],\r\n        ValidAudience = builder.Configuration[\u0022Jwt:Audience\u0022],\r\n        IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(builder.Configuration[\u0022Jwt:Key\u0022] ?? throw new InvalidOperationException(\u0022JWT Key is not configured\u0022)))\r\n    };",
+              "protected": "P:Microsoft.AspNetCore.Authentication.JwtBearer.JwtBearerOptions.TokenValidationParameters"
+            },
+            "kind": "File",
+            "path": "StudHunter.API\\Program.cs",
+            "snippet": "options.TokenValidationParameters = new TokenValidationParameters\r\n    {\r\n        ValidateIssuer = true,\r\n        ValidateAudience = true,\r\n        ValidateLifetime = true,\r\n        ValidateIssuerSigningKey = true,\r\n        ValidIssuer = builder.Configuration[\u0022Jwt:Issuer\u0022],\r\n        ValidAudience = builder.Configuration[\u0022Jwt:Audience\u0022],\r\n        IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(builder.Configuration[\u0022Jwt:Key\u0022] ?? throw new InvalidOperationException(\u0022JWT Key is not configured\u0022)))\r\n    };",
+            "protectedSnippet": "P:Microsoft.AspNetCore.Authentication.JwtBearer.JwtBearerOptions.TokenValidationParameters",
+            "label": "P:Microsoft.AspNetCore.Authentication.JwtBearer.JwtBearerOptions.TokenValidationParameters",
+            "properties": {
+              "PackageId": "Microsoft.AspNetCore.Authentication.JwtBearer",
+              "PackageNewVersion": "8.0.6"
+            },
+            "line": 29,
+            "column": 4
+          }
+        },
+        {
+          "incidentId": "8169a148-2747-45c1-99b0-317182ef2271",
+          "ruleId": "Api.0002",
+          "description": "API is available in package Microsoft.AspNetCore.Authentication.JwtBearer, 8.0.6. Add package reference to Microsoft.AspNetCore.Authentication.JwtBearer, 8.0.6",
+          "projectPath": "StudHunter.API\\StudHunter.API.csproj",
+          "state": "Active",
+          "location": {
+            "snippetModel": {
+              "unrestricted": "options.DefaultChallengeScheme = JwtBearerDefaults.AuthenticationScheme;",
+              "protected": "T:Microsoft.AspNetCore.Authentication.JwtBearer.JwtBearerDefaults"
+            },
+            "kind": "File",
+            "path": "StudHunter.API\\Program.cs",
+            "snippet": "options.DefaultChallengeScheme = JwtBearerDefaults.AuthenticationScheme;",
+            "protectedSnippet": "T:Microsoft.AspNetCore.Authentication.JwtBearer.JwtBearerDefaults",
+            "label": "T:Microsoft.AspNetCore.Authentication.JwtBearer.JwtBearerDefaults",
+            "properties": {
+              "PackageId": "Microsoft.AspNetCore.Authentication.JwtBearer",
+              "PackageNewVersion": "8.0.6"
+            },
+            "line": 26,
+            "column": 4
+          }
+        },
+        {
+          "incidentId": "f0e0c2d6-1cab-44c2-a3bf-d8ddd0e7d3f0",
+          "ruleId": "Api.0002",
+          "description": "API is available in package Microsoft.AspNetCore.Authentication.JwtBearer, 8.0.6. Add package reference to Microsoft.AspNetCore.Authentication.JwtBearer, 8.0.6",
+          "projectPath": "StudHunter.API\\StudHunter.API.csproj",
+          "state": "Active",
+          "location": {
+            "snippetModel": {
+              "unrestricted": "options.DefaultChallengeScheme = JwtBearerDefaults.AuthenticationScheme;",
+              "protected": "F:Microsoft.AspNetCore.Authentication.JwtBearer.JwtBearerDefaults.AuthenticationScheme"
+            },
+            "kind": "File",
+            "path": "StudHunter.API\\Program.cs",
+            "snippet": "options.DefaultChallengeScheme = JwtBearerDefaults.AuthenticationScheme;",
+            "protectedSnippet": "F:Microsoft.AspNetCore.Authentication.JwtBearer.JwtBearerDefaults.AuthenticationScheme",
+            "label": "F:Microsoft.AspNetCore.Authentication.JwtBearer.JwtBearerDefaults.AuthenticationScheme",
+            "properties": {
+              "PackageId": "Microsoft.AspNetCore.Authentication.JwtBearer",
+              "PackageNewVersion": "8.0.6"
+            },
+            "line": 26,
+            "column": 4
+          }
+        },
+        {
+          "incidentId": "987cd4d2-0a25-4b1a-8ab5-1be84a65856f",
+          "ruleId": "Api.0002",
+          "description": "API is available in package Microsoft.AspNetCore.Authentication.JwtBearer, 8.0.6. Add package reference to Microsoft.AspNetCore.Authentication.JwtBearer, 8.0.6",
+          "projectPath": "StudHunter.API\\StudHunter.API.csproj",
+          "state": "Active",
+          "location": {
+            "snippetModel": {
+              "unrestricted": "options.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;",
+              "protected": "T:Microsoft.AspNetCore.Authentication.JwtBearer.JwtBearerDefaults"
+            },
+            "kind": "File",
+            "path": "StudHunter.API\\Program.cs",
+            "snippet": "options.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;",
+            "protectedSnippet": "T:Microsoft.AspNetCore.Authentication.JwtBearer.JwtBearerDefaults",
+            "label": "T:Microsoft.AspNetCore.Authentication.JwtBearer.JwtBearerDefaults",
+            "properties": {
+              "PackageId": "Microsoft.AspNetCore.Authentication.JwtBearer",
+              "PackageNewVersion": "8.0.6"
+            },
+            "line": 25,
+            "column": 4
+          }
+        },
+        {
+          "incidentId": "b0eaa25e-a6fb-4664-8b50-abfbdefb5ee6",
+          "ruleId": "Api.0002",
+          "description": "API is available in package Microsoft.AspNetCore.Authentication.JwtBearer, 8.0.6. Add package reference to Microsoft.AspNetCore.Authentication.JwtBearer, 8.0.6",
+          "projectPath": "StudHunter.API\\StudHunter.API.csproj",
+          "state": "Active",
+          "location": {
+            "snippetModel": {
+              "unrestricted": "options.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;",
+              "protected": "F:Microsoft.AspNetCore.Authentication.JwtBearer.JwtBearerDefaults.AuthenticationScheme"
+            },
+            "kind": "File",
+            "path": "StudHunter.API\\Program.cs",
+            "snippet": "options.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;",
+            "protectedSnippet": "F:Microsoft.AspNetCore.Authentication.JwtBearer.JwtBearerDefaults.AuthenticationScheme",
+            "label": "F:Microsoft.AspNetCore.Authentication.JwtBearer.JwtBearerDefaults.AuthenticationScheme",
+            "properties": {
+              "PackageId": "Microsoft.AspNetCore.Authentication.JwtBearer",
+              "PackageNewVersion": "8.0.6"
+            },
+            "line": 25,
+            "column": 4
+          }
+        },
+        {
+          "incidentId": "3373b909-952c-483d-9915-8e4187e4ca3a",
+          "ruleId": "Api.0002",
+          "description": "API is available in package Microsoft.AspNetCore.Authentication.JwtBearer, 8.0.6. Add package reference to Microsoft.AspNetCore.Authentication.JwtBearer, 8.0.6",
+          "projectPath": "StudHunter.API\\StudHunter.API.csproj",
+          "state": "Active",
+          "location": {
+            "snippetModel": {
+              "unrestricted": "builder.Services.AddAuthentication(options =\u003E\r\n{\r\n    options.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;\r\n    options.DefaultChallengeScheme = JwtBearerDefaults.AuthenticationScheme;\r\n}).AddJwtBearer(options =\u003E\r\n{\r\n    options.TokenValidationParameters = new TokenValidationParameters\r\n    {\r\n        ValidateIssuer = true,\r\n        ValidateAudience = true,\r\n        ValidateLifetime = true,\r\n        ValidateIssuerSigningKey = true,\r\n        ValidIssuer = builder.Configuration[\u0022Jwt:Issuer\u0022],\r\n        ValidAudience = builder.Configuration[\u0022Jwt:Audience\u0022],\r\n        IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(builder.Configuration[\u0022Jwt:Key\u0022] ?? throw new InvalidOperationException(\u0022JWT Key is not configured\u0022)))\r\n    };\r\n});",
+              "protected": "T:Microsoft.Extensions.DependencyInjection.JwtBearerExtensions"
+            },
+            "kind": "File",
+            "path": "StudHunter.API\\Program.cs",
+            "snippet": "builder.Services.AddAuthentication(options =\u003E\r\n{\r\n    options.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;\r\n    options.DefaultChallengeScheme = JwtBearerDefaults.AuthenticationScheme;\r\n}).AddJwtBearer(options =\u003E\r\n{\r\n    options.TokenValidationParameters = new TokenValidationParameters\r\n    {\r\n        ValidateIssuer = true,\r\n        ValidateAudience = true,\r\n        ValidateLifetime = true,\r\n        ValidateIssuerSigningKey = true,\r\n        ValidIssuer = builder.Configuration[\u0022Jwt:Issuer\u0022],\r\n        ValidAudience = builder.Configuration[\u0022Jwt:Audience\u0022],\r\n        IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(builder.Configuration[\u0022Jwt:Key\u0022] ?? throw new InvalidOperationException(\u0022JWT Key is not configured\u0022)))\r\n    };\r\n});",
+            "protectedSnippet": "T:Microsoft.Extensions.DependencyInjection.JwtBearerExtensions",
+            "label": "T:Microsoft.Extensions.DependencyInjection.JwtBearerExtensions",
+            "properties": {
+              "PackageId": "Microsoft.AspNetCore.Authentication.JwtBearer",
+              "PackageNewVersion": "8.0.6"
+            },
+            "line": 23,
+            "column": 0
+          }
+        },
+        {
+          "incidentId": "84ece16c-59b1-4792-ae8b-6fa762c43b7a",
+          "ruleId": "Api.0002",
+          "description": "API is available in package Microsoft.AspNetCore.Authentication.JwtBearer, 8.0.6. Add package reference to Microsoft.AspNetCore.Authentication.JwtBearer, 8.0.6",
+          "projectPath": "StudHunter.API\\StudHunter.API.csproj",
+          "state": "Active",
+          "location": {
+            "snippetModel": {
+              "unrestricted": "builder.Services.AddAuthentication(options =\u003E\r\n{\r\n    options.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;\r\n    options.DefaultChallengeScheme = JwtBearerDefaults.AuthenticationScheme;\r\n}).AddJwtBearer(options =\u003E\r\n{\r\n    options.TokenValidationParameters = new TokenValidationParameters\r\n    {\r\n        ValidateIssuer = true,\r\n        ValidateAudience = true,\r\n        ValidateLifetime = true,\r\n        ValidateIssuerSigningKey = true,\r\n        ValidIssuer = builder.Configuration[\u0022Jwt:Issuer\u0022],\r\n        ValidAudience = builder.Configuration[\u0022Jwt:Audience\u0022],\r\n        IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(builder.Configuration[\u0022Jwt:Key\u0022] ?? throw new InvalidOperationException(\u0022JWT Key is not configured\u0022)))\r\n    };\r\n});",
+              "protected": "M:Microsoft.Extensions.DependencyInjection.JwtBearerExtensions.AddJwtBearer(Microsoft.AspNetCore.Authentication.AuthenticationBuilder,System.Action{Microsoft.AspNetCore.Authentication.JwtBearer.JwtBearerOptions})"
+            },
+            "kind": "File",
+            "path": "StudHunter.API\\Program.cs",
+            "snippet": "builder.Services.AddAuthentication(options =\u003E\r\n{\r\n    options.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;\r\n    options.DefaultChallengeScheme = JwtBearerDefaults.AuthenticationScheme;\r\n}).AddJwtBearer(options =\u003E\r\n{\r\n    options.TokenValidationParameters = new TokenValidationParameters\r\n    {\r\n        ValidateIssuer = true,\r\n        ValidateAudience = true,\r\n        ValidateLifetime = true,\r\n        ValidateIssuerSigningKey = true,\r\n        ValidIssuer = builder.Configuration[\u0022Jwt:Issuer\u0022],\r\n        ValidAudience = builder.Configuration[\u0022Jwt:Audience\u0022],\r\n        IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(builder.Configuration[\u0022Jwt:Key\u0022] ?? throw new InvalidOperationException(\u0022JWT Key is not configured\u0022)))\r\n    };\r\n});",
+            "protectedSnippet": "M:Microsoft.Extensions.DependencyInjection.JwtBearerExtensions.AddJwtBearer(Microsoft.AspNetCore.Authentication.AuthenticationBuilder,System.Action{Microsoft.AspNetCore.Authentication.JwtBearer.JwtBearerOptions})",
+            "label": "M:Microsoft.Extensions.DependencyInjection.JwtBearerExtensions.AddJwtBearer(Microsoft.AspNetCore.Authentication.AuthenticationBuilder,System.Action{Microsoft.AspNetCore.Authentication.JwtBearer.JwtBearerOptions})",
+            "properties": {
+              "PackageId": "Microsoft.AspNetCore.Authentication.JwtBearer",
+              "PackageNewVersion": "8.0.6"
+            },
+            "line": 23,
+            "column": 0
+          }
+        },
+        {
+          "incidentId": "d9a4b5e9-0e16-4e59-8a9c-f703e5bbe7ca",
+          "ruleId": "Api.0003",
+          "description": "Breaking change: Message no longer duplicated in Console log output ",
+          "projectPath": "StudHunter.API\\StudHunter.API.csproj",
+          "state": "Active",
+          "location": {
+            "snippetModel": {
+              "unrestricted": "logging.AddConsole();",
+              "protected": "M:Microsoft.Extensions.Logging.ConsoleLoggerExtensions.AddConsole(Microsoft.Extensions.Logging.ILoggingBuilder)"
+            },
+            "kind": "File",
+            "path": "StudHunter.API\\Program.cs",
+            "snippet": "logging.AddConsole();",
+            "protectedSnippet": "M:Microsoft.Extensions.Logging.ConsoleLoggerExtensions.AddConsole(Microsoft.Extensions.Logging.ILoggingBuilder)",
+            "label": "M:Microsoft.Extensions.Logging.ConsoleLoggerExtensions.AddConsole(Microsoft.Extensions.Logging.ILoggingBuilder)",
+            "links": [
+              {
+                "title": "\u0414\u043E\u043A\u0443\u043C\u0435\u043D\u0442\u0430\u0446\u0438\u044F API",
+                "url": "https://github.com/dotnet/docs/blob/main/docs/core/compatibility/extensions/10.0/console-json-logging-duplicate-messages.md",
+                "isCustom": false
+              }
+            ],
+            "line": 15,
+            "column": 4
+          }
+        }
+      ],
+      "features": [
+        {
+          "featureId": "IdentityModel",
+          "incidents": [
+            "9153d77a-8c5d-4793-87c9-2146957397b7",
+            "e7e72475-b30b-4ecb-a53f-d3d51eb028fe",
+            "fc2a361c-a2ea-4df1-ba6a-44d6ab3a1b9e",
+            "83fd307d-3478-4e85-a12c-3d9667d77cef",
+            "584e55de-09a3-4f43-8a81-d80a945038f7"
+          ]
+        }
+      ]
+    },
+    {
+      "path": "StudHunter.DB.Postgres\\StudHunter.DB.Postgres.csproj",
+      "startingProject": true,
+      "issues": 2,
+      "storyPoints": 6,
+      "properties": {
+        "appName": "StudHunter.DB.Postgres",
+        "projectKind": "ClassLibrary",
+        "frameworks": [
+          "net8.0"
+        ],
+        "languages": [
+          "C#"
+        ],
+        "tools": [
+          "MSBuild"
+        ],
+        "isSdkStyle": true,
+        "numberOfFiles": 54,
+        "numberOfCodeFiles": 54,
+        "linesTotal": 10212,
+        "linesOfCode": 10212,
+        "totalApiScanned": 13083,
+        "minLinesOfCodeToChange": 0,
+        "maxLinesOfCodeToChange": 0
+      },
+      "ruleInstances": [
+        {
+          "incidentId": "a8f2fc3c-189a-4f74-a681-889accc2c662",
+          "ruleId": "NuGet.0002",
+          "projectPath": "StudHunter.DB.Postgres\\StudHunter.DB.Postgres.csproj",
+          "state": "Active",
+          "location": {
+            "snippetModel": {
+              "unrestricted": "Microsoft.EntityFrameworkCore, 9.0.8\n\n\u0420\u0435\u043A\u043E\u043C\u0435\u043D\u0434\u0430\u0446\u0438\u044F:\n\nRemove Microsoft.EntityFrameworkCore, and replace with new package Microsoft.EntityFrameworkCore 10.0.1",
+              "protected": "Microsoft.EntityFrameworkCore, 9.0.8\n\n\u0420\u0435\u043A\u043E\u043C\u0435\u043D\u0434\u0430\u0446\u0438\u044F:\n\nRemove Microsoft.EntityFrameworkCore, and replace with new package Microsoft.EntityFrameworkCore 10.0.1"
+            },
+            "kind": "File",
+            "path": "StudHunter.DB.Postgres\\StudHunter.DB.Postgres.csproj",
+            "snippet": "Microsoft.EntityFrameworkCore, 9.0.8\n\n\u0420\u0435\u043A\u043E\u043C\u0435\u043D\u0434\u0430\u0446\u0438\u044F:\n\nRemove Microsoft.EntityFrameworkCore, and replace with new package Microsoft.EntityFrameworkCore 10.0.1",
+            "protectedSnippet": "Microsoft.EntityFrameworkCore, 9.0.8\n\n\u0420\u0435\u043A\u043E\u043C\u0435\u043D\u0434\u0430\u0446\u0438\u044F:\n\nRemove Microsoft.EntityFrameworkCore, and replace with new package Microsoft.EntityFrameworkCore 10.0.1",
+            "label": "Microsoft.EntityFrameworkCore 9.0.8",
+            "properties": {
+              "PackageId": "Microsoft.EntityFrameworkCore",
+              "PackageVersion": "9.0.8",
+              "PackageNewVersion": "10.0.1",
+              "PackageReplacements": null
+            }
+          }
+        },
+        {
+          "incidentId": "aa30cc23-f43d-4d6e-8aa2-0d8680bf621e",
+          "ruleId": "NuGet.0002",
+          "projectPath": "StudHunter.DB.Postgres\\StudHunter.DB.Postgres.csproj",
+          "state": "Active",
+          "location": {
+            "snippetModel": {
+              "unrestricted": "Microsoft.EntityFrameworkCore.Design, 9.0.8\n\n\u0420\u0435\u043A\u043E\u043C\u0435\u043D\u0434\u0430\u0446\u0438\u044F:\n\nRemove Microsoft.EntityFrameworkCore.Design, and replace with new package Microsoft.EntityFrameworkCore.Design 10.0.1",
+              "protected": "Microsoft.EntityFrameworkCore.Design, 9.0.8\n\n\u0420\u0435\u043A\u043E\u043C\u0435\u043D\u0434\u0430\u0446\u0438\u044F:\n\nRemove Microsoft.EntityFrameworkCore.Design, and replace with new package Microsoft.EntityFrameworkCore.Design 10.0.1"
+            },
+            "kind": "File",
+            "path": "StudHunter.DB.Postgres\\StudHunter.DB.Postgres.csproj",
+            "snippet": "Microsoft.EntityFrameworkCore.Design, 9.0.8\n\n\u0420\u0435\u043A\u043E\u043C\u0435\u043D\u0434\u0430\u0446\u0438\u044F:\n\nRemove Microsoft.EntityFrameworkCore.Design, and replace with new package Microsoft.EntityFrameworkCore.Design 10.0.1",
+            "protectedSnippet": "Microsoft.EntityFrameworkCore.Design, 9.0.8\n\n\u0420\u0435\u043A\u043E\u043C\u0435\u043D\u0434\u0430\u0446\u0438\u044F:\n\nRemove Microsoft.EntityFrameworkCore.Design, and replace with new package Microsoft.EntityFrameworkCore.Design 10.0.1",
+            "label": "Microsoft.EntityFrameworkCore.Design 9.0.8",
+            "properties": {
+              "PackageId": "Microsoft.EntityFrameworkCore.Design",
+              "PackageVersion": "9.0.8",
+              "PackageNewVersion": "10.0.1",
+              "PackageReplacements": null
+            }
+          }
+        },
+        {
+          "incidentId": "174db516-f6fa-44a8-b1a1-c57d9ee4179c",
+          "ruleId": "NuGet.0002",
+          "projectPath": "StudHunter.DB.Postgres\\StudHunter.DB.Postgres.csproj",
+          "state": "Active",
+          "location": {
+            "snippetModel": {
+              "unrestricted": "Microsoft.Extensions.Configuration, 9.0.8\n\n\u0420\u0435\u043A\u043E\u043C\u0435\u043D\u0434\u0430\u0446\u0438\u044F:\n\nRemove Microsoft.Extensions.Configuration, and replace with new package Microsoft.Extensions.Configuration 10.0.1",
+              "protected": "Microsoft.Extensions.Configuration, 9.0.8\n\n\u0420\u0435\u043A\u043E\u043C\u0435\u043D\u0434\u0430\u0446\u0438\u044F:\n\nRemove Microsoft.Extensions.Configuration, and replace with new package Microsoft.Extensions.Configuration 10.0.1"
+            },
+            "kind": "File",
+            "path": "StudHunter.DB.Postgres\\StudHunter.DB.Postgres.csproj",
+            "snippet": "Microsoft.Extensions.Configuration, 9.0.8\n\n\u0420\u0435\u043A\u043E\u043C\u0435\u043D\u0434\u0430\u0446\u0438\u044F:\n\nRemove Microsoft.Extensions.Configuration, and replace with new package Microsoft.Extensions.Configuration 10.0.1",
+            "protectedSnippet": "Microsoft.Extensions.Configuration, 9.0.8\n\n\u0420\u0435\u043A\u043E\u043C\u0435\u043D\u0434\u0430\u0446\u0438\u044F:\n\nRemove Microsoft.Extensions.Configuration, and replace with new package Microsoft.Extensions.Configuration 10.0.1",
+            "label": "Microsoft.Extensions.Configuration 9.0.8",
+            "properties": {
+              "PackageId": "Microsoft.Extensions.Configuration",
+              "PackageVersion": "9.0.8",
+              "PackageNewVersion": "10.0.1",
+              "PackageReplacements": null
+            }
+          }
+        },
+        {
+          "incidentId": "761ce2d1-ccda-4269-b225-aa6df6dbc6a0",
+          "ruleId": "NuGet.0002",
+          "projectPath": "StudHunter.DB.Postgres\\StudHunter.DB.Postgres.csproj",
+          "state": "Active",
+          "location": {
+            "snippetModel": {
+              "unrestricted": "Microsoft.Extensions.Configuration.FileExtensions, 9.0.8\n\n\u0420\u0435\u043A\u043E\u043C\u0435\u043D\u0434\u0430\u0446\u0438\u044F:\n\nRemove Microsoft.Extensions.Configuration.FileExtensions, and replace with new package Microsoft.Extensions.Configuration.FileExtensions 10.0.1",
+              "protected": "Microsoft.Extensions.Configuration.FileExtensions, 9.0.8\n\n\u0420\u0435\u043A\u043E\u043C\u0435\u043D\u0434\u0430\u0446\u0438\u044F:\n\nRemove Microsoft.Extensions.Configuration.FileExtensions, and replace with new package Microsoft.Extensions.Configuration.FileExtensions 10.0.1"
+            },
+            "kind": "File",
+            "path": "StudHunter.DB.Postgres\\StudHunter.DB.Postgres.csproj",
+            "snippet": "Microsoft.Extensions.Configuration.FileExtensions, 9.0.8\n\n\u0420\u0435\u043A\u043E\u043C\u0435\u043D\u0434\u0430\u0446\u0438\u044F:\n\nRemove Microsoft.Extensions.Configuration.FileExtensions, and replace with new package Microsoft.Extensions.Configuration.FileExtensions 10.0.1",
+            "protectedSnippet": "Microsoft.Extensions.Configuration.FileExtensions, 9.0.8\n\n\u0420\u0435\u043A\u043E\u043C\u0435\u043D\u0434\u0430\u0446\u0438\u044F:\n\nRemove Microsoft.Extensions.Configuration.FileExtensions, and replace with new package Microsoft.Extensions.Configuration.FileExtensions 10.0.1",
+            "label": "Microsoft.Extensions.Configuration.FileExtensions 9.0.8",
+            "properties": {
+              "PackageId": "Microsoft.Extensions.Configuration.FileExtensions",
+              "PackageVersion": "9.0.8",
+              "PackageNewVersion": "10.0.1",
+              "PackageReplacements": null
+            }
+          }
+        },
+        {
+          "incidentId": "2596285d-6b48-4a6d-be67-b68d9340b99e",
+          "ruleId": "NuGet.0002",
+          "projectPath": "StudHunter.DB.Postgres\\StudHunter.DB.Postgres.csproj",
+          "state": "Active",
+          "location": {
+            "snippetModel": {
+              "unrestricted": "Microsoft.Extensions.Configuration.Json, 9.0.8\n\n\u0420\u0435\u043A\u043E\u043C\u0435\u043D\u0434\u0430\u0446\u0438\u044F:\n\nRemove Microsoft.Extensions.Configuration.Json, and replace with new package Microsoft.Extensions.Configuration.Json 10.0.1",
+              "protected": "Microsoft.Extensions.Configuration.Json, 9.0.8\n\n\u0420\u0435\u043A\u043E\u043C\u0435\u043D\u0434\u0430\u0446\u0438\u044F:\n\nRemove Microsoft.Extensions.Configuration.Json, and replace with new package Microsoft.Extensions.Configuration.Json 10.0.1"
+            },
+            "kind": "File",
+            "path": "StudHunter.DB.Postgres\\StudHunter.DB.Postgres.csproj",
+            "snippet": "Microsoft.Extensions.Configuration.Json, 9.0.8\n\n\u0420\u0435\u043A\u043E\u043C\u0435\u043D\u0434\u0430\u0446\u0438\u044F:\n\nRemove Microsoft.Extensions.Configuration.Json, and replace with new package Microsoft.Extensions.Configuration.Json 10.0.1",
+            "protectedSnippet": "Microsoft.Extensions.Configuration.Json, 9.0.8\n\n\u0420\u0435\u043A\u043E\u043C\u0435\u043D\u0434\u0430\u0446\u0438\u044F:\n\nRemove Microsoft.Extensions.Configuration.Json, and replace with new package Microsoft.Extensions.Configuration.Json 10.0.1",
+            "label": "Microsoft.Extensions.Configuration.Json 9.0.8",
+            "properties": {
+              "PackageId": "Microsoft.Extensions.Configuration.Json",
+              "PackageVersion": "9.0.8",
+              "PackageNewVersion": "10.0.1",
+              "PackageReplacements": null
+            }
+          }
+        },
+        {
+          "incidentId": "69047bcf-5dda-4bb2-bf4d-16b28d92d7a7",
+          "ruleId": "Project.0002",
+          "projectPath": "StudHunter.DB.Postgres\\StudHunter.DB.Postgres.csproj",
+          "state": "Active",
+          "location": {
+            "snippetModel": {
+              "unrestricted": "\u0422\u0435\u043A\u0443\u0449\u0430\u044F \u0446\u0435\u043B\u0435\u0432\u0430\u044F \u043F\u043B\u0430\u0442\u0444\u043E\u0440\u043C\u0430: net8.0\n\u0420\u0435\u043A\u043E\u043C\u0435\u043D\u0434\u0443\u0435\u043C\u0430\u044F \u0446\u0435\u043B\u0435\u0432\u0430\u044F \u043F\u043B\u0430\u0442\u0444\u043E\u0440\u043C\u0430: net10.0",
+              "protected": "\u0422\u0435\u043A\u0443\u0449\u0430\u044F \u0446\u0435\u043B\u0435\u0432\u0430\u044F \u043F\u043B\u0430\u0442\u0444\u043E\u0440\u043C\u0430: net8.0\n\u0420\u0435\u043A\u043E\u043C\u0435\u043D\u0434\u0443\u0435\u043C\u0430\u044F \u0446\u0435\u043B\u0435\u0432\u0430\u044F \u043F\u043B\u0430\u0442\u0444\u043E\u0440\u043C\u0430: net10.0"
+            },
+            "kind": "File",
+            "path": "StudHunter.DB.Postgres\\StudHunter.DB.Postgres.csproj",
+            "snippet": "\u0422\u0435\u043A\u0443\u0449\u0430\u044F \u0446\u0435\u043B\u0435\u0432\u0430\u044F \u043F\u043B\u0430\u0442\u0444\u043E\u0440\u043C\u0430: net8.0\n\u0420\u0435\u043A\u043E\u043C\u0435\u043D\u0434\u0443\u0435\u043C\u0430\u044F \u0446\u0435\u043B\u0435\u0432\u0430\u044F \u043F\u043B\u0430\u0442\u0444\u043E\u0440\u043C\u0430: net10.0",
+            "protectedSnippet": "\u0422\u0435\u043A\u0443\u0449\u0430\u044F \u0446\u0435\u043B\u0435\u0432\u0430\u044F \u043F\u043B\u0430\u0442\u0444\u043E\u0440\u043C\u0430: net8.0\n\u0420\u0435\u043A\u043E\u043C\u0435\u043D\u0434\u0443\u0435\u043C\u0430\u044F \u0446\u0435\u043B\u0435\u0432\u0430\u044F \u043F\u043B\u0430\u0442\u0444\u043E\u0440\u043C\u0430: net10.0",
+            "properties": {
+              "CurrentTargetFramework": "net8.0",
+              "RecommendedTargetFramework": "net10.0"
+            }
+          }
+        }
+      ],
+      "features": []
+    }
+  ],
+  "rules": {
+    "NuGet.0002": {
+      "id": "NuGet.0002",
+      "isFeature": false,
+      "description": "\u0414\u043B\u044F \u0432\u044B\u0431\u0440\u0430\u043D\u043D\u043E\u0439 \u0446\u0435\u043B\u0435\u0432\u043E\u0439 \u043F\u043B\u0430\u0442\u0444\u043E\u0440\u043C\u044B \u0440\u0435\u043A\u043E\u043C\u0435\u043D\u0434\u0443\u0435\u0442\u0441\u044F \u043E\u0431\u043D\u043E\u0432\u0438\u0442\u044C \u043F\u0430\u043A\u0435\u0442 NuGet.\n\n\u0414\u043B\u044F \u0441\u0442\u0430\u043D\u0434\u0430\u0440\u0442\u043D\u044B\u0445 \u043F\u0430\u043A\u0435\u0442\u043E\u0432 .NET \u0440\u0435\u043A\u043E\u043C\u0435\u043D\u0434\u0443\u0435\u0442\u0441\u044F \u043D\u0430\u043B\u0438\u0447\u0438\u0435 \u0432\u0435\u0440\u0441\u0438\u0439, \u0441\u043E\u043E\u0442\u0432\u0435\u0442\u0441\u0442\u0432\u0443\u044E\u0449\u0438\u0445 \u0432\u0435\u0440\u0441\u0438\u0438 .NET, \u0434\u043B\u044F \u043A\u043E\u0442\u043E\u0440\u043E\u0439 \u043F\u0440\u0435\u0434\u043D\u0430\u0437\u043D\u0430\u0447\u0435\u043D \u043F\u0440\u043E\u0435\u043A\u0442.\n\n\u0422\u0430\u043A\u0436\u0435 \u0438\u0437\u0432\u0435\u0441\u0442\u043D\u043E, \u0447\u0442\u043E \u043D\u0435\u043A\u043E\u0442\u043E\u0440\u044B\u0435 \u0434\u0440\u0443\u0433\u0438\u0435 \u043F\u0430\u043A\u0435\u0442\u044B \u0440\u0430\u0431\u043E\u0442\u0430\u044E\u0442 \u043B\u0443\u0447\u0448\u0435 \u0434\u043B\u044F \u043E\u043F\u0440\u0435\u0434\u0435\u043B\u0435\u043D\u043D\u044B\u0445 \u0446\u0435\u043B\u0435\u0432\u044B\u0445 \u043F\u043B\u0430\u0442\u0444\u043E\u0440\u043C.",
+      "label": "\u0420\u0435\u043A\u043E\u043C\u0435\u043D\u0434\u0443\u0435\u0442\u0441\u044F \u043E\u0431\u043D\u043E\u0432\u0438\u0442\u044C \u043F\u0430\u043A\u0435\u0442 NuGet",
+      "severity": "Potential",
+      "effort": 1,
+      "links": [
+        {
+          "url": "https://go.microsoft.com/fwlink/?linkid=2262530",
+          "isCustom": false
+        }
+      ]
+    },
+    "Project.0002": {
+      "id": "Project.0002",
+      "isFeature": false,
+      "description": "\u0426\u0435\u043B\u0435\u0432\u0443\u044E \u043F\u043B\u0430\u0442\u0444\u043E\u0440\u043C\u0443 \u0438\u043B\u0438 \u043F\u043B\u0430\u0442\u0444\u043E\u0440\u043C\u044B \u043F\u0440\u043E\u0435\u043A\u0442\u0430 \u043D\u0435\u043E\u0431\u0445\u043E\u0434\u0438\u043C\u043E \u0438\u0437\u043C\u0435\u043D\u0438\u0442\u044C \u043D\u0430 \u043D\u043E\u0432\u0443\u044E \u0446\u0435\u043B\u0435\u0432\u0443\u044E \u043F\u043B\u0430\u0442\u0444\u043E\u0440\u043C\u0443, \u0432\u044B\u0431\u0440\u0430\u043D\u043D\u0443\u044E \u0434\u043B\u044F \u044D\u0442\u043E\u0433\u043E \u043E\u0431\u043D\u043E\u0432\u043B\u0435\u043D\u0438\u044F.\n\n\u0412\u043E \u0432\u0440\u0435\u043C\u044F \u043E\u0431\u043D\u043E\u0432\u043B\u0435\u043D\u0438\u044F \u0446\u0435\u043B\u0435\u0432\u0430\u044F \u043F\u043B\u0430\u0442\u0444\u043E\u0440\u043C\u0430 \u0431\u0443\u0434\u0435\u0442 \u0438\u0437\u043C\u0435\u043D\u0435\u043D\u0430 \u043D\u0430 \u0441\u043E\u043E\u0442\u0432\u0435\u0442\u0441\u0442\u0432\u0443\u044E\u0449\u0443\u044E \u043F\u043B\u0430\u0442\u0444\u043E\u0440\u043C\u0443, \u043A\u043E\u0433\u0434\u0430 \u044D\u0442\u043E \u043F\u0440\u0438\u043C\u0435\u043D\u0438\u043C\u043E. \u0412 \u043D\u0435\u043A\u043E\u0442\u043E\u0440\u044B\u0445 \u0441\u043B\u0443\u0447\u0430\u044F\u0445 \u0440\u0435\u0430\u043B\u0438\u0437\u0430\u0446\u0438\u044F \u043F\u0440\u043E\u0435\u043A\u0442\u0430 \u043F\u0440\u0438\u0432\u0435\u0434\u0435\u0442 \u043A \u043D\u0430\u043B\u0438\u0447\u0438\u044E \u043D\u0435\u0441\u043A\u043E\u043B\u044C\u043A\u0438\u0445 \u0446\u0435\u043B\u0435\u0432\u044B\u0445 \u043F\u043B\u0430\u0442\u0444\u043E\u0440\u043C, \u0435\u0441\u043B\u0438 \u0432 \u043F\u0440\u043E\u0435\u043A\u0442\u0435 \u0438\u0441\u043F\u043E\u043B\u044C\u0437\u043E\u0432\u0430\u043B\u0438\u0441\u044C \u043A\u043E\u043C\u043F\u043E\u043D\u0435\u043D\u0442\u044B, \u0443 \u043A\u043E\u0442\u043E\u0440\u044B\u0445 \u0442\u0435\u043F\u0435\u0440\u044C \u0435\u0441\u0442\u044C \u0441\u043E\u0431\u0441\u0442\u0432\u0435\u043D\u043D\u044B\u0435 \u043F\u043B\u0430\u0442\u0444\u043E\u0440\u043C\u044B \u0432 \u0441\u043E\u0432\u0440\u0435\u043C\u0435\u043D\u043D\u044B\u0445 \u0432\u0435\u0440\u0441\u0438\u044F\u0445 .NET (Windows, iOS, Android \u0438 \u0442. \u0434.).",
+      "label": "\u041D\u0435\u043E\u0431\u0445\u043E\u0434\u0438\u043C\u043E \u0438\u0437\u043C\u0435\u043D\u0438\u0442\u044C \u0446\u0435\u043B\u0435\u0432\u044B\u0435 \u043F\u043B\u0430\u0442\u0444\u043E\u0440\u043C\u044B \u043F\u0440\u043E\u0435\u043A\u0442\u0430",
+      "severity": "Mandatory",
+      "effort": 1,
+      "links": [
+        {
+          "title": "\u041E\u0431\u0437\u043E\u0440 \u043F\u0435\u0440\u0435\u0445\u043E\u0434\u0430 \u0441 .NET Framework \u043D\u0430 .NET",
+          "url": "https://go.microsoft.com/fwlink/?linkid=2265227",
+          "isCustom": false
+        },
+        {
+          "title": "\u041F\u0430\u043A\u0435\u0442\u044B SDK \u043F\u0440\u043E\u0435\u043A\u0442\u0430 .NET",
+          "url": "https://go.microsoft.com/fwlink/?linkid=2265226",
+          "isCustom": false
+        }
+      ]
+    },
+    "Api.0001": {
+      "id": "Api.0001",
+      "isFeature": false,
+      "description": "API is binary incompatible for selected .NET version: affects existing binaries, often requiring recompilation, because the API has changed in a way that prevents older binaries from loading or executing.",
+      "label": "Binary incompatible for selected .NET version",
+      "severity": "Mandatory",
+      "effort": 1,
+      "links": [
+        {
+          "title": "\u041A\u0440\u0438\u0442\u0438\u0447\u0435\u0441\u043A\u0438\u0435 \u0438\u0437\u043C\u0435\u043D\u0435\u043D\u0438\u044F \u0432 .NET",
+          "url": "https://go.microsoft.com/fwlink/?linkid=2262679",
+          "isCustom": false
+        }
+      ]
+    },
+    "Api.0002": {
+      "id": "Api.0002",
+      "isFeature": false,
+      "description": "API is source incompatible for selected .NET version: requires code changes to compile successfully when targeting a new version, such as removing obsolete APIs or changing method signatures.",
+      "label": "Source incompatible for selected .NET version",
+      "severity": "Potential",
+      "effort": 1,
+      "links": [
+        {
+          "title": "\u041A\u0440\u0438\u0442\u0438\u0447\u0435\u0441\u043A\u0438\u0435 \u0438\u0437\u043C\u0435\u043D\u0435\u043D\u0438\u044F \u0432 .NET",
+          "url": "https://go.microsoft.com/fwlink/?linkid=2262679",
+          "isCustom": false
+        }
+      ]
+    },
+    "Api.0003": {
+      "id": "Api.0003",
+      "isFeature": false,
+      "description": "API has a behavioral change in selected .NET version: code and binaries may behave differently at runtime without needing recompilation, but the new behavior might be undesirable and require updates.",
+      "label": "Behavioral change in selected .NET version",
+      "severity": "Potential",
+      "effort": 1
+    },
+    "IdentityModel": {
+      "id": "IdentityModel",
+      "isFeature": false,
+      "description": "Windows Identity Foundation (WIF), SAML, and claims-based authentication APIs that have been replaced by modern identity libraries. WIF was the original identity framework for .NET Framework. Migrate to Microsoft.IdentityModel.* packages (modern identity stack).",
+      "label": "IdentityModel \u0026 Claims-based Security",
+      "severity": "Mandatory",
+      "effort": 4,
+      "links": [
+        {
+          "title": "Microsoft.IdentityModel packages",
+          "url": "https://go.microsoft.com/fwlink/?linkid=2341614",
+          "isCustom": false
+        }
+      ]
+    }
+  }
+}

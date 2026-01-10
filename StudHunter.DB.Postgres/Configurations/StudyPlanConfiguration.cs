@@ -22,16 +22,17 @@ public class StudyPlanConfiguration : IEntityTypeConfiguration<StudyPlan>
         builder.Property(sp => sp.CourseNumber)
                .HasColumnType("INTEGER")
                .HasDefaultValue(1)
-               .HasAnnotation("Range", new[] { 1, 7 })
                .IsRequired();
 
         builder.Property(sp => sp.FacultyId)
                .HasColumnType("UUID")
-               .IsRequired();
+               //.IsRequired();
+               .IsRequired(false);  // TODO: required после тестов
 
         builder.Property(sp => sp.SpecialityId)
                .HasColumnType("UUID")
-               .IsRequired();
+               //.IsRequired(),
+               .IsRequired(false);  // TODO: required после тестов
 
         builder.Property(sp => sp.StudyForm)
                .HasColumnType("INTEGER")
@@ -39,6 +40,7 @@ public class StudyPlanConfiguration : IEntityTypeConfiguration<StudyPlan>
                .IsRequired();
 
         builder.Property(sp => sp.IsDeleted)
+               .HasColumnType("BOOLEAN")
                .HasDefaultValue(false)
                .IsRequired();
 
@@ -55,20 +57,17 @@ public class StudyPlanConfiguration : IEntityTypeConfiguration<StudyPlan>
         builder.HasOne(sp => sp.Faculty)
                .WithMany(f => f.StudyPlans)
                .HasForeignKey(sp => sp.FacultyId)
-               .OnDelete(DeleteBehavior.Restrict)
-               .IsRequired();
+               .OnDelete(DeleteBehavior.Restrict);
 
         builder.HasOne(sp => sp.Speciality)
                .WithMany(spec => spec.StudyPlans)
                .HasForeignKey(sp => sp.SpecialityId)
-               .OnDelete(DeleteBehavior.Restrict)
-               .IsRequired();
+               .OnDelete(DeleteBehavior.Restrict);
 
         builder.HasMany(sp => sp.StudyPlanCourses)
                .WithOne(spc => spc.StudyPlan)
                .HasForeignKey(spc => spc.StudyPlanId)
-               .OnDelete(DeleteBehavior.Cascade)
-               .IsRequired(false);
+               .OnDelete(DeleteBehavior.Cascade);
 
         builder.HasIndex(sp => sp.StudentId)
                .IsUnique();

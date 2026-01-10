@@ -1,6 +1,7 @@
 ﻿using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
 using StudHunter.DB.Postgres.Models;
+
 namespace StudHunter.DB.Postgres.Configurations;
 
 public class SpecialityConfiguration : IEntityTypeConfiguration<Speciality>
@@ -20,6 +21,11 @@ public class SpecialityConfiguration : IEntityTypeConfiguration<Speciality>
         builder.Property(s => s.Description)
                .HasColumnType("TEXT")
                .HasMaxLength(1000)
+               .IsRequired(false);
+
+        builder.Property(s => s.Code)
+               .HasColumnType("VARCHAR(20)")
+               .HasMaxLength(20)
                .IsRequired(false);
 
         builder.HasIndex(s => s.Name)

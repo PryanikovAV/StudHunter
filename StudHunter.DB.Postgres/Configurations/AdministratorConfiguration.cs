@@ -22,5 +22,12 @@ public class AdministratorConfiguration : IEntityTypeConfiguration<Administrator
                .HasColumnType("VARCHAR(50)")
                .HasMaxLength(50)
                .IsRequired(false);
+
+        builder.Property(a => a.LastLoginAt)
+               .HasColumnType("TIMESTAMPTZ")
+               .IsRequired(false);
+
+        builder.HasIndex(a => a.Email)
+               .IsUnique();
     }
 }

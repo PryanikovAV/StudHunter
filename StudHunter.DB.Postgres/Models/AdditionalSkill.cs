@@ -2,9 +2,19 @@
 
 public class AdditionalSkill
 {
-    public Guid Id { get; set; }
+    public Guid Id { get; init; }
 
-    public string Name { get; set; } = string.Empty;
+    private string _name = null!;
+    public string Name
+    {
+        get => _name;
+        set
+        {
+            ArgumentException.ThrowIfNullOrWhiteSpace(value);
+            _name = value.Trim().ToLower();
+        }
+    }
 
-    public virtual ICollection<StudentAdditionalSkill> StudentAdditionalSkills { get; set; } = new List<StudentAdditionalSkill>();
+    public virtual ICollection<ResumeAdditionalSkill> ResumeAdditionalSkills { get; set; } = new HashSet<ResumeAdditionalSkill>();
+    public virtual ICollection<VacancyAdditionalSkill> VacancyAdditionalSkills { get; set; } = new HashSet<VacancyAdditionalSkill>();
 }

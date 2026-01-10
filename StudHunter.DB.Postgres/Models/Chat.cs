@@ -2,19 +2,16 @@
 
 public class Chat
 {
-    public Guid Id { get; set; }
+    public Guid Id { get; init; }
 
     public Guid User1Id { get; set; }
-
     public Guid User2Id { get; set; }
 
-    public DateTime CreatedAt { get; set; }
-
+    public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
     public DateTime? LastMessageAt { get; set; }
 
     public virtual User User1 { get; set; } = null!;
-
     public virtual User User2 { get; set; } = null!;
 
-    public virtual ICollection<Message> Messages { get; set; } = new List<Message>();
+    public virtual ICollection<Message> Messages { get; set; } = new HashSet<Message>();
 }

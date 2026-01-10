@@ -9,7 +9,7 @@ services:
     ports:
       - "5433:5432"
     volumes:
-      - studhunter-data:/var/lib/postgresql/data
+      - studhunter-data:/var/lib/postgresql
     restart: unless-stopped
   studhunter-api:
     build:
@@ -22,6 +22,9 @@ services:
       - ASPNETCORE_ENVIRONMENT=Development
       - ASPNETCORE_HTTP_PORTS=8080
       - ConnectionStrings__DefaultConnection=Host=postgres;Port=5432;Database=studhunter;Username=postgres;Password=postgres
+      - Jwt__Key=MyTopSecretVeryLongKeyForStudHunter123!
+      - Jwt__Issuer=StudHunter
+      - Jwt__Audience=StudHunter
     depends_on:
       - postgres
     restart: unless-stopped

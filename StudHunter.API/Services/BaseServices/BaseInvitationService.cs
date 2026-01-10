@@ -1,38 +1,35 @@
-﻿using StudHunter.API.ModelsDto.InvitationDto;
+﻿using Microsoft.EntityFrameworkCore;
 using StudHunter.DB.Postgres;
 using StudHunter.DB.Postgres.Models;
 
 namespace StudHunter.API.Services.BaseServices;
 
-public abstract class BaseInvitationService(StudHunterDbContext context) : BaseService(context)
+public abstract class BaseInvitationService(StudHunterDbContext context, INotificationService notificationService) : BaseService(context)
 {
-    protected InvitationDto MapToInvitationDto(Invitation invitation)
-    {
-        var entitySummary = invitation.VacancyId != null ? new EntitySummaryDto
-        {
-            Id = invitation.VacancyId,
-            Type = nameof(Vacancy),
-            Title = invitation.Vacancy?.Title,
-            Status = invitation.Vacancy?.IsDeleted == true ? "Deleted" : "Active"
-        } : invitation.ResumeId != null ? new EntitySummaryDto
-        {
-            Id = invitation.ResumeId,
-            Type = nameof(Resume),
-            Title = invitation.Resume?.Title,
-            Status = invitation.Resume?.IsDeleted == true ? "Deleted" : "Active"
-        } : null;
+    protected readonly INotificationService _notificationService = notificationService;
 
-        return new InvitationDto
+    protected IQueryable<Invitation> GetFullInvitationQuery() =>
+        _context.Invitations
+            .Include(i => i.Sender)
+            .Include(i => i.Receiver)
+            .Include(i => i.Vacancy)
+            .Include(i => i.Resume);
+
+    protected async Task PopulateSnapshotsAsync(Invitation invitation)
+    {
+        var sender = await _context.Users.FindAsync(invitation.SenderId);
+        var receiver = await _context.Users.FindAsync(invitation.ReceiverId);
+
+        if (sender != null)
+            invitation.SnapshotSenderName = GetUserDisplayName(sender);
+
+        if (receiver != null)
+            invitation.SnapshotReceiverName = GetUserDisplayName(receiver);
+
+        if (invitation.VacancyId.HasValue)
         {
-            Id = invitation.Id,
-            SenderId = invitation.SenderId,
-            SenderEmail = invitation.Sender.IsDeleted ? "[Deleted Account]" : invitation.Sender.Email,
-            ReceiverId = invitation.ReceiverId,
-            ReceiverEmail = invitation.Receiver.IsDeleted ? "[Deleted Account]" : invitation.Receiver.Email,
-            Entity = entitySummary,
-            Status = invitation.Status.ToString(),
-            CreatedAt = invitation.CreatedAt,
-            UpdatedAt = invitation.UpdatedAt,
-        };
+            var vacancy = await _context.Vacancies.FindAsync(invitation.VacancyId.Value);
+            invitation.SnapshotVacancyTitle = vacancy?.Title;
+        }
     }
 }

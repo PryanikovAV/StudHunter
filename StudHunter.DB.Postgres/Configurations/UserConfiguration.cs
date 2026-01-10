@@ -10,13 +10,23 @@ public class UserConfiguration : IEntityTypeConfiguration<User>
     {
         builder.HasKey(u => u.Id);
 
+        builder.Property(u => u.RegistrationStage)
+               .HasColumnType("VARCHAR(20)")
+               .HasDefaultValue(User.AccountStatus.Anonymous)
+               .HasConversion<string>()
+               .IsRequired();
+
         builder.Property(u => u.Id)
                .HasColumnType("UUID")
                .HasDefaultValueSql("gen_random_uuid()")
                .IsRequired();
 
         builder.Property(u => u.Email)
+               .HasColumnType("VARCHAR(255)")
                .HasMaxLength(255)
+               .IsRequired();
+
+        builder.Property(u => u.PasswordHash)
                .HasColumnType("VARCHAR(255)")
                .IsRequired();
 
@@ -28,11 +38,16 @@ public class UserConfiguration : IEntityTypeConfiguration<User>
         builder.Property(u => u.ContactPhone)
                .HasColumnType("VARCHAR(20)")
                .HasMaxLength(20)
+               .HasConversion(
+                   v => v == null ? null : new string(v.Where(char.IsDigit).ToArray()),
+                   v => v
+               )
                .IsRequired(false);
 
-        builder.Property(u => u.PasswordHash)
+        builder.Property(s => s.AvatarUrl)
                .HasColumnType("VARCHAR(255)")
-               .IsRequired();
+               .HasMaxLength(255)
+               .IsRequired(false);
 
         builder.Property(u => u.CreatedAt)
                .HasColumnType("TIMESTAMPTZ")
@@ -48,37 +63,42 @@ public class UserConfiguration : IEntityTypeConfiguration<User>
                .HasColumnType("TIMESTAMPTZ")
                .IsRequired(false);
 
-        builder.HasMany(u => u.SentInvitations)
-               .WithOne(i => i.Sender)
-               .HasForeignKey(i => i.SenderId)
-               .OnDelete(DeleteBehavior.Restrict)
-               .IsRequired();
+        ConfigureRelationships(builder);
 
-        builder.HasMany(u => u.ReceivedInvitations)
-               .WithOne(i => i.Receiver)
-               .HasForeignKey(i => i.ReceiverId)
-               .OnDelete(DeleteBehavior.Restrict)
-               .IsRequired();
+        builder.HasQueryFilter(u => !u.IsDeleted);
+        builder.HasIndex(u => u.Email).IsUnique();
+    }
 
-        builder.HasMany(u => u.SentMessages)
-               .WithOne(m => m.Sender)
-               .HasForeignKey(m => m.SenderId)
-               .OnDelete(DeleteBehavior.Restrict)
-               .IsRequired();
+    private static void ConfigureRelationships(EntityTypeBuilder<User> builder)
+    {
+        builder.HasMany(u => u.BlackLists)
+               .WithOne(b => b.User)
+               .HasForeignKey(b => b.UserId)
+               .OnDelete(DeleteBehavior.Cascade);
 
         builder.HasMany(u => u.ChatsAsUser1)
                .WithOne(c => c.User1)
                .HasForeignKey(c => c.User1Id)
-               .OnDelete(DeleteBehavior.Restrict)
-               .IsRequired();
+               .OnDelete(DeleteBehavior.Restrict);
 
         builder.HasMany(u => u.ChatsAsUser2)
                .WithOne(c => c.User2)
                .HasForeignKey(c => c.User2Id)
-               .OnDelete(DeleteBehavior.Restrict)
-               .IsRequired();
+               .OnDelete(DeleteBehavior.Restrict);
 
-        builder.HasQueryFilter(u => !u.IsDeleted);
-        builder.HasIndex(u => u.Email).IsUnique();
+        builder.HasMany(u => u.SentInvitations)
+               .WithOne(i => i.Sender)
+               .HasForeignKey(i => i.SenderId)
+               .OnDelete(DeleteBehavior.Restrict);
+
+        builder.HasMany(u => u.ReceivedInvitations)
+               .WithOne(i => i.Receiver)
+               .HasForeignKey(i => i.ReceiverId)
+               .OnDelete(DeleteBehavior.Restrict);
+
+        builder.HasMany(u => u.SentMessages)
+               .WithOne(m => m.Sender)
+               .HasForeignKey(m => m.SenderId)
+               .OnDelete(DeleteBehavior.Restrict);
     }
 }

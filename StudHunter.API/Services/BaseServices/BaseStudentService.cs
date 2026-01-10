@@ -1,4 +1,5 @@
-﻿using StudHunter.API.ModelsDto.StudentDto;
+﻿using Microsoft.EntityFrameworkCore;
+using StudHunter.API.Infrastructure;
 using StudHunter.DB.Postgres;
 using StudHunter.DB.Postgres.Models;
 
@@ -6,38 +7,58 @@ namespace StudHunter.API.Services.BaseServices;
 
 public abstract class BaseStudentService(StudHunterDbContext context) : BaseService(context)
 {
-    /// <summary>
-    /// Maps a Student entity to a StudentDto.
-    /// </summary>
-    /// <param name="student">The student entity to map.</param>
-    /// <returns>A TDto representing the student.</returns>
-    protected TDto MapToStudentDto<TDto>(Student student) where TDto : StudentDto, new()
+    protected async Task<Student?> GetStudentInternalAsync(Guid studentId, bool ignoreFilters = false)
     {
-        var dto = new TDto
-        {
-            Id = student.Id,
-            Email = student.Email,
-            FirstName = student.FirstName,
-            LastName = student.LastName,
-            ContactPhone = student.ContactPhone,
-            ContactEmail = student.ContactEmail,
-            CreatedAt = student.CreatedAt,
-            Gender = student.Gender.ToString(),
-            BirthDate = student.BirthDate == DateOnly.MinValue ? null : student.BirthDate,
-            Photo = student.Photo,
-            IsForeign = student.IsForeign,
-            Status = student.Status.ToString(),
-            ResumeId = student.Resume?.Id,
-            Achievements = student.Achievements
-                .Select(BaseUserAchievementService.MapToUserAchievementDto)
-                .ToList(),
-        };
+        var query = _context.Students.AsQueryable();
 
-        if (dto is AdminStudentDto adminDto)
+        if (ignoreFilters)
+            query = query.IgnoreQueryFilters();
+
+        return await query
+                .Include(s => s.Resume)
+                .Include(s => s.StudyPlan)
+                .FirstOrDefaultAsync(s => s.Id == studentId);
+    }
+
+    protected async Task SoftDeleteStudentAsync(Student student, DateTime now)
+    {
+        student.IsDeleted = true;
+        student.DeletedAt = now;
+        
+        if (student.Resume != null && !student.Resume.IsDeleted)
         {
-            adminDto.IsDeleted = student.IsDeleted;
+            student.Resume.IsDeleted = true;
+            student.Resume.DeletedAt = now;
         }
+        
+        if (student.StudyPlan != null && !student.StudyPlan.IsDeleted)
+        {
+            student.StudyPlan.IsDeleted = true;
+            student.StudyPlan.DeletedAt = now;
+        }
+        
+        await ClearUserActivityAsync(student.Id, now);
 
-        return dto;
+        RecalculateRegistrationStage(student);
+    }
+
+    protected void RecalculateRegistrationStage(Student student)
+    {
+        bool isProfileComplete =
+            student.FirstName != UserDefaultNames.DefaultFirstName &&
+            student.LastName != UserDefaultNames.DefaultLastName &&
+            student.Gender.HasValue &&
+            student.BirthDate.HasValue &&
+            student.StudyPlan != null &&
+            student.StudyPlan.FacultyId != null;
+
+        bool hasActiveResume = student.Resume != null && !student.Resume.IsDeleted;
+
+        if (hasActiveResume && isProfileComplete)
+            student.RegistrationStage = User.AccountStatus.FullyActivated;
+        else if (isProfileComplete)
+            student.RegistrationStage = User.AccountStatus.ProfileFilled;
+        else
+            student.RegistrationStage = User.AccountStatus.Anonymous;
     }
 }

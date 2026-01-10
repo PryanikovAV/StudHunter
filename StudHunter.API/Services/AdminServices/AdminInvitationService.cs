@@ -1,106 +1,38 @@
 ﻿using Microsoft.EntityFrameworkCore;
-using StudHunter.API.Common;
-using StudHunter.API.ModelsDto.InvitationDto;
-using StudHunter.API.Services.BaseServices;
+using StudHunter.API.Infrastructure;
+using StudHunter.API.ModelsDto;
 using StudHunter.DB.Postgres;
 using StudHunter.DB.Postgres.Models;
 
 namespace StudHunter.API.Services.AdminServices;
-
-/// <summary>
-/// Service for managing invitations with administrative privileges.
-/// </summary>
-public class AdminInvitationService(StudHunterDbContext context) : BaseInvitationService(context)
+// TODO: добавить пагинацию
+public interface IAdminInvitationService : IInvitationService
 {
-    /// <summary>
-    /// Retrieves all invitations.
-    /// </summary>
-    /// <returns>A tuple containing a list of all invitations, an optional status code, and an optional error message.</returns>
-    public async Task<(List<InvitationDto>? Entities, int? StatusCode, string? ErrorMessage)> GetAllInvitationsAsync()
-    {
-        var invitations = await _context.Invitations
-            .Include(i => i.Vacancy)
-            .Include(i => i.Resume)
-            .Select(i => MapToInvitationDto(i))
-            .OrderByDescending(i => i.CreatedAt)
-            .ToListAsync();
-        return (invitations, null, null);
-    }
-
-    /// <summary>
-    /// 
-    /// </summary>
-    /// <param name="invitationId"></param>
-    /// <returns></returns>
-    public async Task<(InvitationDto? Entity, int? StatusCode, string? ErrorMessage)> GetInvitationAsync(Guid invitationId)
-    {
-        var invitation = await _context.Invitations
-            .Include(i => i.Sender)
-            .Include(i => i.Receiver)
-            .Include(i => i.Vacancy)
-            .Include(i => i.Resume)
-            .FirstOrDefaultAsync(i => i.Id == invitationId);
-        if (invitation == null)
-            return (null, StatusCodes.Status404NotFound, ErrorMessages.EntityNotFound(nameof(Invitation)));
-        return (MapToInvitationDto(invitation), null, null);
-    }
-
-    /// <summary>
-    /// 
-    /// </summary>
-    /// <param name="userId"></param>
-    /// <param name="sent"></param>
-    /// <returns></returns>
-    public async Task<(List<InvitationDto>? Entities, int? StatusCode, string? ErrorMessage)> GetInvitationsByUserAsync(Guid userId, bool sent = false)
-    {
-        var query = sent
-        ? _context.Invitations.Where(i => i.SenderId == userId)
-        : _context.Invitations.Where(i => i.ReceiverId == userId);
-
-        var invitations = await query
-            .Include(i => i.Sender)
-            .Include(i => i.Receiver)
-            .Include(i => i.Vacancy)
-            .Include(i => i.Resume)
-            .Select(i => MapToInvitationDto(i))
-            .OrderByDescending(i => i.CreatedAt)
-            .ToListAsync();
-        return (invitations, null, null);
-    }
-
-    /// <summary>
-    /// 
-    /// </summary>
-    /// <param name="id"></param>
-    /// <param name="status"></param>
-    /// <returns></returns>
-    public async Task<(bool Success, int? StatusCode, string? ErrorMessage)> UpdateInvitationStatusAsync(Guid id, string status)
-    {
-        var invitation = await _context.Invitations
-            .FirstOrDefaultAsync(i => i.Id == id);
-        if (invitation == null)
-            return (false, StatusCodes.Status404NotFound, ErrorMessages.EntityNotFound(nameof(Invitation)));
-        if (!Enum.TryParse<Invitation.InvitationStatus>(status, out var newStatus))
-            return (false, StatusCodes.Status400BadRequest, "Invalid status value.");
-        if (invitation.Status != Invitation.InvitationStatus.Sent)
-            return (false, StatusCodes.Status409Conflict, $"{nameof(Invitation)} status cannot be changed.");
-
-        invitation.Status = newStatus;
-        invitation.UpdatedAt = DateTime.UtcNow;
-        return await SaveChangesAsync<Invitation>();
-    }
-
-    /// <summary>
-    /// 
-    /// </summary>
-    /// <param name="id"></param>
-    /// <returns></returns>
-    public async Task<(bool Success, int? StatusCode, string? ErrorMessage)> DeleteInvitationAsync(Guid id)
+    Task<Result<bool>> HardDeleteAsync(Guid id);
+    Task<Result<InvitationDto>> UpdateStatusForcedAsync(Guid id, Invitation.InvitationStatus status);
+}
+public class AdminInvitationService(StudHunterDbContext context, INotificationService notificationService) : InvitationService(context, notificationService), IAdminInvitationService
+{
+    public async Task<Result<bool>> HardDeleteAsync(Guid id)
     {
         var invitation = await _context.Invitations.FindAsync(id);
         if (invitation == null)
-            return (false, StatusCodes.Status404NotFound, ErrorMessages.EntityNotFound(nameof(Invitation)));
+            return Result<bool>.Failure(ErrorMessages.EntityNotFound(nameof(Invitation)), StatusCodes.Status404NotFound);
+
         _context.Invitations.Remove(invitation);
         return await SaveChangesAsync<Invitation>();
+    }
+
+    public async Task<Result<InvitationDto>> UpdateStatusForcedAsync(Guid id, Invitation.InvitationStatus status)
+    {
+        var invitation = await GetFullInvitationQuery().FirstOrDefaultAsync(i => i.Id == id);
+        if (invitation == null)
+            return Result<InvitationDto>.Failure(ErrorMessages.EntityNotFound(nameof(Invitation)), StatusCodes.Status404NotFound);
+
+        invitation.Status = status;
+        invitation.UpdatedAt = DateTime.UtcNow;
+
+        await _context.SaveChangesAsync();
+        return Result<InvitationDto>.Success(InvitationMapper.ToDto(invitation));
     }
 }

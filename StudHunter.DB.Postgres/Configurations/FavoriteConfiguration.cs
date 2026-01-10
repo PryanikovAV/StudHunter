@@ -1,6 +1,7 @@
 ﻿using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
 using StudHunter.DB.Postgres.Models;
+
 namespace StudHunter.DB.Postgres.Configurations;
 
 public class FavoriteConfiguration : IEntityTypeConfiguration<Favorite>
@@ -17,56 +18,44 @@ public class FavoriteConfiguration : IEntityTypeConfiguration<Favorite>
                .IsRequired();
 
         builder.Property(f => f.VacancyId)
-               .HasColumnType("UUID")
-               .IsRequired(false);
+               .HasColumnType("UUID");
 
         builder.Property(f => f.EmployerId)
-               .HasColumnType("UUID")
-               .IsRequired(false);
+               .HasColumnType("UUID");
 
-        builder.Property(f => f.StudentId)
-               .HasColumnType("UUID")
-               .IsRequired(false);
+        builder.Property(f => f.ResumeId)
+               .HasColumnType("UUID");
 
         builder.Property(f => f.AddedAt)
                .HasColumnType("TIMESTAMPTZ")
                .HasDefaultValueSql("CURRENT_TIMESTAMP")
                .IsRequired();
 
+        builder.ToTable(t => t.HasCheckConstraint(
+                "CK_Favorite_AtLeastOneTarget", 
+                "\"VacancyId\" IS NOT NULL OR \"EmployerId\" IS NOT NULL OR \"ResumeId\" IS NOT NULL"));
+
         builder.HasOne(f => f.User)
                .WithMany(u => u.Favorites)
                .HasForeignKey(f => f.UserId)
-               .OnDelete(DeleteBehavior.Cascade)
-               .IsRequired();
+               .OnDelete(DeleteBehavior.Cascade);
 
         builder.HasOne(f => f.Vacancy)
                .WithMany()
                .HasForeignKey(f => f.VacancyId)
-               .OnDelete(DeleteBehavior.Cascade)
-               .IsRequired(false);
+               .OnDelete(DeleteBehavior.Cascade);
 
         builder.HasOne(f => f.Employer)
                .WithMany()
                .HasForeignKey(f => f.EmployerId)
-               .OnDelete(DeleteBehavior.Cascade)
-               .IsRequired(false);
+               .OnDelete(DeleteBehavior.Cascade);
 
-        builder.HasOne(f => f.Student)
+        builder.HasOne(f => f.Resume)
                .WithMany()
-               .HasForeignKey(f => f.StudentId)
-               .OnDelete(DeleteBehavior.Cascade)
-               .IsRequired(false);
+               .HasForeignKey(f => f.ResumeId)
+               .OnDelete(DeleteBehavior.Cascade);
 
         builder.HasIndex(f => f.UserId);
-
-        builder.HasIndex(f => f.VacancyId)
-               .HasFilter("\"EmployerId\" IS NOT NULL");
-
-        builder.HasIndex(f => f.EmployerId)
-               .HasFilter("\"EmployerId\" IS NOT NULL");
-
-        builder.HasIndex(f => f.StudentId)
-               .HasFilter("\"StudentId\" IS NOT NULL");
 
         builder.HasIndex(f => new { f.UserId, f.VacancyId })
                .IsUnique()
@@ -76,8 +65,8 @@ public class FavoriteConfiguration : IEntityTypeConfiguration<Favorite>
                .IsUnique()
                .HasFilter("\"EmployerId\" IS NOT NULL");
 
-        builder.HasIndex(f => new { f.UserId, f.StudentId })
+        builder.HasIndex(f => new { f.UserId, f.ResumeId })
                .IsUnique()
-               .HasFilter("\"StudentId\" IS NOT NULL");
+               .HasFilter("\"ResumeId\" IS NOT NULL");
     }
 }

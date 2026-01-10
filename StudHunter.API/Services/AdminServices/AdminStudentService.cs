@@ -1,130 +1,67 @@
 ﻿using Microsoft.EntityFrameworkCore;
-using StudHunter.API.Common;
-using StudHunter.API.ModelsDto.StudentDto;
+using StudHunter.API.Infrastructure;
+using StudHunter.API.ModelsDto;
 using StudHunter.API.Services.BaseServices;
 using StudHunter.DB.Postgres;
 using StudHunter.DB.Postgres.Models;
 
 namespace StudHunter.API.Services.AdminServices;
-
-/// <summary>
-/// Service for managing students with administrative privileges.
-/// </summary>
-public class AdminStudentService(StudHunterDbContext context) : BaseStudentService(context)
+// TODO: добавить пагинацию
+public interface IAdminStudentService
 {
-    /// <summary>
-    /// Retrieves all students include deleted.
-    /// </summary>
-    /// <returns>A tuple containing a list of all students, an optional status code, and an optional error message.</returns>
-    public async Task<(List<AdminStudentDto>? Entities, int? StatusCode, string? ErrorMessage)> GetAllStudentsAsync()
+    Task<Result<List<AdminStudentDto>>> GetAllStudentsAsync();
+    Task<Result<AdminStudentDto>> GetStudentByIdAsync(Guid studentId);
+    Task<Result<AdminStudentDto>> UpdateStudentAsync(Guid studentId, UpdateStudentDto dto);
+    Task<Result<bool>> DeleteStudentAsync(Guid studentId, bool hardDelete);
+    Task<Result<bool>> RestoreAsync(Guid studentId);
+}
+
+public class AdminStudentService(StudHunterDbContext context) : BaseStudentService(context), IAdminStudentService
+{
+    public async Task<Result<List<AdminStudentDto>>> GetAllStudentsAsync()
     {
         var students = await _context.Students
             .IgnoreQueryFilters()
-            .Include(s => s.Achievements).ThenInclude(a => a.AchievementTemplate)
             .Include(s => s.Resume)
-            .Select(s => MapToStudentDto<AdminStudentDto>(s))
-            .OrderByDescending(s => s.LastName)
+            .OrderByDescending(s => s.CreatedAt)
             .ToListAsync();
 
-        return (students, null, null);
+        var dtos = students.Select(StudentMapper.ToAdminDto).ToList();
+
+        return Result<List<AdminStudentDto>>.Success(dtos);
     }
 
-    /// <summary>
-    /// Retrieves an student by their ID.
-    /// </summary>
-    /// <param name="studentId">The unique identifier (GUID) of the student.</param>
-    /// <returns>A tuple containing the student's details, an optional status code, and an optional error message.</returns>
-    public async Task<(AdminStudentDto? Entity, int? StatusCode, string? ErrorMessage)> GetStudentAsync(Guid studentId)
+    public async Task<Result<AdminStudentDto>> GetStudentByIdAsync(Guid studentId)
     {
-        var student = await _context.Students
-            .IgnoreQueryFilters()
-            .Include(s => s.Achievements).ThenInclude(a => a.AchievementTemplate)
-            .Include(s => s.Resume)
-            .FirstOrDefaultAsync(s => s.Id == studentId);
+        var student = await GetStudentInternalAsync(studentId, ignoreFilters: true);
+
         if (student == null)
-            return (null, StatusCodes.Status404NotFound, ErrorMessages.EntityNotFound(nameof(Student)));
-       
-        return (MapToStudentDto<AdminStudentDto>(student), null, null);
+            return Result<AdminStudentDto>.Failure(ErrorMessages.EntityNotFound(nameof(Student)), StatusCodes.Status404NotFound);
+
+        return Result<AdminStudentDto>.Success(StudentMapper.ToAdminDto(student));
     }
 
-    /// <summary>
-    /// Retrieves a student by their email.
-    /// </summary>
-    /// <param name="email">The email of the student.</param>
-    /// <returns>A typle containing the student DTO, an optional status code, and an optional error message.</returns>
-    public async Task<(AdminStudentDto? Entity, int? StatusCode, string? ErrorMessage)> GetStudentAsync(string email)
+    public async Task<Result<AdminStudentDto>> UpdateStudentAsync(Guid studentId, UpdateStudentDto dto)
     {
-        var student = await _context.Students
-            .IgnoreQueryFilters()
-            .Include(s => s.Achievements).ThenInclude(a => a.AchievementTemplate)
-            .Include(s => s.Resume)
-            .FirstOrDefaultAsync(s => s.Email == email);
+        var student = await GetStudentInternalAsync(studentId, ignoreFilters: true);
+
         if (student == null)
-            return (null, StatusCodes.Status404NotFound, ErrorMessages.EntityNotFound(nameof(Student)));
-        
-        return (MapToStudentDto<AdminStudentDto>(student), null, null);
+            return Result<AdminStudentDto>.Failure(ErrorMessages.EntityNotFound(nameof(Student)), StatusCodes.Status404NotFound);
+
+        StudentMapper.ApplyUpdate(student, dto);
+
+        RecalculateRegistrationStage(student);
+
+        await _context.SaveChangesAsync();
+        return Result<AdminStudentDto>.Success(StudentMapper.ToAdminDto(student));
     }
 
-    /// <summary>
-    /// Updates a student's profile by administrator.
-    /// </summary>
-    /// <param name="studentId">The unique identifier (GUID) of the student.</param>
-    /// <param name="dto">The data transfer object containing updated student details.</param>
-    /// <returns>A tuple indicating whether the update was successful, an optional status code, and an optional error message.</returns>
-    public async Task<(bool Success, int? StatusCode, string? ErrorMessage)> UpdateStudentAsync(Guid studentId, AdminUpdateStudentDto dto)
+    public async Task<Result<bool>> DeleteStudentAsync(Guid studentId, bool hardDelete)
     {
-        var student = await _context.Students
-            .IgnoreQueryFilters()
-            .FirstOrDefaultAsync(s => s.Id == studentId);
-        if (student == null)
-            return (false, StatusCodes.Status404NotFound, ErrorMessages.EntityNotFound(nameof(Student)));
-        if (dto.Email != null && await _context.Students.AnyAsync(s => s.Email == dto.Email && s.Id != studentId && !s.IsDeleted))
-            return (false, StatusCodes.Status409Conflict, ErrorMessages.EntityAlreadyExists(nameof(Student), nameof(Student.Email)));
-        if (dto.ContactPhone != null && await _context.Students.AnyAsync(s => s.ContactPhone == dto.ContactPhone && s.Id != studentId && !s.IsDeleted))
-            return (false, StatusCodes.Status409Conflict, ErrorMessages.EntityAlreadyExists(nameof(Student), nameof(Student.ContactPhone)));
-
-        if (dto.Email != null)
-            student.UpdateEmail(dto.Email);
-        if (dto.FirstName != null)
-            student.FirstName = dto.FirstName;
-        if (dto.LastName != null)
-            student.LastName = dto.LastName;
-        if (dto.Gender != null)
-            student.Gender = Enum.Parse<Student.StudentGender>(dto.Gender);
-        if (dto.BirthDate.HasValue)
-            student.BirthDate = dto.BirthDate.Value;
-        if (dto.Photo != null)
-            student.Photo = dto.Photo;
-        if (dto.ContactPhone != null)
-            student.ContactPhone = dto.ContactPhone;
-        if (dto.ContactEmail != null)
-            student.ContactEmail = dto.ContactEmail;
-        if (dto.IsForeign.HasValue)
-            student.IsForeign = dto.IsForeign.Value;
-        if (dto.Status != null)
-            student.Status = Enum.Parse<Student.StudentStatus>(dto.Status);
-        if (dto.IsDeleted.HasValue)
-            student.IsDeleted = dto.IsDeleted.Value;
-
-        return await SaveChangesAsync<Student>();
-    }
-
-    /// <summary>
-    /// Deletes a student (hard or soft delete).
-    /// </summary>
-    /// <param name="studentId">The unique identifier (GUID) of the student.</param>
-    /// <param name="hardDelete">A boolean indicating whether to perform a hard delete (true) or soft delete (false).</param>
-    /// <returns>A tuple indicating whether the deletion was successful, an optional status code, and an optional error message.</returns>
-    public async Task<(bool Success, int? StatusCode, string? ErrorMessage)> DeleteStudentAsync(Guid studentId, bool hardDelete = false)
-    {
-        var student = await _context.Students
-            .IgnoreQueryFilters()
-            .Include(s => s.StudyPlan)
-            .Include(s => s.Resume)
-            .FirstOrDefaultAsync(s => s.Id == studentId);
+        var student = await GetStudentInternalAsync(studentId, ignoreFilters: true);
 
         if (student == null)
-            return (false, StatusCodes.Status404NotFound, ErrorMessages.EntityNotFound(nameof(Student)));
+            return Result<bool>.Failure(ErrorMessages.EntityNotFound(nameof(Student)), StatusCodes.Status404NotFound);
 
         if (hardDelete)
         {
@@ -132,37 +69,36 @@ public class AdminStudentService(StudHunterDbContext context) : BaseStudentServi
         }
         else
         {
-            student.IsDeleted = true;
-            student.DeletedAt = DateTime.UtcNow;
+            if (student.IsDeleted)
+                return Result<bool>.Failure(ErrorMessages.EntityAlreadyDeleted(nameof(Student)), StatusCodes.Status400BadRequest);
 
-            if (student.StudyPlan != null && !student.StudyPlan.IsDeleted)
-            {
-                student.StudyPlan.IsDeleted = true;
-                student.StudyPlan.DeletedAt = DateTime.UtcNow;
-            }
-
-            if (student.Resume != null && !student.Resume.IsDeleted)
-            {
-                student.Resume.IsDeleted = true;
-                student.Resume.DeletedAt = DateTime.UtcNow;
-            }
-
-            var invitations = await _context.Invitations
-                .Where(i => (i.SenderId == student.Id || i.ReceiverId == student.Id) && i.Status != Invitation.InvitationStatus.Rejected)
-                .ToListAsync();
-
-            foreach (var invitation in invitations)
-            {
-                invitation.Status = Invitation.InvitationStatus.Rejected;
-                invitation.UpdatedAt = DateTime.UtcNow;
-            }
-
-            var favorites = await _context.Favorites
-                .Where(f => f.StudentId == student.Id)
-                .ToListAsync();
-
-            _context.Favorites.RemoveRange(favorites);
+            await SoftDeleteStudentAsync(student, DateTime.UtcNow);
         }
+
+        return await SaveChangesAsync<Student>();
+    }
+
+    public async Task<Result<bool>> RestoreAsync(Guid studentId)
+    {
+        var student = await GetStudentInternalAsync(studentId, ignoreFilters: true);
+
+        if (student == null)
+            return Result<bool>.Failure(ErrorMessages.EntityNotFound(nameof(Student)), StatusCodes.Status404NotFound);
+
+        if (!student.IsDeleted)
+            return Result<bool>.Failure(ErrorMessages.AccountAlreadyActive(), StatusCodes.Status400BadRequest);
+
+        var deletedAt = student.DeletedAt;
+        student.IsDeleted = false;
+        student.DeletedAt = null;
+
+        if (student.Resume != null && student.Resume.DeletedAt >= deletedAt)
+        {
+            student.Resume.IsDeleted = false;
+            student.Resume.DeletedAt = null;
+        }
+
+        RecalculateRegistrationStage(student);
 
         return await SaveChangesAsync<Student>();
     }

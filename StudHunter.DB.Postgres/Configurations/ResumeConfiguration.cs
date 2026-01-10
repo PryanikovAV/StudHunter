@@ -1,6 +1,7 @@
 ﻿using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
 using StudHunter.DB.Postgres.Models;
+
 namespace StudHunter.DB.Postgres.Configurations;
 
 public class ResumeConfiguration : IEntityTypeConfiguration<Resume>
@@ -23,8 +24,7 @@ public class ResumeConfiguration : IEntityTypeConfiguration<Resume>
 
         builder.Property(r => r.Description)
                .HasColumnType("TEXT")
-               .HasMaxLength(2500)
-               .IsRequired(false);
+               .HasMaxLength(2500);
 
         builder.Property(r => r.CreatedAt)
                .HasColumnType("TIMESTAMPTZ")
@@ -38,8 +38,7 @@ public class ResumeConfiguration : IEntityTypeConfiguration<Resume>
 
         builder.Property(r => r.IsDeleted)
                .HasColumnType("BOOLEAN")
-               .HasDefaultValue(false)
-               .IsRequired();
+               .HasDefaultValue(false);
 
         builder.Property(u => u.DeletedAt)
                .HasColumnType("TIMESTAMPTZ")
@@ -48,18 +47,23 @@ public class ResumeConfiguration : IEntityTypeConfiguration<Resume>
         builder.HasOne(r => r.Student)
                .WithOne(s => s.Resume)
                .HasForeignKey<Resume>(r => r.StudentId)
+               .OnDelete(DeleteBehavior.Cascade)
                .IsRequired();
+
+        builder.HasMany(r => r.AdditionalSkills)
+               .WithOne(ras => ras.Resume)
+               .HasForeignKey(ras => ras.ResumeId)
+               .OnDelete(DeleteBehavior.Cascade);
 
         builder.HasMany(r => r.Invitations)
                .WithOne(i => i.Resume)
                .HasForeignKey(i => i.ResumeId)
+               .OnDelete(DeleteBehavior.Restrict)
                .IsRequired(false);
 
         builder.HasIndex(r => r.StudentId)
                .IsUnique();
-
         builder.HasIndex(r => r.CreatedAt);
-
         builder.HasQueryFilter(r => !r.IsDeleted);
     }
 }

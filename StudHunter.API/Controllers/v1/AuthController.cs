@@ -1,39 +1,27 @@
-﻿using Microsoft.AspNetCore.Mvc;
+﻿using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Mvc;
 using StudHunter.API.Controllers.v1.BaseControllers;
-using StudHunter.API.ModelsDto.AuthDto;
-using StudHunter.API.Services;
+using StudHunter.API.ModelsDto;
+using StudHunter.API.Services.AuthService;
 
 namespace StudHunter.API.Controllers.v1;
 
-[Route("api/v1/[controller]")]
-[ApiController]
+[AllowAnonymous]
 public class AuthController(IAuthService authService) : BaseController
 {
-    private readonly IAuthService _authService = authService;
-
     [HttpPost("login")]
-    public async Task<IActionResult> Login([FromBody] LoginDto dto)
-    {
-        if (!ValidateModel())
-        {
-            var errors = ModelState.Values.SelectMany(v => v.Errors).Select(e => e.ErrorMessage).ToList();
-            return HandleResponse<LoginDto>(null, StatusCodes.Status400BadRequest, string.Join("; ", errors));
-        }
+    public async Task<IActionResult> Login([FromBody] LoginDto dto) =>
+        HandleResult(await authService.LoginAsync(dto));
 
-        var (result, statusCode, errorMessage) = await _authService.LoginAsync(dto);
-        return HandleResponse(result, statusCode, errorMessage);
-    }
+    [HttpPost("register/student")]
+    public async Task<IActionResult> RegisterStudent([FromBody] RegisterStudentDto dto) =>
+        HandleResult(await authService.RegisterStudentAsync(dto));
 
-    [HttpPut("recovery")]
-    public async Task<IActionResult> Recovery([FromBody] LoginDto dto)
-    {
-        if (!ValidateModel())
-        {
-            var errors = ModelState.Values.SelectMany(v => v.Errors).Select(e => e.ErrorMessage).ToList();
-            return HandleResponse<bool>(false, StatusCodes.Status400BadRequest, string.Join("; ", errors));
-        }
+    [HttpPost("register/employer")]
+    public async Task<IActionResult> RegisterEmployer([FromBody] RegisterEmployerDto dto) =>
+        HandleResult(await authService.RegisterEmployerAsync(dto));
 
-        var (result, statusCode, errorMessage) = await _authService.RecoverAccountAsync(dto);
-        return HandleResponse(result, statusCode, errorMessage);
-    }
+    [HttpPost("recover")]
+    public async Task<IActionResult> Recover([FromBody] LoginDto dto) =>
+        HandleResult(await authService.RecoverAccountAsync(dto));
 }

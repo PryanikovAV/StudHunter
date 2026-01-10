@@ -8,8 +8,10 @@ public class StudHunterDbContextFactory : IDesignTimeDbContextFactory<StudHunter
 {
     public StudHunterDbContext CreateDbContext(string[] args)
     {
+        var apiPath = Path.Combine(Directory.GetCurrentDirectory(), "..", "StudHunter.API");
+
         var configuration = new ConfigurationBuilder()
-            .SetBasePath(Directory.GetCurrentDirectory())
+            .SetBasePath(apiPath)
             .AddJsonFile("appsettings.json")
             .AddJsonFile("appsettings.Development.json", optional: true)
             .Build();

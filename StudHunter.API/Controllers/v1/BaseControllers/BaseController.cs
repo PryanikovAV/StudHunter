@@ -1,51 +1,26 @@
-﻿using Microsoft.AspNetCore.Mvc;
+﻿using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Mvc;
+using StudHunter.API.Infrastructure;
+using System.Security.Claims;
 
 namespace StudHunter.API.Controllers.v1.BaseControllers;
 
-/// <summary>
-/// Base controller with common API error handling.
-/// </summary>
+[Authorize]
+[ApiController]
+[Route("api/v1/[controller]")]
 public class BaseController : ControllerBase
 {
-    protected bool ValidateModel()
-    {
-        return ModelState.IsValid;
-    }
+    protected Guid AuthorizedUserId =>
+        Guid.TryParse(User.FindFirstValue(ClaimTypes.NameIdentifier), out var id) ? id : Guid.Empty;
 
-    // GET, POST
-    /// <summary>
-    /// 
-    /// </summary>
-    /// <typeparam name="T"></typeparam>
-    /// <param name="entity"></param>
-    /// <param name="statusCode"></param>
-    /// <param name="errorMessage"></param>
-    /// <param name="actionName"></param>
-    /// <param name="routeValues"></param>
-    /// <returns></returns>
-    protected IActionResult HandleResponse<T>(T? entity, int? statusCode, string? errorMessage, string? actionName = null, object? routeValues = null)
+    protected IActionResult HandleResult<T>(Result<T> result)
     {
-        if (statusCode.HasValue)
-            return StatusCode(statusCode.Value, new { error = errorMessage, errorCode = statusCode.Value });
+        if (!result.IsSuccess)
+            return Problem(detail: result.ErrorMessage, statusCode: result.StatusCode);
 
-        if (!string.IsNullOrEmpty(actionName))
-            return CreatedAtAction(actionName, routeValues, entity);
-        
-        return Ok(entity);
-    }
+        if (result.Value is null || (result.Value is bool b && b == false && result.StatusCode == StatusCodes.Status204NoContent))
+            return NoContent();
 
-    // PUT, DELETE
-    /// <summary>
-    /// 
-    /// </summary>
-    /// <param name="success"></param>
-    /// <param name="statusCode"></param>
-    /// <param name="errorMessage"></param>
-    /// <returns></returns>
-    protected IActionResult HandleResponse(bool success, int? statusCode, string? errorMessage)
-    {
-        if (!success && statusCode.HasValue)
-            return StatusCode(statusCode.Value, new { error = errorMessage, errorCode = statusCode.Value});
-        return NoContent();
+        return Ok(result.Value);
     }
 }

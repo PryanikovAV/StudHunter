@@ -19,6 +19,14 @@ public class MessageConfiguration : IEntityTypeConfiguration<Message>
 
         builder.Property(m => m.SenderId)
                .HasColumnType("UUID")
+               .IsRequired(false);
+
+        builder.Property(m => m.ReceiverId)
+               .HasColumnType("UUID")
+               .IsRequired();
+
+        builder.Property(m => m.IsRead)
+               .HasDefaultValue(false)
                .IsRequired();
 
         builder.Property(m => m.Content)
@@ -43,15 +51,15 @@ public class MessageConfiguration : IEntityTypeConfiguration<Message>
         builder.HasOne(m => m.Sender)
                .WithMany(u => u.SentMessages)
                .HasForeignKey(m => m.SenderId)
-               .OnDelete(DeleteBehavior.Restrict);
+               .OnDelete(DeleteBehavior.SetNull);
 
         builder.HasOne(m => m.Invitation)
                .WithMany()
                .HasForeignKey(m => m.InvitationId)
-               .OnDelete(DeleteBehavior.Cascade);
+               .OnDelete(DeleteBehavior.SetNull);
 
         builder.HasIndex(m => m.ChatId);
-
         builder.HasIndex(m => m.SentAt);
+        builder.HasIndex(m => new { m.ReceiverId, m.IsRead });
     }
 }

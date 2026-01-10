@@ -1,6 +1,7 @@
 ﻿using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
 using StudHunter.DB.Postgres.Models;
+
 namespace StudHunter.DB.Postgres.Configurations;
 
 public class VacancyCourseConfiguration : IEntityTypeConfiguration<VacancyCourse>

@@ -1,4 +1,5 @@
-﻿using StudHunter.API.ModelsDto.EmployerDto;
+﻿using Microsoft.EntityFrameworkCore;
+using StudHunter.API.Infrastructure;
 using StudHunter.DB.Postgres;
 using StudHunter.DB.Postgres.Models;
 
@@ -6,35 +7,53 @@ namespace StudHunter.API.Services.BaseServices;
 
 public abstract class BaseEmployerService(StudHunterDbContext context) : BaseService(context)
 {
-    /// <summary>
-    /// Maps an employer entity to a specified DTO type.
-    /// </summary>
-    /// <typeparam name="TDto">The type of DTO tp map to (must inherit from EmployerDto).</typeparam>
-    /// <param name="employer">The employer entity to map.</param>
-    /// <returns>The mapped DTO.</returns>
-    protected TDto MapToEmployerDto<TDto>(Employer employer) where TDto : EmployerDto, new()
+    protected async Task<Employer?> GetEmployerInternalAsync(Guid employerId, bool ignoreFilters = false)
     {
-        var dto = new TDto
-        {
-            Id = employer.Id,
-            Email = employer.Email,
-            ContactEmail = employer.ContactEmail,
-            ContactPhone = employer.ContactPhone,
-            CreatedAt = employer.CreatedAt,
-            AccreditationStatus = employer.AccreditationStatus,
-            Name = employer.Name,
-            Description = employer.Description,
-            Website = employer.Website,
-            Specialization = employer.Specialization,
-            VacancyIds = employer.Vacancies.Select(v => v.Id).ToList(),
-            Achievements = employer.Achievements.Select(BaseUserAchievementService.MapToUserAchievementDto).ToList()
-        };
+        var query = _context.Employers.AsQueryable();
 
-        if (dto is AdminEmployerDto adminDto)
+        if (ignoreFilters)
+            query = query.IgnoreQueryFilters();
+
+        return await query
+            .Include(e => e.Vacancies)
+            .FirstOrDefaultAsync(e => e.Id == employerId);
+    }
+
+    protected async Task SoftDeleteEmployerAsync(Employer employer, DateTime now)
+    {
+        employer.IsDeleted = true;
+        employer.DeletedAt = now;
+
+        foreach (var v in employer.Vacancies.Where(v => !v.IsDeleted))
         {
-            adminDto.IsDeleted = employer.IsDeleted;
+            v.IsDeleted = true;
+            v.DeletedAt = now;
         }
 
-        return dto;
+        await ClearUserActivityAsync(employer.Id, now);
+
+        RecalculateRegistrationStage(employer);
+    }
+
+    public static void RecalculateRegistrationStage(Employer employer)
+    {
+        if (employer.IsDeleted)
+        {
+            employer.RegistrationStage = User.AccountStatus.Anonymous;
+            return;
+        }
+
+        if (employer.RegistrationStage == User.AccountStatus.Anonymous)
+            return;
+
+        bool isDataValid =
+            employer.Name != UserDefaultNames.DefaultCompanyName &&
+            !string.IsNullOrWhiteSpace(employer.ContactPhone) &&
+            !string.IsNullOrWhiteSpace(employer.Description);
+
+        if (isDataValid)
+            employer.RegistrationStage = User.AccountStatus.FullyActivated;
+        else
+            employer.RegistrationStage = User.AccountStatus.ProfileFilled;
     }
 }

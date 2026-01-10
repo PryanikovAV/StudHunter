@@ -1,6 +1,7 @@
 ﻿using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
 using StudHunter.DB.Postgres.Models;
+
 namespace StudHunter.DB.Postgres.Configurations;
 
 public class CourseConfiguration : IEntityTypeConfiguration<Course>
@@ -20,8 +21,7 @@ public class CourseConfiguration : IEntityTypeConfiguration<Course>
 
         builder.Property(c => c.Description)
                .HasColumnType("TEXT")
-               .HasMaxLength(1000)
-               .IsRequired(false);
+               .HasMaxLength(1000);
 
         builder.HasIndex(c => c.Name)
                .IsUnique();
@@ -29,11 +29,11 @@ public class CourseConfiguration : IEntityTypeConfiguration<Course>
         builder.HasMany(c => c.VacancyCourses)
                .WithOne(vc => vc.Course)
                .HasForeignKey(vc => vc.CourseId)
-               .IsRequired(false);
+               .OnDelete(DeleteBehavior.Restrict);
 
         builder.HasMany(c => c.StudyPlanCourses)
                .WithOne(spc => spc.Course)
                .HasForeignKey(spc => spc.CourseId)
-               .IsRequired(false);
+               .OnDelete(DeleteBehavior.Restrict);
     }
 }

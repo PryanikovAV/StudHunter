@@ -1,33 +1,29 @@
-﻿using Microsoft.EntityFrameworkCore;
-using StudHunter.API.Common;
-using StudHunter.API.ModelsDto.ChatDto;
-using StudHunter.API.Services.BaseServices;
+﻿using Microsoft.AspNetCore.SignalR;
+using Microsoft.EntityFrameworkCore;
+using StudHunter.API.Hubs;
+using StudHunter.API.Infrastructure;
 using StudHunter.DB.Postgres;
 using StudHunter.DB.Postgres.Models;
 
 namespace StudHunter.API.Services.AdminServices;
-
-public class AdminChatService(StudHunterDbContext context) : BaseChatService(context)
+// TODO: добавить пагинацию
+public interface IAdminChatService : IChatService
 {
-    public async Task<(List<ChatDto>? Entities, int? StatusCode, string? ErrorMessage)> GetAllChatsAsync()
+    Task<Result<bool>> DeleteMessageAsync(Guid messageId);
+}
+
+public class AdminChatService(StudHunterDbContext context, IHubContext<ChatHub> chatHubContext, INotificationService notificationService)
+    : ChatService(context, chatHubContext, notificationService), IAdminChatService
+{
+    public async Task<Result<bool>> DeleteMessageAsync(Guid messageId)
     {
-        var chats = await _context.Chats
-            .Include(c => c.User1)
-            .Include(c => c.User2)
-            .Select(c => MapToChatDto(c))
-            .OrderByDescending(c => c.LastMessageAt)
-            .ToListAsync();
+        var message = await _context.Messages.FindAsync(messageId);
 
-        return (chats, null, null);
-    }
+        if (message == null)
+            return Result<bool>.Failure(ErrorMessages.EntityNotFound(nameof(Message)), StatusCodes.Status404NotFound);
 
-    public async Task<(bool Success, int? StatusCode, string? ErrorMessage)> DeleteChatAsync(Guid chatId)
-    {
-        var chat = await _context.Chats.FindAsync(chatId);
-        if (chat == null)
-            return (false, StatusCodes.Status404NotFound, ErrorMessages.EntityNotFound(nameof(Chat)));
+        _context.Messages.Remove(message);
 
-        _context.Chats.Remove(chat);
-        return await SaveChangesAsync<Chat>();
+        return await SaveChangesAsync<Message>();
     }
 }

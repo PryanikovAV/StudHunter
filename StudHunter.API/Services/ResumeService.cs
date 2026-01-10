@@ -1,145 +1,136 @@
 ﻿using Microsoft.EntityFrameworkCore;
-using StudHunter.API.Common;
-using StudHunter.API.ModelsDto.BaseModelsDto;
-using StudHunter.API.ModelsDto.ResumeDto;
+using StudHunter.API.Infrastructure;
+using StudHunter.API.ModelsDto;
 using StudHunter.API.Services.BaseServices;
 using StudHunter.DB.Postgres;
 using StudHunter.DB.Postgres.Models;
 
 namespace StudHunter.API.Services;
 
-/// <summary>
-/// Service for managing resumes.
-/// </summary>
-public class ResumeService(StudHunterDbContext context, StudyPlanService studyPlanService) : BaseResumeService(context)
+public interface IResumeService
 {
-    private readonly StudyPlanService _studyPlanService = studyPlanService;
+    Task<Result<ResumeDto>> GetResumeByStudentIdAsync(Guid studentId, Guid? currentUserId = null, bool ignoreFilters = true);
+    Task<Result<ResumeDto>> CreateResumeAsync(Guid studentId, UpdateResumeDto dto);
+    Task<Result<ResumeDto>> UpdateResumeAsync(Guid studentId, UpdateResumeDto dto);
+    Task<Result<bool>> SoftDeleteResumeAsync(Guid studentId);
+    Task<Result<ResumeDto>> RestoreResumeAsync(Guid studentId);
+    Task<Result<PagedResult<ResumeDto>>> SearchResumesAsync(ResumeSearchFilter filter, Guid? currentUserId = null);
+}
 
-    /// <summary>
-    /// Retrieves a resume by studentID.
-    /// </summary>
-    /// <param name="studentId">The unique identifier (GUID) of the student.</param>
-    /// <param name="authUserId">The unique identifier (GUID) of the resume.</param>
-    /// <returns>A tuple containing the resume, an optional status code, and an optional error message.</returns>
-    public async Task<(ResumeDto? Entity, int? StatusCode, string? ErrorMessage)> GetResumeAsync(Guid studentId, Guid authUserId)
+public class ResumeService(StudHunterDbContext context) : BaseResumeService(context), IResumeService
+{
+    public async Task<Result<ResumeDto>> CreateResumeAsync(Guid studentId, UpdateResumeDto dto)
     {
-        if (studentId != authUserId)
-            return (null, StatusCodes.Status403Forbidden, ErrorMessages.RestrictOwnProfileAction("get", nameof(Resume)));
-        var student = await _context.Students.FindAsync(studentId);
+        var student = await _context.Users.FindAsync(studentId);
         if (student == null)
-            return (null, StatusCodes.Status404NotFound, ErrorMessages.EntityNotFound(nameof(Student)));
-        if (student.Resume == null)
-            return (null, StatusCodes.Status404NotFound, ErrorMessages.EntityNotFound(nameof(Resume)));
+            return Result<ResumeDto>.Failure(ErrorMessages.EntityNotFound(nameof(Student)));
 
-        return (MapToResumeDto(student.Resume), null, null);
-    }
+        var permission = EnsureCanPerform(student, UserAction.CreateResume);
+        if (!permission.IsSuccess)
+            return Result<ResumeDto>.Failure(permission.ErrorMessage!, permission.StatusCode);
 
-    /// <summary>
-    /// Creates a new resume for a student.
-    /// </summary>
-    /// <param name="authUserId">The unique identifier (GUID) of the student.</param>
-    /// <param name="dto">The data transfer object containing resume details.</param>
-    /// <returns>A tuple containing the created resume, an optional status code, and an optional error message.</returns>
-    public async Task<(ResumeDto? Entity, int? StatusCode, string? ErrorMessage)> CreateResumeAsync(Guid authUserId, CreateResumeDto dto)
-    {
-        var student = await _context.Students.FindAsync(authUserId);
-        if (student == null)
-            return (null, StatusCodes.Status404NotFound, ErrorMessages.EntityNotFound(nameof(Student)));
-        var resume = await _context.Resumes
-            .IgnoreQueryFilters()
-            .FirstOrDefaultAsync(r => r.Id == student.Id);
-        if (resume != null && resume.IsDeleted)
-            return (null, StatusCodes.Status410Gone, ErrorMessages.EntityAlreadyDeleted(nameof(Resume), nameof(UpdateResumeStatusAsync)));
-        if (resume != null)
-            return (null, StatusCodes.Status409Conflict, ErrorMessages.EntityAlreadyExists(nameof(Student), nameof(Resume)));
-        var (studyPlan, studyPlanStatusCode, studyPlanErrorMessage) = await _studyPlanService.GetStudyPlanByStudentAsync(authUserId, authUserId);
-        if (studyPlan == null)
-            return (null, StatusCodes.Status400BadRequest, $"{nameof(StudyPlan)} is required to create a {nameof(Resume)}. Please create a {nameof(StudyPlan)} first.");
+        if (await _context.Resumes.AnyAsync(r => r.StudentId == studentId))
+            return Result<ResumeDto>.Failure(ErrorMessages.AlreadyExists(nameof(Resume)));
 
-        resume = new Resume
+        var resume = new Resume
         {
-            Id = Guid.NewGuid(),
-            StudentId = authUserId,
-            Title = dto.Title,
-            Description = dto.Description,
-            CreatedAt = DateTime.UtcNow,
-            UpdatedAt = DateTime.UtcNow,
-            IsDeleted = false
+            StudentId = studentId,
+            Title = dto.Title?.Trim() ?? "Новое резюме",
+            Description = dto.Description?.Trim()
         };
+
+        if (dto.SkillIds?.Any() == true)
+            UpdateResumeSkills(resume, dto.SkillIds);
 
         _context.Resumes.Add(resume);
 
-        var (success, statusCode, errorMessage) = await SaveChangesAsync<Resume>();
-        if (!success)
-            return (null, statusCode, errorMessage);
+        var result = await SaveChangesAsync<Resume>();
 
-        return (MapToResumeDto(resume), null, null);
+        return result.IsSuccess
+            ? await GetResumeByStudentIdAsync(studentId, null, true)
+            : Result<ResumeDto>.Failure(result.ErrorMessage!);
     }
 
-    /// <summary>
-    /// Updates an existing resume.
-    /// </summary>
-    /// <param name="studentId"></param>
-    /// <param name="authUserId"></param>
-    /// <param name="dto"></param>
-    /// <returns></returns>
-    public async Task<(bool Success, int? StatusCode, string? ErrorMessage)> UpdateResumeAsync(Guid authUserId, Guid studentId, UpdateResumeDto dto)
+    public async Task<Result<ResumeDto>> UpdateResumeAsync(Guid studentId, UpdateResumeDto dto)
     {
-        if (studentId != authUserId)
-            return (false, StatusCodes.Status403Forbidden, ErrorMessages.RestrictOwnProfileAction("update", nameof(Resume)));
-        var student = await _context.Students
-            .Include(r => r.Resume)
-            .FirstOrDefaultAsync(s => s.Id == studentId);
-        if (student == null)
-            return (false, StatusCodes.Status404NotFound, ErrorMessages.EntityNotFound(nameof(Student)));
-        if (student.Resume == null)
-            return (false, StatusCodes.Status404NotFound, ErrorMessages.EntityNotFound(nameof(Resume)));
-        if (await _context.Resumes.IgnoreQueryFilters().AnyAsync(r => r.Id == student.Resume.Id))
-            return (false, StatusCodes.Status410Gone, ErrorMessages.EntityAlreadyDeleted(nameof(Resume), nameof(UpdateResumeStatusAsync)));
+        var resume = await _context.Resumes
+            .Include(r => r.AdditionalSkills)
+            .FirstOrDefaultAsync(r => r.StudentId == studentId);
 
-        if (dto.Title != null)
-            student.Resume.Title = dto.Title;
-        if (dto.Description != null)
-            student.Resume.Description = dto.Description;
-        student.Resume.UpdatedAt = DateTime.UtcNow;
-        return await SaveChangesAsync<Resume>();
+        if (resume == null)
+            return Result<ResumeDto>.Failure(ErrorMessages.EntityNotFound(nameof(Resume)), StatusCodes.Status404NotFound);
+
+        ResumeMapper.ApplyUpdate(resume, dto);
+        if (dto.SkillIds != null)
+            UpdateResumeSkills(resume, dto.SkillIds);
+
+        var result = await SaveChangesAsync<Resume>();
+        return result.IsSuccess
+            ? await GetResumeByStudentIdAsync(studentId, null, true)
+            : Result<ResumeDto>.Failure(result.ErrorMessage!);
     }
 
-    /// <summary>
-    /// 
-    /// </summary>
-    /// <param name="studentId"></param>
-    /// <param name="authUserId"></param>
-    /// <param name="dto"></param>
-    /// <returns></returns>
-    public async Task<(bool Success, int? StatusCode, string? ErrorMessage)> UpdateResumeStatusAsync(Guid authUserId, Guid studentId, UpdateStatusDto dto)
+    public async Task<Result<PagedResult<ResumeDto>>> SearchResumesAsync(ResumeSearchFilter filter, Guid? currentUserId = null)
     {
-        if (studentId != authUserId)
-            return (false, StatusCodes.Status403Forbidden, ErrorMessages.RestrictOwnProfileAction("update status", nameof(Resume)));
-        var student = await _context.Students
-            .IgnoreAutoIncludes()
-            .Include(s => s.Resume)
-            .FirstOrDefaultAsync(s => s.Id == studentId);
-
-        if (student == null)
-            return (false, StatusCodes.Status404NotFound, ErrorMessages.EntityNotFound(nameof(Student)));
-        if (student.Resume == null)
-            return (false, StatusCodes.Status404NotFound, ErrorMessages.EntityNotFound(nameof(Resume)));
-
-        student.Resume.IsDeleted = dto.IsDeleted;
-        student.Resume.DeletedAt = dto.IsDeleted ? DateTime.UtcNow : null;
-
-        if (dto.IsDeleted)
+        if (currentUserId.HasValue)
         {
-            var invitations = await _context.Invitations
-                .Where(i => i.ResumeId == studentId && i.Status != Invitation.InvitationStatus.Rejected)
-                .ToListAsync();
-            foreach (var invitation in invitations)
-            {
-                invitation.Status = Invitation.InvitationStatus.Rejected;
-                invitation.UpdatedAt = DateTime.UtcNow;
-            }
+            var currentUser = await _context.Users.FindAsync(currentUserId.Value);
+            var permission = EnsureCanPerform(currentUser!, UserAction.ViewResumes);
+            if (!permission.IsSuccess)
+                return Result<PagedResult<ResumeDto>>.Failure(permission.ErrorMessage!, permission.StatusCode);
         }
-        return await SaveChangesAsync<Resume>();
+
+        var query = GetFullResumeQuery();
+        query = query.Where(r => r.Student.RegistrationStage == User.AccountStatus.FullyActivated);
+
+        if (currentUserId.HasValue)
+        {
+            var blockedIds = await GetBlockedUserIdsAsync(currentUserId.Value);
+            if (blockedIds.Any())
+                query = query.Where(r => !blockedIds.Contains(r.StudentId));
+        }
+
+        if (!string.IsNullOrWhiteSpace(filter.SearchTerm))
+        {
+            var term = filter.SearchTerm.ToLower();
+            query = query.Where(r => r.Title.ToLower().Contains(term)
+            || (r.Description != null && r.Description.ToLower().Contains(term)));
+        }
+
+        if (filter.SkillIds?.Any() == true)
+            query = query.Where(r => r.AdditionalSkills.Any(s => filter.SkillIds.Contains(s.AdditionalSkillId)));
+
+        var pagedEntities = await query
+            .OrderByDescending(r => r.UpdatedAt)
+            .ToPagedResultAsync(filter.Paging);
+
+        bool maskContacts = false;
+        if (currentUserId.HasValue)
+        {
+            var user = await _context.Users.FindAsync(currentUserId.Value);
+            maskContacts = !UserPermissions.IsAllowed(UserRoles.GetRole(user!), user!.RegistrationStage, UserAction.ViewContacts);
+        }
+
+        var dtos = pagedEntities.Items
+            .Select(r => ResumeMapper.ToDto(r, false, maskContacts))
+            .ToList();
+
+        var results = new PagedResult<ResumeDto>(
+            Items: dtos,
+            TotalCount: pagedEntities.TotalCount,
+            PageNumber: pagedEntities.PageNumber,
+            PageSize: pagedEntities.PageSize
+        );
+
+        return Result<PagedResult<ResumeDto>>.Success(results);
     }
 }
+
+public record ResumeSearchFilter(
+    string? SearchTerm = null,
+    List<Guid>? SkillIds = null,
+    PaginationParams Paging = null!
+)
+{
+    public PaginationParams Paging { get; init; } = Paging ?? new PaginationParams();
+};

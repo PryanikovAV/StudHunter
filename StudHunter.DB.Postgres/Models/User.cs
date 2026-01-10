@@ -2,46 +2,55 @@
 
 public abstract class User
 {
-    public Guid Id { get; set; }
+    public enum AccountStatus
+    {
+        Anonymous = 1,
+        ProfileFilled = 2,
+        FullyActivated = 3
+    }
 
-    public string Email { get; private set; } = null!;
+    public Guid Id { get; init; }
+
+    public AccountStatus RegistrationStage { get; set; } = AccountStatus.Anonymous;
+
+    private string _email = null!;
+    public string Email
+    {
+        get => _email;
+        set
+        {
+            ArgumentException.ThrowIfNullOrWhiteSpace(value);
+            _email = value.Trim().ToLower();
+        }
+    }
+
+    private string _passwordHash = null!;
+    public string PasswordHash
+    {
+        get => _passwordHash;
+        set
+        {
+            ArgumentException.ThrowIfNullOrWhiteSpace(value);
+            _passwordHash = value;
+        }
+    }
 
     public string? ContactEmail { get; set; }
-
     public string? ContactPhone { get; set; }
+    public string? AvatarUrl { get; set; }
 
-    public string PasswordHash { get; private set; } = null!;
-
-    public DateTime CreatedAt { get; set; }
-
-    public bool IsDeleted { get; set; }
-
+    public DateTime CreatedAt { get; init; } = DateTime.UtcNow;
+    public bool IsDeleted { get; set; } = false;
     public DateTime? DeletedAt { get; set; }
 
-    public virtual ICollection<UserAchievement> Achievements { get; set; } = new List<UserAchievement>();
-    public virtual ICollection<Favorite> Favorites { get; set; } = new List<Favorite>();
-    public virtual ICollection<Invitation> SentInvitations { get; set; } = new List<Invitation>();
-    public virtual ICollection<Invitation> ReceivedInvitations { get; set; } = new List<Invitation>();
-    public virtual ICollection<Message> SentMessages { get; set; } = new List<Message>();
-    public virtual ICollection<Message> ReceivedMessages { get; set; } = new List<Message>();
-    public virtual ICollection<Chat> ChatsAsUser1 { get; set; } = new List<Chat>();
-    public virtual ICollection<Chat> ChatsAsUser2 { get; set; } = new List<Chat>();
+    public virtual ICollection<BlackList> BlackLists { get; set; } = new HashSet<BlackList>();
+    public virtual ICollection<Chat> ChatsAsUser1 { get; set; } = new HashSet<Chat>();
+    public virtual ICollection<Chat> ChatsAsUser2 { get; set; } = new HashSet<Chat>();
+    public virtual ICollection<Favorite> Favorites { get; set; } = new HashSet<Favorite>();
+    public virtual ICollection<Invitation> ReceivedInvitations { get; set; } = new HashSet<Invitation>();
+    public virtual ICollection<Invitation> SentInvitations { get; set; } = new HashSet<Invitation>();
+    public virtual ICollection<Message> ReceivedMessages { get; set; } = new HashSet<Message>();
+    public virtual ICollection<Message> SentMessages { get; set; } = new HashSet<Message>();
 
     protected User() { }
-
-    protected void SetEmail(string email)
-    {
-        if (string.IsNullOrWhiteSpace(email))
-            throw new ArgumentNullException("Email cannot be empty.");
-
-        Email = email;
-    }
-
-    protected void SetPasswordHash(string passwordHash)
-    {
-        if (string.IsNullOrWhiteSpace(passwordHash))
-            throw new ArgumentNullException("PasswordHash cannot be empty.");
-
-        PasswordHash = passwordHash;
-    }
 }

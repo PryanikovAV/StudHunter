@@ -6,40 +6,36 @@ namespace StudHunter.DB.Postgres;
 
 public class StudHunterDbContext : DbContext
 {
-    public DbSet<AdditionalSkill> AdditionalSkills { get; set; }
-    public DbSet<AchievementTemplate> AchievementTemplates { get; set; } = null!;
-    public DbSet<Administrator> Administrators { get; set; } = null!;
-    public DbSet<Chat> Chats { get; set; } = null!;
-    public DbSet<Course> Courses { get; set; } = null!;
-    public DbSet<Employer> Employers { get; set; } = null!;
-    public DbSet<Faculty> Faculties { get; set; } = null!;
-    public DbSet<Favorite> Favorites { get; set; } = null!;
-    public DbSet<Invitation> Invitations { get; set; } = null!;
-    public DbSet<Message> Messages { get; set; } = null!;
-    public DbSet<Resume> Resumes { get; set; } = null!;
-    public DbSet<Speciality> Specialities { get; set; } = null!;
-    public DbSet<Student> Students { get; set; } = null!;
-    public DbSet<StudyPlan> StudyPlans { get; set; } = null!;
-    public DbSet<StudyPlanCourse> StudyPlanCourses { get; set; } = null!;
-    public DbSet<User> Users { get; set; } = null!;
-    public DbSet<UserAchievement> UserAchievements { get; set; } = null!;
-    public DbSet<Vacancy> Vacancies { get; set; } = null!;
-    public DbSet<VacancyCourse> VacancyCourses { get; set; } = null!;
-
     public StudHunterDbContext(DbContextOptions<StudHunterDbContext> options)
         : base(options)
     {
-
     }
 
-    protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
-    {
-
-    }
+    public DbSet<AdditionalSkill> AdditionalSkills => Set<AdditionalSkill>();
+    public DbSet<Administrator> Administrators => Set<Administrator>();
+    public DbSet<BlackList> BlackLists => Set<BlackList>();
+    public DbSet<Chat> Chats => Set<Chat>();
+    public DbSet<Course> Courses => Set<Course>();
+    public DbSet<Employer> Employers => Set<Employer>();
+    public DbSet<Faculty> Faculties => Set<Faculty>();
+    public DbSet<Favorite> Favorites => Set<Favorite>();
+    public DbSet<Invitation> Invitations => Set<Invitation>();
+    public DbSet<Message> Messages => Set<Message>();
+    public DbSet<Notification> Notifications => Set<Notification>();
+    public DbSet<Resume> Resumes => Set<Resume>();
+    public DbSet<ResumeAdditionalSkill> ResumeAdditionalSkills => Set<ResumeAdditionalSkill>();
+    public DbSet<Speciality> Specialities => Set<Speciality>();
+    public DbSet<Student> Students => Set<Student>();
+    public DbSet<StudyPlan> StudyPlans => Set<StudyPlan>();
+    public DbSet<StudyPlanCourse> StudyPlanCourses => Set<StudyPlanCourse>();
+    public DbSet<User> Users => Set<User>();
+    public DbSet<Vacancy> Vacancies => Set<Vacancy>();
+    public DbSet<VacancyAdditionalSkill> VacancyAdditionalSkills => Set<VacancyAdditionalSkill>();
+    public DbSet<VacancyCourse> VacancyCourses => Set<VacancyCourse>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
-        modelBuilder.HasDefaultSchema("studhunter");
+        // modelBuilder.HasDefaultSchema("studhunter");
         modelBuilder.Entity<User>().UseTpcMappingStrategy();
         modelBuilder.ApplyConfigurationsFromAssembly(typeof(UserConfiguration).Assembly);
         base.OnModelCreating(modelBuilder);

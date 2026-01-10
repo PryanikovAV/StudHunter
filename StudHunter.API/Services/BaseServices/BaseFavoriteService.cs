@@ -1,4 +1,5 @@
-﻿using StudHunter.API.ModelsDto.FavoriteDto;
+﻿using Microsoft.EntityFrameworkCore;
+using StudHunter.API.ModelsDto;
 using StudHunter.DB.Postgres;
 using StudHunter.DB.Postgres.Models;
 
@@ -6,32 +7,24 @@ namespace StudHunter.API.Services.BaseServices;
 
 public abstract class BaseFavoriteService(StudHunterDbContext context) : BaseService(context)
 {
-    protected static FavoriteDto MapToFavoriteDto(Favorite favorite)
+    protected IQueryable<Favorite> GetFullFavoriteQuery() =>
+        _context.Favorites
+            .Include(f => f.Vacancy).ThenInclude(v => v!.Employer)
+            .Include(f => f.Resume).ThenInclude(r => r!.Student)
+            .Include(f => f.Employer);
+
+    protected async Task<Guid?> GetTargetOwnerIdAsync(Guid targetId, FavoriteType type)
     {
-        return new FavoriteDto
+        return type switch
         {
-            Id = favorite.Id,
-            UserId = favorite.UserId,
-            VacancyId = favorite.VacancyId,
-            EmployerId = favorite.EmployerId,
-            StudentId = favorite.StudentId,
-            AddedAt = favorite.AddedAt,
-            Vacancy = favorite.Vacancy != null ? new VacancySummaryDto
-            {
-                Id = favorite.Vacancy.Id,
-                Title = favorite.Vacancy.Title
-            } : null,
-            Employer = favorite.Employer != null ? new EmployerSummaryDto
-            {
-                Id = favorite.Employer.Id,
-                Name = favorite.Employer.Name
-            } : null,
-            Student = favorite.Student != null ? new StudentSummaryDto
-            {
-                Id = favorite.Student.Id,
-                FirstName = favorite.Student.FirstName,
-                LastName = favorite.Student.LastName
-            } : null
+            FavoriteType.Vacancy => (await _context.Vacancies.AsNoTracking()
+                .FirstOrDefaultAsync(v => v.Id == targetId))?.EmployerId,
+
+            FavoriteType.Resume => (await _context.Resumes.AsNoTracking()
+                .FirstOrDefaultAsync(r => r.Id == targetId))?.StudentId,
+
+            FavoriteType.Employer => targetId,
+            _ => null
         };
     }
 }

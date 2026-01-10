@@ -1,6 +1,7 @@
 ﻿using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
 using StudHunter.DB.Postgres.Models;
+
 namespace StudHunter.DB.Postgres.Configurations;
 
 public class StudentConfiguration : IEntityTypeConfiguration<Student>
@@ -19,27 +20,20 @@ public class StudentConfiguration : IEntityTypeConfiguration<Student>
 
         builder.Property(s => s.Gender)
                .HasColumnType("INTEGER")
-               .IsRequired();
-
-        builder.Property(s => s.BirthDate)
-               .HasColumnType("DATE")
-               .HasDefaultValue(DateOnly.MinValue)
-               .IsRequired();
-
-        builder.Property(s => s.Photo)
-               .HasColumnType("VARCHAR(255)")
-               .HasMaxLength(255)
                .IsRequired(false);
-
-        builder.Property(s => s.IsForeign)
-               .HasColumnType("BOOLEAN")
-               .HasDefaultValue(false)
-               .IsRequired();
 
         builder.Property(s => s.Status)
                .HasColumnType("INTEGER")
                .HasDefaultValue(Student.StudentStatus.Studying)
                .IsRequired();
+
+        builder.Property(s => s.BirthDate)
+               .HasColumnType("DATE")
+               .IsRequired(false);
+
+        builder.Property(s => s.IsForeign)
+               .HasColumnType("BOOLEAN")
+               .IsRequired(false);
 
         builder.HasOne(s => s.Resume)
                .WithOne(r => r.Student)

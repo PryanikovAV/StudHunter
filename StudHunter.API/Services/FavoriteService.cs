@@ -1,212 +1,115 @@
 ﻿using Microsoft.EntityFrameworkCore;
-using StudHunter.API.Common;
-using StudHunter.API.ModelsDto.FavoriteDto;
+using StudHunter.API.Infrastructure;
+using StudHunter.API.ModelsDto;
 using StudHunter.API.Services.BaseServices;
 using StudHunter.DB.Postgres;
 using StudHunter.DB.Postgres.Models;
 
 namespace StudHunter.API.Services;
 
-/// <summary>
-/// Service for managing favorites.
-/// </summary>
-public class FavoriteService(StudHunterDbContext context) : BaseFavoriteService(context)
+public interface IFavoriteService
 {
-    /// <summary>
-    /// Retrieves all favorites for a specific user.
-    /// </summary>
-    /// <param name="authUserId">The unique identifier (GUID) of the user.</param>
-    /// <returns>A tuple containing a list of favorites, an optional status code, and an optional error message.</returns>
-    public async Task<(List<FavoriteDto>? Entities, int? StatusCode, string? ErrorMessage)> GetAllFavoritesByUserAsync(Guid authUserId)
+    Task<Result<PagedResult<FavoriteDto>>> GetMyFavoritesAsync(Guid userId, PaginationParams paging);
+    Task<Result<bool>> ToggleFavoriteAsync(Guid userId, FavoriteRequest request);
+}
+
+public class FavoriteService(StudHunterDbContext context) : BaseFavoriteService(context), IFavoriteService
+{
+    public async Task<Result<PagedResult<FavoriteDto>>> GetMyFavoritesAsync(Guid userId, PaginationParams paging)
     {
-        if (!await _context.Users.AnyAsync(u => u.Id == authUserId))
-            return (null, StatusCodes.Status401Unauthorized, ErrorMessages.InvalidTokenUserId());
+        var blockedIds = await GetBlockedUserIdsAsync(userId);
 
-        var favorites = await _context.Favorites
-            .Include(f => f.Vacancy)
-            .Include(f => f.Employer)
-            .Include(f => f.Student)
-            .Where(f => f.UserId == authUserId)
-            .Select(f => MapToFavoriteDto(f))
-            .ToListAsync();
+        var query = GetFullFavoriteQuery().Where(f => f.UserId == userId);
 
-        return (favorites, null, null);
-    }
-
-    /// <summary>
-    /// Retrieves a favorite by its ID for a specific user.
-    /// </summary>
-    /// <param name="favoriteId">The unique identifier (GUID) of the favorite.</param>
-    /// <param name="authUserId">The unique identifier (GUID) of the user.</param>
-    /// <returns>A tuple containing the favorite, an optional status code, and an optional error message.</returns>
-    public async Task<(FavoriteDto? Entity, int? StatusCode, string? ErrorMessage)> GetFavoriteAsync(Guid authUserId, Guid favoriteId)
-    {
-        if (!await _context.Users.AnyAsync(u => u.Id == authUserId))
-            return (null, StatusCodes.Status403Forbidden, ErrorMessages.InvalidTokenUserId());
-
-        var favorite = await _context.Favorites
-            .Include(f => f.Vacancy)
-            .Include(f => f.Employer)
-            .Include(f => f.Student)
-            .Where(f => f.Id == favoriteId && f.UserId == authUserId)
-            .Select(f => MapToFavoriteDto(f))
-            .FirstOrDefaultAsync();
-
-        if (favorite == null)
-            return (null, StatusCodes.Status404NotFound, ErrorMessages.EntityNotFound(nameof(Favorite)));
-
-        return (favorite, null, null);
-    }
-
-    /// <summary>
-    /// 
-    /// </summary>
-    /// <param name="authUserId"></param>
-    /// <returns></returns>
-    public async Task<(List<FavoriteDto>? Entities, int? StatusCode, string? ErrorMessage)> GetFavoriteVacanciesAsync(Guid authUserId)
-    {
-        if (!await _context.Users.AnyAsync(u => u.Id == authUserId))
-            return (null, StatusCodes.Status401Unauthorized, ErrorMessages.InvalidTokenUserId());
-
-        var isStudent = await _context.Students.AnyAsync(s => s.Id == authUserId && !s.IsDeleted);
-        if (!isStudent)
-            return (null, StatusCodes.Status403Forbidden, $"Only {nameof(Student)} can favorite {nameof(Vacancy)}.");
-
-        var favorites = await _context.Favorites
-            .Include(f => f.Vacancy)
-            .Where(f => f.UserId == authUserId && f.VacancyId != null)
-            .Select(f => MapToFavoriteDto(f))
-            .OrderByDescending(f => f.AddedAt)
-            .ToListAsync();
-
-        return (favorites, null, null);
-    }
-
-    /// <summary>
-    /// 
-    /// </summary>
-    /// <param name="authUserId"></param>
-    /// <returns></returns>
-    public async Task<(List<FavoriteDto>? Entities, int? StatusCode, string? ErrorMessage)> GetFavoriteEmployersAsync(Guid authUserId)
-    {
-        if (!await _context.Users.AnyAsync(u => u.Id == authUserId))
-            return (null, StatusCodes.Status401Unauthorized, ErrorMessages.InvalidTokenUserId());
-
-        var isStudent = await _context.Students.AnyAsync(s => s.Id == authUserId && !s.IsDeleted);
-        if (!isStudent)
-            return (null, StatusCodes.Status403Forbidden, $"Only {nameof(Student)} can favorite {nameof(Employer)}.");
-
-        var favorites = await _context.Favorites
-            .Include(f => f.Employer)
-            .Where(f => f.UserId == authUserId && f.EmployerId != null)
-            .Select(f => MapToFavoriteDto(f))
-            .OrderByDescending(f => f.AddedAt)
-            .ToListAsync();
-
-        return (favorites, null, null);
-    }
-
-    /// <summary>
-    /// 
-    /// </summary>
-    /// <param name="authUserId"></param>
-    /// <returns></returns>
-    public async Task<(List<FavoriteDto>? Entities, int? StatusCode, string? ErrorMessage)> GetFavoriteStudentsAsync(Guid authUserId)
-    {
-        if (!await _context.Users.AnyAsync(u => u.Id == authUserId))
-            return (null, StatusCodes.Status401Unauthorized, ErrorMessages.InvalidTokenUserId());
-
-        var isEmployer = await _context.Employers.AnyAsync(s => s.Id == authUserId && !s.IsDeleted);
-        if (!isEmployer)
-            return (null, StatusCodes.Status403Forbidden, $"Only {nameof(Employer)} can favorite {nameof(Student)}.");
-
-        var favorites = await _context.Favorites
-            .Include(f => f.Student)
-            .Where(f => f.UserId == authUserId && f.StudentId != null)
-            .Select(f => MapToFavoriteDto(f))
-            .OrderByDescending(f => f.AddedAt)
-            .ToListAsync();
-
-        return (favorites, null, null);
-    }
-
-    public async Task<(bool Exists, int? StatusCode, string? ErrorMessage)> IsFavoriteAsync(Guid authUserId, Guid? vacancyId, Guid? employerId, Guid? studentId)
-    {
-        if (!await _context.Users.AnyAsync(u => u.Id == authUserId))
-            return (false, StatusCodes.Status401Unauthorized, ErrorMessages.InvalidTokenUserId());
-
-        var exists = await _context.Favorites
-            .AnyAsync(f => f.UserId == authUserId && (f.VacancyId == vacancyId || f.EmployerId == employerId || f.StudentId == studentId));
-
-        return (exists, null, null);
-    }
-
-    /// <summary>
-    /// Creates a new favorite for a user.
-    /// </summary>
-    /// <param name="authUserId">The unique identifier (GUID) of the user.</param>
-    /// <param name="dto">The data transfer object containing favorite details.</param>
-    /// <returns>A tuple containing the created favorite, an optional status code, and an optional error message.</returns>
-    public async Task<(FavoriteDto? Entity, int? StatusCode, string? ErrorMessage)> CreateFavoriteAsync(Guid authUserId, CreateFavoriteDto dto)
-    {
-        if (!await _context.Users.AnyAsync(u => u.Id == authUserId))
-            return (null, StatusCodes.Status401Unauthorized, ErrorMessages.InvalidTokenUserId());
-
-        if (dto.VacancyId != null && !await _context.Vacancies.AnyAsync(v => v.Id == dto.VacancyId && !v.IsDeleted))
-            return (null, StatusCodes.Status404NotFound, ErrorMessages.EntityNotFound(nameof(Vacancy)));
-
-        if (dto.EmployerId != null && !await _context.Employers.AnyAsync(e => e.Id == dto.EmployerId && !e.IsDeleted && e.AccreditationStatus))
-            return (null, StatusCodes.Status404NotFound, ErrorMessages.EntityNotFound(nameof(Employer)));
-
-        if (dto.StudentId != null && !await _context.Students.AnyAsync(s => s.Id == dto.StudentId && !s.IsDeleted && s.Resume != null && !s.Resume.IsDeleted))
-            return (null, StatusCodes.Status404NotFound, ErrorMessages.EntityNotFound(nameof(Student)));
-
-        if (await _context.Favorites.AnyAsync(f => f.UserId == authUserId && (f.VacancyId == dto.VacancyId || f.EmployerId == dto.EmployerId || f.StudentId == dto.StudentId)))
-            return (null, StatusCodes.Status409Conflict, ErrorMessages.EntityAlreadyExists(nameof(Favorite), "userId, favoriteId"));
-
-        var isStudent = await _context.Students.AnyAsync(s => s.Id == authUserId && !s.IsDeleted);
-        var isEmployer = await _context.Employers.AnyAsync(e => e.Id == authUserId && !e.IsDeleted && e.AccreditationStatus);
-
-        if (isStudent && dto.StudentId != null)
-            return (null, StatusCodes.Status400BadRequest, $"{nameof(Student)} can only favorite {nameof(Vacancy)} or {nameof(Employer)}.");
-        if (isEmployer && (dto.VacancyId != null || dto.EmployerId != null))
-            return (null, StatusCodes.Status400BadRequest, $"{nameof(Employer)} can only favorite {nameof(Student)}.");
-
-        var favorite = new Favorite
+        if (blockedIds.Any())
         {
-            Id = Guid.NewGuid(),
-            UserId = authUserId,
-            VacancyId = dto.VacancyId,
-            EmployerId = dto.EmployerId,
-            StudentId = dto.StudentId,
-            AddedAt = DateTime.UtcNow
+            query = query.Where(f =>
+                (f.VacancyId != null && !blockedIds.Contains(f.Vacancy!.EmployerId)) ||
+                (f.ResumeId != null && !blockedIds.Contains(f.Resume!.StudentId)) ||
+                (f.EmployerId != null && !blockedIds.Contains(f.EmployerId.Value))
+            );
+        }
+
+        var pagedEntities = await query
+            .OrderByDescending(f => f.AddedAt)
+            .ToPagedResultAsync(paging);
+
+        var dtos = pagedEntities.Items.Select(FavoriteMapper.ToDto).ToList();
+
+        var pagedResult = new PagedResult<FavoriteDto>(
+            Items: dtos,
+            TotalCount: pagedEntities.TotalCount,
+            PageNumber: pagedEntities.PageNumber,
+            PageSize: pagedEntities.PageSize
+    );
+
+        return Result<PagedResult<FavoriteDto>>.Success(pagedResult);
+    }
+
+    public async Task<Result<bool>> ToggleFavoriteAsync(Guid userId, FavoriteRequest request)
+    {
+        var user = await _context.Users.FindAsync(userId);
+        if (user == null)
+            return Result<bool>.Failure(ErrorMessages.EntityNotFound(nameof(User)));
+
+        var permission = EnsureCanPerform(user, UserAction.AddToFavorite);
+        if (!permission.IsSuccess)
+            return Result<bool>.Failure(permission.ErrorMessage!, permission.StatusCode);
+
+        var ownerId = await GetTargetOwnerIdAsync(request.TargetId, request.Type);
+        if (ownerId == null)
+            return Result<bool>.Failure(ErrorMessages.EntityNotFound("Target"));
+
+        var blackListCheck = await EnsureCommunicationAllowedAsync(userId, ownerId.Value);
+        if (!blackListCheck.IsSuccess)
+            return Result<bool>.Failure("Действие невозможно: пользователь находится в черном списке.");
+
+        var existingQuery = _context.Favorites.Where(f => f.UserId == userId);
+
+        Favorite? existing = request.Type switch
+        {
+            FavoriteType.Vacancy => await existingQuery.FirstOrDefaultAsync(f => f.VacancyId == request.TargetId),
+            FavoriteType.Resume => await existingQuery.FirstOrDefaultAsync(f => f.ResumeId == request.TargetId),
+            FavoriteType.Employer => await existingQuery.FirstOrDefaultAsync(f => f.EmployerId == request.TargetId),
+            _ => null
         };
 
+        if (!request.IsFavorite)
+        {
+            if (existing != null)
+            {
+                _context.Favorites.Remove(existing);
+                await _context.SaveChangesAsync();
+            }
+            return Result<bool>.Success(false);
+        }
+
+        if (existing != null)
+            return Result<bool>.Success(true);
+
+        var favorite = new Favorite { UserId = userId };
+        switch (request.Type)
+        {
+            case FavoriteType.Vacancy: favorite.VacancyId = request.TargetId; break;
+            case FavoriteType.Resume: favorite.ResumeId = request.TargetId; break;
+            case FavoriteType.Employer: favorite.EmployerId = request.TargetId; break;
+        }
+
         _context.Favorites.Add(favorite);
+        var result = await SaveChangesAsync<Favorite>();
 
-        var (success, statusCode, errorMessage) = await SaveChangesAsync<Favorite>();
-        if (!success)
-            return (null, statusCode, errorMessage);
-
-        return (MapToFavoriteDto(favorite), null, null);
-    }
-
-    /// <summary>
-    /// Deletes a favorite for a specific user.
-    /// </summary>
-    /// <param name="favoriteId">The unique identifier (GUID) of the favorite.</param>
-    /// <param name="authUserId">The unique identifier (GUID) of the user.</param>
-    /// <returns>A tuple indicating whether the deletion was successful, an optional status code, and an optional error message.</returns>
-    public virtual async Task<(bool Success, int? StatusCode, string? ErrorMessage)> DeleteFavoriteAsync(Guid authUserId, Guid favoriteId)
-    {
-        var favorite = await _context.Favorites.FindAsync(favoriteId);
-        if (favorite == null)
-            return (false, StatusCodes.Status404NotFound, ErrorMessages.EntityNotFound(nameof(Favorite)));
-        if (favorite.UserId != authUserId)
-            return (false, StatusCodes.Status403Forbidden, ErrorMessages.RestrictOwnProfileAction("delete", nameof(Favorite)));
-
-        _context.Favorites.Remove(favorite);
-
-        return await SaveChangesAsync<Favorite>();
+        return result.IsSuccess
+            ? Result<bool>.Success(true)
+            : Result<bool>.Failure(result.ErrorMessage!);
     }
 }
+
+public record FavoriteRequest(
+    Guid TargetId,
+    FavoriteType Type,
+    bool IsFavorite,
+    PaginationParams Paging = null!
+)
+{
+    public PaginationParams Paging { get; init; } = Paging ?? new PaginationParams();
+};

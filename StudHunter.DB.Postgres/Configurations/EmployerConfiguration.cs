@@ -1,17 +1,13 @@
 ﻿using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
 using StudHunter.DB.Postgres.Models;
+
 namespace StudHunter.DB.Postgres.Configurations;
 
 public class EmployerConfiguration : IEntityTypeConfiguration<Employer>
 {
     public void Configure(EntityTypeBuilder<Employer> builder)
     {
-        builder.Property(e => e.AccreditationStatus)
-               .HasColumnType("BOOLEAN")
-               .HasDefaultValue(false)
-               .IsRequired();
-
         builder.Property(e => e.Name)
                .HasColumnType("VARCHAR(255)")
                .HasMaxLength(255)
@@ -25,7 +21,6 @@ public class EmployerConfiguration : IEntityTypeConfiguration<Employer>
         builder.Property(e => e.Website)
                .HasColumnType("VARCHAR(255)")
                .HasMaxLength(255)
-               .HasAnnotation("Url", true)
                .IsRequired(false);
 
         builder.Property(e => e.Specialization)
@@ -38,5 +33,8 @@ public class EmployerConfiguration : IEntityTypeConfiguration<Employer>
                .HasForeignKey(v => v.EmployerId)
                .OnDelete(DeleteBehavior.Cascade)
                .IsRequired();
+       
+        builder.HasIndex(e => e.Email)
+               .IsUnique();
     }
 }

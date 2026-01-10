@@ -2,13 +2,35 @@
 
 public class Administrator : User
 {
-    public string FirstName { get; set; } = null!;
+    private string _firstName = null!;
+    private string _lastName = null!;
+    private string? _patronymic;
 
-    public string LastName { get; set; } = null!;
+    public string FirstName
+    {
+        get => _firstName;
+        set
+        {
+            ArgumentException.ThrowIfNullOrWhiteSpace(value);
+            _firstName = value.Trim();
+        }
+    }
 
-    public string? Patronymic { get; set; }
+    public string LastName
+    {
+        get => _lastName;
+        set
+        {
+            ArgumentException.ThrowIfNullOrWhiteSpace(value);
+            _lastName = value.Trim();
+        }
+    }
 
-    public void UpdateEmail(string email) => SetEmail(email);
+    public string? Patronymic
+    {
+        get => _patronymic;
+        set => _patronymic = value?.Trim();
+    }
 
-    public void UpdatePassword(string passwordHash) => SetPasswordHash(passwordHash);
+    public DateTime? LastLoginAt { get; set; }
 }
