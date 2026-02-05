@@ -1,0 +1,153 @@
+{
+  "reportConfigHash": "b334afcb",
+  "createdAtUtc": "2025-12-18T10:41:32.0202188Z",
+  "entries": [
+    {
+      "packageName": "BCrypt.Net-Next",
+      "packageVersion": "4.0.3",
+      "insightsName": "BCrypt.Net-Next",
+      "insightsCurrentVersion": "4.0.3",
+      "insightsNewVersion": "",
+      "insightsDescription": "",
+      "insightsIsCompatible": true,
+      "insightsProjects": []
+    },
+    {
+      "packageName": "Microsoft.AspNetCore.Authentication.JwtBearer",
+      "packageVersion": "8.0.19",
+      "insightsName": "Microsoft.AspNetCore.Authentication.JwtBearer",
+      "insightsCurrentVersion": "8.0.19",
+      "insightsNewVersion": "10.0.1",
+      "insightsDescription": "\u0420\u0435\u043A\u043E\u043C\u0435\u043D\u0434\u0443\u0435\u0442\u0441\u044F \u043E\u0431\u043D\u043E\u0432\u0438\u0442\u044C \u043F\u0430\u043A\u0435\u0442 NuGet",
+      "insightsIsCompatible": true,
+      "insightsProjects": [
+        "StudHunter.API\\StudHunter.API.csproj"
+      ]
+    },
+    {
+      "packageName": "Microsoft.EntityFrameworkCore.Design",
+      "packageVersion": "9.0.8",
+      "insightsName": "Microsoft.EntityFrameworkCore.Design",
+      "insightsCurrentVersion": "9.0.8",
+      "insightsNewVersion": "10.0.1",
+      "insightsDescription": "\u0420\u0435\u043A\u043E\u043C\u0435\u043D\u0434\u0443\u0435\u0442\u0441\u044F \u043E\u0431\u043D\u043E\u0432\u0438\u0442\u044C \u043F\u0430\u043A\u0435\u0442 NuGet",
+      "insightsIsCompatible": true,
+      "insightsProjects": [
+        "StudHunter.API\\StudHunter.API.csproj",
+        "StudHunter.DB.Postgres\\StudHunter.DB.Postgres.csproj"
+      ]
+    },
+    {
+      "packageName": "Microsoft.EntityFrameworkCore.Tools",
+      "packageVersion": "9.0.8",
+      "insightsName": "Microsoft.EntityFrameworkCore.Tools",
+      "insightsCurrentVersion": "9.0.8",
+      "insightsNewVersion": "10.0.1",
+      "insightsDescription": "\u0420\u0435\u043A\u043E\u043C\u0435\u043D\u0434\u0443\u0435\u0442\u0441\u044F \u043E\u0431\u043D\u043E\u0432\u0438\u0442\u044C \u043F\u0430\u043A\u0435\u0442 NuGet",
+      "insightsIsCompatible": true,
+      "insightsProjects": [
+        "StudHunter.API\\StudHunter.API.csproj"
+      ]
+    },
+    {
+      "packageName": "Microsoft.VisualStudio.Web.CodeGeneration.Design",
+      "packageVersion": "9.0.0",
+      "insightsName": "Microsoft.VisualStudio.Web.CodeGeneration.Design",
+      "insightsCurrentVersion": "9.0.0",
+      "insightsNewVersion": "10.0.0",
+      "insightsDescription": "\u0420\u0435\u043A\u043E\u043C\u0435\u043D\u0434\u0443\u0435\u0442\u0441\u044F \u043E\u0431\u043D\u043E\u0432\u0438\u0442\u044C \u043F\u0430\u043A\u0435\u0442 NuGet",
+      "insightsIsCompatible": true,
+      "insightsProjects": [
+        "StudHunter.API\\StudHunter.API.csproj"
+      ]
+    },
+    {
+      "packageName": "Swashbuckle.AspNetCore",
+      "packageVersion": "8.1.4",
+      "insightsName": "Swashbuckle.AspNetCore",
+      "insightsCurrentVersion": "8.1.4",
+      "insightsNewVersion": "",
+      "insightsDescription": "",
+      "insightsIsCompatible": true,
+      "insightsProjects": []
+    },
+    {
+      "packageName": "Swashbuckle.AspNetCore.SwaggerUI",
+      "packageVersion": "9.0.3",
+      "insightsName": "Swashbuckle.AspNetCore.SwaggerUI",
+      "insightsCurrentVersion": "9.0.3",
+      "insightsNewVersion": "",
+      "insightsDescription": "",
+      "insightsIsCompatible": true,
+      "insightsProjects": []
+    },
+    {
+      "packageName": "System.IdentityModel.Tokens.Jwt",
+      "packageVersion": "8.14.0",
+      "insightsName": "System.IdentityModel.Tokens.Jwt",
+      "insightsCurrentVersion": "8.14.0",
+      "insightsNewVersion": "",
+      "insightsDescription": "",
+      "insightsIsCompatible": true,
+      "insightsProjects": []
+    },
+    {
+      "packageName": "Microsoft.EntityFrameworkCore",
+      "packageVersion": "9.0.8",
+      "insightsName": "Microsoft.EntityFrameworkCore",
+      "insightsCurrentVersion": "9.0.8",
+      "insightsNewVersion": "10.0.1",
+      "insightsDescription": "\u0420\u0435\u043A\u043E\u043C\u0435\u043D\u0434\u0443\u0435\u0442\u0441\u044F \u043E\u0431\u043D\u043E\u0432\u0438\u0442\u044C \u043F\u0430\u043A\u0435\u0442 NuGet",
+      "insightsIsCompatible": true,
+      "insightsProjects": [
+        "StudHunter.DB.Postgres\\StudHunter.DB.Postgres.csproj"
+      ]
+    },
+    {
+      "packageName": "Microsoft.Extensions.Configuration",
+      "packageVersion": "9.0.8",
+      "insightsName": "Microsoft.Extensions.Configuration",
+      "insightsCurrentVersion": "9.0.8",
+      "insightsNewVersion": "10.0.1",
+      "insightsDescription": "\u0420\u0435\u043A\u043E\u043C\u0435\u043D\u0434\u0443\u0435\u0442\u0441\u044F \u043E\u0431\u043D\u043E\u0432\u0438\u0442\u044C \u043F\u0430\u043A\u0435\u0442 NuGet",
+      "insightsIsCompatible": true,
+      "insightsProjects": [
+        "StudHunter.DB.Postgres\\StudHunter.DB.Postgres.csproj"
+      ]
+    },
+    {
+      "packageName": "Microsoft.Extensions.Configuration.FileExtensions",
+      "packageVersion": "9.0.8",
+      "insightsName": "Microsoft.Extensions.Configuration.FileExtensions",
+      "insightsCurrentVersion": "9.0.8",
+      "insightsNewVersion": "10.0.1",
+      "insightsDescription": "\u0420\u0435\u043A\u043E\u043C\u0435\u043D\u0434\u0443\u0435\u0442\u0441\u044F \u043E\u0431\u043D\u043E\u0432\u0438\u0442\u044C \u043F\u0430\u043A\u0435\u0442 NuGet",
+      "insightsIsCompatible": true,
+      "insightsProjects": [
+        "StudHunter.DB.Postgres\\StudHunter.DB.Postgres.csproj"
+      ]
+    },
+    {
+      "packageName": "Microsoft.Extensions.Configuration.Json",
+      "packageVersion": "9.0.8",
+      "insightsName": "Microsoft.Extensions.Configuration.Json",
+      "insightsCurrentVersion": "9.0.8",
+      "insightsNewVersion": "10.0.1",
+      "insightsDescription": "\u0420\u0435\u043A\u043E\u043C\u0435\u043D\u0434\u0443\u0435\u0442\u0441\u044F \u043E\u0431\u043D\u043E\u0432\u0438\u0442\u044C \u043F\u0430\u043A\u0435\u0442 NuGet",
+      "insightsIsCompatible": true,
+      "insightsProjects": [
+        "StudHunter.DB.Postgres\\StudHunter.DB.Postgres.csproj"
+      ]
+    },
+    {
+      "packageName": "Npgsql.EntityFrameworkCore.PostgreSQL",
+      "packageVersion": "9.0.4",
+      "insightsName": "Npgsql.EntityFrameworkCore.PostgreSQL",
+      "insightsCurrentVersion": "9.0.4",
+      "insightsNewVersion": "",
+      "insightsDescription": "",
+      "insightsIsCompatible": true,
+      "insightsProjects": []
+    }
+  ]
+}

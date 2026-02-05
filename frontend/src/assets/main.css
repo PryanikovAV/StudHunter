@@ -1,0 +1,90 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap');
+
+:root {
+  --susu-blue: #275886;
+  --dark-text: #1a1a1a;
+}
+
+body {
+  font-family:
+    'Inter',
+    -apple-system,
+    sans-serif;
+  color: var(--dark-text);
+  margin: 0;
+  padding: 0;
+  background-color: #f8fafc;
+  -webkit-font-smoothing: antialiased;
+}
+
+.container {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 0 20px;
+  width: 100%;
+}
+
+/* 1. Кнопка "Создать резюме" и "Найти" */
+.btn-primary {
+  padding: 10px 22px;
+  border-radius: 100px;
+  font-size: 14px;
+  font-weight: 400;
+  cursor: pointer;
+  background-color: var(--dark-text); /* Твой темно-серый/черный */
+  color: #fff;
+  border: none;
+  transition: all 0.2s ease;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.btn-primary:hover {
+  background-color: #000; /* Становится чуть темнее */
+}
+
+/* 2. Кнопка "Войти" */
+.btn-outline {
+  padding: 10px 22px;
+  border-radius: 100px;
+  font-size: 14px;
+  font-weight: 400;
+  cursor: pointer;
+  background-color: transparent;
+  color: var(--dark-text);
+  border: 1px solid var(--dark-text); /* Рамка */
+  transition: all 0.2s ease;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.btn-outline:hover {
+  background-color: rgba(0, 0, 0, 0.05); /* Легкий серый фон при наведении */
+}
+
+/* В main.css */
+.btn-text {
+  background: none;
+  border: none;
+  font-family: inherit;
+  cursor: pointer;
+  font-size: 14px;
+  padding: 8px 0;
+  transition: all 0.2s ease;
+  display: inline-flex;
+  align-items: center;
+  user-select: none;
+  border-bottom: 2px solid transparent; /* Резервируем место под линию */
+}
+
+.btn-text-blue {
+  color: #275886;
+  font-weight: 600;
+}
+
+.btn-text-gray {
+  color: #64748b;
+  font-weight: 400;
+}

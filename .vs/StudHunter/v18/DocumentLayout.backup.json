@@ -1,0 +1,139 @@
+{
+  "Version": 1,
+  "WorkspaceRootPath": "C:\\Users\\Alexey\\Documents\\Visual Studio projects\\StudHunter\\",
+  "Documents": [
+    {
+      "AbsoluteMoniker": "D:0:0:{B0890A61-27EA-4CEE-8A19-0EE2DD35D93D}|StudHunter.API\\StudHunter.API.csproj|c:\\users\\alexey\\documents\\visual studio projects\\studhunter\\studhunter.api\\services\\baseservices\\baseemployerservice.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{B0890A61-27EA-4CEE-8A19-0EE2DD35D93D}|StudHunter.API\\StudHunter.API.csproj|solutionrelative:studhunter.api\\services\\baseservices\\baseemployerservice.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{B0890A61-27EA-4CEE-8A19-0EE2DD35D93D}|StudHunter.API\\StudHunter.API.csproj|c:\\users\\alexey\\documents\\visual studio projects\\studhunter\\studhunter.api\\services\\baseservices\\basestudentservice.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{B0890A61-27EA-4CEE-8A19-0EE2DD35D93D}|StudHunter.API\\StudHunter.API.csproj|solutionrelative:studhunter.api\\services\\baseservices\\basestudentservice.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{A7F27CAC-BC69-4CC6-9C39-C2C0CCDFB0A3}|StudHunter.DB.Postgres\\StudHunter.DB.Postgres.csproj|c:\\users\\alexey\\documents\\visual studio projects\\studhunter\\studhunter.db.postgres\\models\\notification.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{A7F27CAC-BC69-4CC6-9C39-C2C0CCDFB0A3}|StudHunter.DB.Postgres\\StudHunter.DB.Postgres.csproj|solutionrelative:studhunter.db.postgres\\models\\notification.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{A7F27CAC-BC69-4CC6-9C39-C2C0CCDFB0A3}|StudHunter.DB.Postgres\\StudHunter.DB.Postgres.csproj|c:\\users\\alexey\\documents\\visual studio projects\\studhunter\\studhunter.db.postgres\\models\\message.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{A7F27CAC-BC69-4CC6-9C39-C2C0CCDFB0A3}|StudHunter.DB.Postgres\\StudHunter.DB.Postgres.csproj|solutionrelative:studhunter.db.postgres\\models\\message.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{A7F27CAC-BC69-4CC6-9C39-C2C0CCDFB0A3}|StudHunter.DB.Postgres\\StudHunter.DB.Postgres.csproj|c:\\users\\alexey\\documents\\visual studio projects\\studhunter\\studhunter.db.postgres\\models\\chat.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{A7F27CAC-BC69-4CC6-9C39-C2C0CCDFB0A3}|StudHunter.DB.Postgres\\StudHunter.DB.Postgres.csproj|solutionrelative:studhunter.db.postgres\\models\\chat.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{A7F27CAC-BC69-4CC6-9C39-C2C0CCDFB0A3}|StudHunter.DB.Postgres\\StudHunter.DB.Postgres.csproj|c:\\users\\alexey\\documents\\visual studio projects\\studhunter\\studhunter.db.postgres\\models\\student.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{A7F27CAC-BC69-4CC6-9C39-C2C0CCDFB0A3}|StudHunter.DB.Postgres\\StudHunter.DB.Postgres.csproj|solutionrelative:studhunter.db.postgres\\models\\student.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{A7F27CAC-BC69-4CC6-9C39-C2C0CCDFB0A3}|StudHunter.DB.Postgres\\StudHunter.DB.Postgres.csproj|c:\\users\\alexey\\documents\\visual studio projects\\studhunter\\studhunter.db.postgres\\models\\user.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{A7F27CAC-BC69-4CC6-9C39-C2C0CCDFB0A3}|StudHunter.DB.Postgres\\StudHunter.DB.Postgres.csproj|solutionrelative:studhunter.db.postgres\\models\\user.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    }
+  ],
+  "DocumentGroupContainers": [
+    {
+      "Orientation": 0,
+      "VerticalTabListWidth": 225,
+      "DocumentGroups": [
+        {
+          "DockedWidth": 199,
+          "SelectedChildIndex": 0,
+          "Children": [
+            {
+              "$type": "Document",
+              "DocumentIndex": 0,
+              "Title": "BaseEmployerService.cs",
+              "DocumentMoniker": "C:\\Users\\Alexey\\Documents\\Visual Studio projects\\StudHunter\\StudHunter.API\\Services\\BaseServices\\BaseEmployerService.cs",
+              "RelativeDocumentMoniker": "StudHunter.API\\Services\\BaseServices\\BaseEmployerService.cs",
+              "ToolTip": "C:\\Users\\Alexey\\Documents\\Visual Studio projects\\StudHunter\\StudHunter.API\\Services\\BaseServices\\BaseEmployerService.cs*",
+              "RelativeToolTip": "StudHunter.API\\Services\\BaseServices\\BaseEmployerService.cs*",
+              "ViewState": "AgIAAAAAAAAAAAAAAAAAACAAAAAkAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2026-01-21T11:23:45.444Z",
+              "EditorCaption": ""
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 1,
+              "Title": "BaseStudentService.cs",
+              "DocumentMoniker": "C:\\Users\\Alexey\\Documents\\Visual Studio projects\\StudHunter\\StudHunter.API\\Services\\BaseServices\\BaseStudentService.cs",
+              "RelativeDocumentMoniker": "StudHunter.API\\Services\\BaseServices\\BaseStudentService.cs",
+              "ToolTip": "C:\\Users\\Alexey\\Documents\\Visual Studio projects\\StudHunter\\StudHunter.API\\Services\\BaseServices\\BaseStudentService.cs*",
+              "RelativeToolTip": "StudHunter.API\\Services\\BaseServices\\BaseStudentService.cs*",
+              "ViewState": "AgIAAAMAAAAAAAAAAAAAACEAAAAjAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2026-01-21T11:23:05.173Z",
+              "EditorCaption": ""
+            },
+            {
+              "$type": "Bookmark",
+              "Name": "ST:0:0:{1c4feeaa-4718-4aa9-859d-94ce25d182ba}"
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 5,
+              "Title": "Student.cs",
+              "DocumentMoniker": "C:\\Users\\Alexey\\Documents\\Visual Studio projects\\StudHunter\\StudHunter.DB.Postgres\\Models\\Student.cs",
+              "RelativeDocumentMoniker": "StudHunter.DB.Postgres\\Models\\Student.cs",
+              "ToolTip": "C:\\Users\\Alexey\\Documents\\Visual Studio projects\\StudHunter\\StudHunter.DB.Postgres\\Models\\Student.cs",
+              "RelativeToolTip": "StudHunter.DB.Postgres\\Models\\Student.cs",
+              "ViewState": "AgIAAAAAAAAAAAAAAAAAAC4AAAABAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2026-01-19T13:43:24.423Z"
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 6,
+              "Title": "User.cs",
+              "DocumentMoniker": "C:\\Users\\Alexey\\Documents\\Visual Studio projects\\StudHunter\\StudHunter.DB.Postgres\\Models\\User.cs",
+              "RelativeDocumentMoniker": "StudHunter.DB.Postgres\\Models\\User.cs",
+              "ToolTip": "C:\\Users\\Alexey\\Documents\\Visual Studio projects\\StudHunter\\StudHunter.DB.Postgres\\Models\\User.cs",
+              "RelativeToolTip": "StudHunter.DB.Postgres\\Models\\User.cs",
+              "ViewState": "AgIAAAAAAAAAAAAAAAAAACMAAAAFAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2026-01-19T13:43:18.393Z"
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 2,
+              "Title": "Notification.cs",
+              "DocumentMoniker": "C:\\Users\\Alexey\\Documents\\Visual Studio projects\\StudHunter\\StudHunter.DB.Postgres\\Models\\Notification.cs",
+              "RelativeDocumentMoniker": "StudHunter.DB.Postgres\\Models\\Notification.cs",
+              "ToolTip": "C:\\Users\\Alexey\\Documents\\Visual Studio projects\\StudHunter\\StudHunter.DB.Postgres\\Models\\Notification.cs",
+              "RelativeToolTip": "StudHunter.DB.Postgres\\Models\\Notification.cs",
+              "ViewState": "AgIAAAAAAAAAAAAAAAAAAA8AAAAUAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2026-01-19T13:29:12.584Z",
+              "EditorCaption": ""
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 3,
+              "Title": "Message.cs",
+              "DocumentMoniker": "C:\\Users\\Alexey\\Documents\\Visual Studio projects\\StudHunter\\StudHunter.DB.Postgres\\Models\\Message.cs",
+              "RelativeDocumentMoniker": "StudHunter.DB.Postgres\\Models\\Message.cs",
+              "ToolTip": "C:\\Users\\Alexey\\Documents\\Visual Studio projects\\StudHunter\\StudHunter.DB.Postgres\\Models\\Message.cs",
+              "RelativeToolTip": "StudHunter.DB.Postgres\\Models\\Message.cs",
+              "ViewState": "AgIAAAAAAAAAAAAAAAAAABMAAAAAAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2026-01-19T13:27:28.528Z"
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 4,
+              "Title": "Chat.cs",
+              "DocumentMoniker": "C:\\Users\\Alexey\\Documents\\Visual Studio projects\\StudHunter\\StudHunter.DB.Postgres\\Models\\Chat.cs",
+              "RelativeDocumentMoniker": "StudHunter.DB.Postgres\\Models\\Chat.cs",
+              "ToolTip": "C:\\Users\\Alexey\\Documents\\Visual Studio projects\\StudHunter\\StudHunter.DB.Postgres\\Models\\Chat.cs",
+              "RelativeToolTip": "StudHunter.DB.Postgres\\Models\\Chat.cs",
+              "ViewState": "AgIAAAAAAAAAAAAAAAAAABEAAAAAAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2026-01-19T13:27:09.628Z"
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}
