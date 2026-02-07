@@ -19,6 +19,11 @@ public class StudyPlanConfiguration : IEntityTypeConfiguration<StudyPlan>
                .HasColumnType("UUID")
                .IsRequired();
 
+        builder.HasOne(s => s.University)
+               .WithMany()
+               .HasForeignKey(s => s.UniversityId)
+               .OnDelete(DeleteBehavior.Restrict);
+
         builder.Property(sp => sp.CourseNumber)
                .HasColumnType("INTEGER")
                .HasDefaultValue(1)
@@ -26,13 +31,15 @@ public class StudyPlanConfiguration : IEntityTypeConfiguration<StudyPlan>
 
         builder.Property(sp => sp.FacultyId)
                .HasColumnType("UUID")
-               //.IsRequired();
-               .IsRequired(false);  // TODO: required после тестов
+               .IsRequired(false);
 
-        builder.Property(sp => sp.SpecialityId)
+        builder.Property(sp => sp.StudyDirectionId)
                .HasColumnType("UUID")
-               //.IsRequired(),
-               .IsRequired(false);  // TODO: required после тестов
+               .IsRequired(false);
+
+        builder.Property(sp => sp.DepartmentId)
+               .HasColumnType("UUID")
+               .IsRequired(false);
 
         builder.Property(sp => sp.StudyForm)
                .HasColumnType("INTEGER")
@@ -59,9 +66,14 @@ public class StudyPlanConfiguration : IEntityTypeConfiguration<StudyPlan>
                .HasForeignKey(sp => sp.FacultyId)
                .OnDelete(DeleteBehavior.Restrict);
 
-        builder.HasOne(sp => sp.Speciality)
-               .WithMany(spec => spec.StudyPlans)
-               .HasForeignKey(sp => sp.SpecialityId)
+        builder.HasOne(sp => sp.StudyDirection)
+               .WithMany(sd => sd.StudyPlans)
+               .HasForeignKey(sp => sp.StudyDirectionId)
+               .OnDelete(DeleteBehavior.Restrict);
+
+        builder.HasOne(sp => sp.Department)
+               .WithMany(d => d.StudyPlans)
+               .HasForeignKey(sp => sp.DepartmentId)
                .OnDelete(DeleteBehavior.Restrict);
 
         builder.HasMany(sp => sp.StudyPlanCourses)
@@ -72,6 +84,6 @@ public class StudyPlanConfiguration : IEntityTypeConfiguration<StudyPlan>
         builder.HasIndex(sp => sp.StudentId)
                .IsUnique();
 
-        builder.HasQueryFilter(sp => !sp.IsDeleted && !sp.Student.IsDeleted);
+        builder.HasQueryFilter(u => !u.IsDeleted);
     }
 }

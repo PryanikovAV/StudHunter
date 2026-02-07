@@ -35,6 +35,7 @@ public abstract class User
         }
     }
 
+    public Guid? CityId { get; set; }
     public string? ContactEmail { get; set; }
     public string? ContactPhone { get; set; }
     public string? AvatarUrl { get; set; }
@@ -43,6 +44,7 @@ public abstract class User
     public bool IsDeleted { get; set; } = false;
     public DateTime? DeletedAt { get; set; }
 
+    public virtual City? City { get; set; }
     public virtual ICollection<BlackList> BlackLists { get; set; } = new HashSet<BlackList>();
     public virtual ICollection<Chat> ChatsAsUser1 { get; set; } = new HashSet<Chat>();
     public virtual ICollection<Chat> ChatsAsUser2 { get; set; } = new HashSet<Chat>();

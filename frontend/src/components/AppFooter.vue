@@ -1,7 +1,15 @@
+<script setup lang="ts">
+import IconTranslate from '@/components/icons/IconTranslate.vue'
+</script>
+
 <template>
   <footer class="app-footer">
     <div class="container">
       <div class="footer-actions">
+        <button class="btn-text btn-text-gray footer-action-btn">
+          <IconTranslate class="icon-translate" />
+          <span>Русский</span>
+        </button>
         <button class="btn-text btn-text-gray footer-action-btn">Задать вопрос</button>
         <button class="btn-text btn-text-gray footer-action-btn">Сообщить об ошибке</button>
       </div>
@@ -36,6 +44,12 @@
   background-color: #ffffff; /* Белый фон сайта */
   padding: 40px 0 60px; /* Отступы: сверху 40, снизу 60 */
   border-top: 1px solid #f1f5f9; /* Тонкая линия отделения от контента */
+}
+
+.icon-translate {
+  width: 18px;
+  height: 18px;
+  flex-shrink: 0;
 }
 
 /* Группировка кнопок */

@@ -6,7 +6,7 @@ using Microsoft.EntityFrameworkCore.Migrations;
 namespace StudHunter.DB.Postgres.Migrations
 {
     /// <inheritdoc />
-    public partial class InitialCreate : Migration
+    public partial class Attempt1 : Migration
     {
         /// <inheritdoc />
         protected override void Up(MigrationBuilder migrationBuilder)
@@ -21,30 +21,6 @@ namespace StudHunter.DB.Postgres.Migrations
                 constraints: table =>
                 {
                     table.PrimaryKey("PK_AdditionalSkills", x => x.Id);
-                });
-
-            migrationBuilder.CreateTable(
-                name: "Administrators",
-                columns: table => new
-                {
-                    Id = table.Column<Guid>(type: "UUID", nullable: false, defaultValueSql: "gen_random_uuid()"),
-                    RegistrationStage = table.Column<string>(type: "VARCHAR(20)", nullable: false, defaultValue: "Anonymous"),
-                    Email = table.Column<string>(type: "VARCHAR(255)", maxLength: 255, nullable: false),
-                    PasswordHash = table.Column<string>(type: "VARCHAR(255)", nullable: false),
-                    ContactEmail = table.Column<string>(type: "VARCHAR(255)", maxLength: 255, nullable: true),
-                    ContactPhone = table.Column<string>(type: "VARCHAR(20)", maxLength: 20, nullable: true),
-                    AvatarUrl = table.Column<string>(type: "VARCHAR(255)", maxLength: 255, nullable: true),
-                    CreatedAt = table.Column<DateTime>(type: "TIMESTAMPTZ", nullable: false, defaultValueSql: "CURRENT_TIMESTAMP"),
-                    IsDeleted = table.Column<bool>(type: "BOOLEAN", nullable: false, defaultValue: false),
-                    DeletedAt = table.Column<DateTime>(type: "TIMESTAMPTZ", nullable: true),
-                    FirstName = table.Column<string>(type: "VARCHAR(50)", maxLength: 50, nullable: false),
-                    LastName = table.Column<string>(type: "VARCHAR(50)", maxLength: 50, nullable: false),
-                    Patronymic = table.Column<string>(type: "VARCHAR(50)", maxLength: 50, nullable: true),
-                    LastLoginAt = table.Column<DateTime>(type: "TIMESTAMPTZ", nullable: true)
-                },
-                constraints: table =>
-                {
-                    table.PrimaryKey("PK_Administrators", x => x.Id);
                 });
 
             migrationBuilder.CreateTable(
@@ -78,6 +54,18 @@ namespace StudHunter.DB.Postgres.Migrations
                 });
 
             migrationBuilder.CreateTable(
+                name: "Cities",
+                columns: table => new
+                {
+                    Id = table.Column<Guid>(type: "uuid", nullable: false, defaultValueSql: "gen_random_uuid()"),
+                    Name = table.Column<string>(type: "VARCHAR(100)", maxLength: 100, nullable: false)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_Cities", x => x.Id);
+                });
+
+            migrationBuilder.CreateTable(
                 name: "Courses",
                 columns: table => new
                 {
@@ -91,27 +79,16 @@ namespace StudHunter.DB.Postgres.Migrations
                 });
 
             migrationBuilder.CreateTable(
-                name: "Employers",
+                name: "Departments",
                 columns: table => new
                 {
-                    Id = table.Column<Guid>(type: "UUID", nullable: false, defaultValueSql: "gen_random_uuid()"),
-                    RegistrationStage = table.Column<string>(type: "VARCHAR(20)", nullable: false, defaultValue: "Anonymous"),
-                    Email = table.Column<string>(type: "VARCHAR(255)", maxLength: 255, nullable: false),
-                    PasswordHash = table.Column<string>(type: "VARCHAR(255)", nullable: false),
-                    ContactEmail = table.Column<string>(type: "VARCHAR(255)", maxLength: 255, nullable: true),
-                    ContactPhone = table.Column<string>(type: "VARCHAR(20)", maxLength: 20, nullable: true),
-                    AvatarUrl = table.Column<string>(type: "VARCHAR(255)", maxLength: 255, nullable: true),
-                    CreatedAt = table.Column<DateTime>(type: "TIMESTAMPTZ", nullable: false, defaultValueSql: "CURRENT_TIMESTAMP"),
-                    IsDeleted = table.Column<bool>(type: "BOOLEAN", nullable: false, defaultValue: false),
-                    DeletedAt = table.Column<DateTime>(type: "TIMESTAMPTZ", nullable: true),
+                    Id = table.Column<Guid>(type: "uuid", nullable: false, defaultValueSql: "gen_random_uuid()"),
                     Name = table.Column<string>(type: "VARCHAR(255)", maxLength: 255, nullable: false),
-                    Description = table.Column<string>(type: "TEXT", maxLength: 1000, nullable: true),
-                    Website = table.Column<string>(type: "VARCHAR(255)", maxLength: 255, nullable: true),
-                    Specialization = table.Column<string>(type: "VARCHAR(255)", maxLength: 255, nullable: true)
+                    Description = table.Column<string>(type: "text", nullable: true)
                 },
                 constraints: table =>
                 {
-                    table.PrimaryKey("PK_Employers", x => x.Id);
+                    table.PrimaryKey("PK_Departments", x => x.Id);
                 });
 
             migrationBuilder.CreateTable(
@@ -146,7 +123,7 @@ namespace StudHunter.DB.Postgres.Migrations
                 });
 
             migrationBuilder.CreateTable(
-                name: "Specialities",
+                name: "StudyDirections",
                 columns: table => new
                 {
                     Id = table.Column<Guid>(type: "uuid", nullable: false, defaultValueSql: "gen_random_uuid()"),
@@ -156,17 +133,31 @@ namespace StudHunter.DB.Postgres.Migrations
                 },
                 constraints: table =>
                 {
-                    table.PrimaryKey("PK_Specialities", x => x.Id);
+                    table.PrimaryKey("PK_StudyDirections", x => x.Id);
                 });
 
             migrationBuilder.CreateTable(
-                name: "Students",
+                name: "Universities",
+                columns: table => new
+                {
+                    Id = table.Column<Guid>(type: "uuid", nullable: false, defaultValueSql: "gen_random_uuid()"),
+                    Name = table.Column<string>(type: "VARCHAR(255)", maxLength: 255, nullable: false),
+                    Abbreviation = table.Column<string>(type: "VARCHAR(50)", maxLength: 50, nullable: true)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_Universities", x => x.Id);
+                });
+
+            migrationBuilder.CreateTable(
+                name: "Administrators",
                 columns: table => new
                 {
                     Id = table.Column<Guid>(type: "UUID", nullable: false, defaultValueSql: "gen_random_uuid()"),
-                    RegistrationStage = table.Column<string>(type: "VARCHAR(20)", nullable: false, defaultValue: "Anonymous"),
+                    RegistrationStage = table.Column<int>(type: "INTEGER", nullable: false, defaultValue: 1),
                     Email = table.Column<string>(type: "VARCHAR(255)", maxLength: 255, nullable: false),
                     PasswordHash = table.Column<string>(type: "VARCHAR(255)", nullable: false),
+                    CityId = table.Column<Guid>(type: "UUID", nullable: true),
                     ContactEmail = table.Column<string>(type: "VARCHAR(255)", maxLength: 255, nullable: true),
                     ContactPhone = table.Column<string>(type: "VARCHAR(20)", maxLength: 20, nullable: true),
                     AvatarUrl = table.Column<string>(type: "VARCHAR(255)", maxLength: 255, nullable: true),
@@ -175,6 +166,69 @@ namespace StudHunter.DB.Postgres.Migrations
                     DeletedAt = table.Column<DateTime>(type: "TIMESTAMPTZ", nullable: true),
                     FirstName = table.Column<string>(type: "VARCHAR(50)", maxLength: 50, nullable: false),
                     LastName = table.Column<string>(type: "VARCHAR(50)", maxLength: 50, nullable: false),
+                    Patronymic = table.Column<string>(type: "VARCHAR(50)", maxLength: 50, nullable: true),
+                    LastLoginAt = table.Column<DateTime>(type: "TIMESTAMPTZ", nullable: true)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_Administrators", x => x.Id);
+                    table.ForeignKey(
+                        name: "FK_Administrators_Cities_CityId",
+                        column: x => x.CityId,
+                        principalTable: "Cities",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Restrict);
+                });
+
+            migrationBuilder.CreateTable(
+                name: "Employers",
+                columns: table => new
+                {
+                    Id = table.Column<Guid>(type: "UUID", nullable: false, defaultValueSql: "gen_random_uuid()"),
+                    RegistrationStage = table.Column<int>(type: "INTEGER", nullable: false, defaultValue: 1),
+                    Email = table.Column<string>(type: "VARCHAR(255)", maxLength: 255, nullable: false),
+                    PasswordHash = table.Column<string>(type: "VARCHAR(255)", nullable: false),
+                    CityId = table.Column<Guid>(type: "UUID", nullable: true),
+                    ContactEmail = table.Column<string>(type: "VARCHAR(255)", maxLength: 255, nullable: true),
+                    ContactPhone = table.Column<string>(type: "VARCHAR(20)", maxLength: 20, nullable: true),
+                    AvatarUrl = table.Column<string>(type: "VARCHAR(255)", maxLength: 255, nullable: true),
+                    CreatedAt = table.Column<DateTime>(type: "TIMESTAMPTZ", nullable: false, defaultValueSql: "CURRENT_TIMESTAMP"),
+                    IsDeleted = table.Column<bool>(type: "BOOLEAN", nullable: false, defaultValue: false),
+                    DeletedAt = table.Column<DateTime>(type: "TIMESTAMPTZ", nullable: true),
+                    Name = table.Column<string>(type: "VARCHAR(255)", maxLength: 255, nullable: false),
+                    Description = table.Column<string>(type: "TEXT", maxLength: 1000, nullable: true),
+                    Website = table.Column<string>(type: "VARCHAR(255)", maxLength: 255, nullable: true),
+                    Specialization = table.Column<string>(type: "VARCHAR(255)", maxLength: 255, nullable: true)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_Employers", x => x.Id);
+                    table.ForeignKey(
+                        name: "FK_Employers_Cities_CityId",
+                        column: x => x.CityId,
+                        principalTable: "Cities",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Restrict);
+                });
+
+            migrationBuilder.CreateTable(
+                name: "Students",
+                columns: table => new
+                {
+                    Id = table.Column<Guid>(type: "UUID", nullable: false, defaultValueSql: "gen_random_uuid()"),
+                    RegistrationStage = table.Column<int>(type: "INTEGER", nullable: false, defaultValue: 1),
+                    Email = table.Column<string>(type: "VARCHAR(255)", maxLength: 255, nullable: false),
+                    PasswordHash = table.Column<string>(type: "VARCHAR(255)", nullable: false),
+                    CityId = table.Column<Guid>(type: "UUID", nullable: true),
+                    ContactEmail = table.Column<string>(type: "VARCHAR(255)", maxLength: 255, nullable: true),
+                    ContactPhone = table.Column<string>(type: "VARCHAR(20)", maxLength: 20, nullable: true),
+                    AvatarUrl = table.Column<string>(type: "VARCHAR(255)", maxLength: 255, nullable: true),
+                    CreatedAt = table.Column<DateTime>(type: "TIMESTAMPTZ", nullable: false, defaultValueSql: "CURRENT_TIMESTAMP"),
+                    IsDeleted = table.Column<bool>(type: "BOOLEAN", nullable: false, defaultValue: false),
+                    DeletedAt = table.Column<DateTime>(type: "TIMESTAMPTZ", nullable: true),
+                    FirstName = table.Column<string>(type: "VARCHAR(50)", maxLength: 50, nullable: false),
+                    LastName = table.Column<string>(type: "VARCHAR(50)", maxLength: 50, nullable: false),
+                    Patronymic = table.Column<string>(type: "VARCHAR(50)", maxLength: 50, nullable: true),
                     Gender = table.Column<int>(type: "INTEGER", nullable: true),
                     BirthDate = table.Column<DateOnly>(type: "DATE", nullable: true),
                     IsForeign = table.Column<bool>(type: "BOOLEAN", nullable: true),
@@ -183,6 +237,35 @@ namespace StudHunter.DB.Postgres.Migrations
                 constraints: table =>
                 {
                     table.PrimaryKey("PK_Students", x => x.Id);
+                    table.ForeignKey(
+                        name: "FK_Students_Cities_CityId",
+                        column: x => x.CityId,
+                        principalTable: "Cities",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Restrict);
+                });
+
+            migrationBuilder.CreateTable(
+                name: "OrganizationDetails",
+                columns: table => new
+                {
+                    Id = table.Column<Guid>(type: "uuid", nullable: false, defaultValueSql: "gen_random_uuid()"),
+                    EmployerId = table.Column<Guid>(type: "UUID", nullable: false),
+                    Inn = table.Column<string>(type: "VARCHAR(12)", maxLength: 12, nullable: false),
+                    Ogrn = table.Column<string>(type: "VARCHAR(15)", maxLength: 15, nullable: false),
+                    LegalAddress = table.Column<string>(type: "TEXT", nullable: false),
+                    ActualAddress = table.Column<string>(type: "TEXT", nullable: false),
+                    Kpp = table.Column<string>(type: "VARCHAR(9)", maxLength: 9, nullable: true)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_OrganizationDetails", x => x.Id);
+                    table.ForeignKey(
+                        name: "FK_OrganizationDetails_Employers_EmployerId",
+                        column: x => x.EmployerId,
+                        principalTable: "Employers",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Cascade);
                 });
 
             migrationBuilder.CreateTable(
@@ -242,9 +325,11 @@ namespace StudHunter.DB.Postgres.Migrations
                 {
                     Id = table.Column<Guid>(type: "UUID", nullable: false, defaultValueSql: "gen_random_uuid()"),
                     StudentId = table.Column<Guid>(type: "UUID", nullable: false),
-                    CourseNumber = table.Column<int>(type: "INTEGER", nullable: false, defaultValue: 1),
+                    UniversityId = table.Column<Guid>(type: "uuid", nullable: true),
                     FacultyId = table.Column<Guid>(type: "UUID", nullable: true),
-                    SpecialityId = table.Column<Guid>(type: "UUID", nullable: true),
+                    StudyDirectionId = table.Column<Guid>(type: "UUID", nullable: true),
+                    DepartmentId = table.Column<Guid>(type: "UUID", nullable: true),
+                    CourseNumber = table.Column<int>(type: "INTEGER", nullable: false, defaultValue: 1),
                     StudyForm = table.Column<int>(type: "INTEGER", nullable: false, defaultValue: 0),
                     IsDeleted = table.Column<bool>(type: "BOOLEAN", nullable: false, defaultValue: false),
                     DeletedAt = table.Column<DateTime>(type: "TIMESTAMPTZ", nullable: true)
@@ -253,15 +338,15 @@ namespace StudHunter.DB.Postgres.Migrations
                 {
                     table.PrimaryKey("PK_StudyPlans", x => x.Id);
                     table.ForeignKey(
-                        name: "FK_StudyPlans_Faculties_FacultyId",
-                        column: x => x.FacultyId,
-                        principalTable: "Faculties",
+                        name: "FK_StudyPlans_Departments_DepartmentId",
+                        column: x => x.DepartmentId,
+                        principalTable: "Departments",
                         principalColumn: "Id",
                         onDelete: ReferentialAction.Restrict);
                     table.ForeignKey(
-                        name: "FK_StudyPlans_Specialities_SpecialityId",
-                        column: x => x.SpecialityId,
-                        principalTable: "Specialities",
+                        name: "FK_StudyPlans_Faculties_FacultyId",
+                        column: x => x.FacultyId,
+                        principalTable: "Faculties",
                         principalColumn: "Id",
                         onDelete: ReferentialAction.Restrict);
                     table.ForeignKey(
@@ -270,6 +355,18 @@ namespace StudHunter.DB.Postgres.Migrations
                         principalTable: "Students",
                         principalColumn: "Id",
                         onDelete: ReferentialAction.Cascade);
+                    table.ForeignKey(
+                        name: "FK_StudyPlans_StudyDirections_StudyDirectionId",
+                        column: x => x.StudyDirectionId,
+                        principalTable: "StudyDirections",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Restrict);
+                    table.ForeignKey(
+                        name: "FK_StudyPlans_Universities_UniversityId",
+                        column: x => x.UniversityId,
+                        principalTable: "Universities",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Restrict);
                 });
 
             migrationBuilder.CreateTable(
@@ -300,8 +397,8 @@ namespace StudHunter.DB.Postgres.Migrations
                 name: "VacancyCourses",
                 columns: table => new
                 {
-                    VacancyId = table.Column<Guid>(type: "UUID", nullable: false),
-                    CourseId = table.Column<Guid>(type: "UUID", nullable: false)
+                    VacancyId = table.Column<Guid>(type: "uuid", nullable: false),
+                    CourseId = table.Column<Guid>(type: "uuid", nullable: false)
                 },
                 constraints: table =>
                 {
@@ -311,7 +408,7 @@ namespace StudHunter.DB.Postgres.Migrations
                         column: x => x.CourseId,
                         principalTable: "Courses",
                         principalColumn: "Id",
-                        onDelete: ReferentialAction.Restrict);
+                        onDelete: ReferentialAction.Cascade);
                     table.ForeignKey(
                         name: "FK_VacancyCourses_Vacancies_VacancyId",
                         column: x => x.VacancyId,
@@ -420,7 +517,7 @@ namespace StudHunter.DB.Postgres.Migrations
                 columns: table => new
                 {
                     StudyPlanId = table.Column<Guid>(type: "UUID", nullable: false),
-                    CourseId = table.Column<Guid>(type: "UUID", nullable: false)
+                    CourseId = table.Column<Guid>(type: "uuid", nullable: false)
                 },
                 constraints: table =>
                 {
@@ -450,8 +547,7 @@ namespace StudHunter.DB.Postgres.Migrations
                     Content = table.Column<string>(type: "TEXT", maxLength: 1000, nullable: false),
                     IsRead = table.Column<bool>(type: "boolean", nullable: false, defaultValue: false),
                     InvitationId = table.Column<Guid>(type: "UUID", nullable: true),
-                    SentAt = table.Column<DateTime>(type: "TIMESTAMPTZ", nullable: false, defaultValueSql: "CURRENT_TIMESTAMP"),
-                    UserId = table.Column<Guid>(type: "UUID", nullable: true)
+                    SentAt = table.Column<DateTime>(type: "TIMESTAMPTZ", nullable: false, defaultValueSql: "CURRENT_TIMESTAMP")
                 },
                 constraints: table =>
                 {
@@ -470,11 +566,21 @@ namespace StudHunter.DB.Postgres.Migrations
                         onDelete: ReferentialAction.SetNull);
                 });
 
+            migrationBuilder.InsertData(
+                table: "Cities",
+                columns: new[] { "Id", "Name" },
+                values: new object[] { new Guid("8f8e833b-8f9b-4b2a-9e1d-3b5a1f2c4d5e"), "Челябинск" });
+
             migrationBuilder.CreateIndex(
                 name: "IX_AdditionalSkills_Name",
                 table: "AdditionalSkills",
                 column: "Name",
                 unique: true);
+
+            migrationBuilder.CreateIndex(
+                name: "IX_Administrators_CityId",
+                table: "Administrators",
+                column: "CityId");
 
             migrationBuilder.CreateIndex(
                 name: "IX_Administrators_Email",
@@ -505,10 +611,27 @@ namespace StudHunter.DB.Postgres.Migrations
                 column: "User2Id");
 
             migrationBuilder.CreateIndex(
+                name: "IX_Cities_Name",
+                table: "Cities",
+                column: "Name",
+                unique: true);
+
+            migrationBuilder.CreateIndex(
                 name: "IX_Courses_Name",
                 table: "Courses",
                 column: "Name",
                 unique: true);
+
+            migrationBuilder.CreateIndex(
+                name: "IX_Departments_Name",
+                table: "Departments",
+                column: "Name",
+                unique: true);
+
+            migrationBuilder.CreateIndex(
+                name: "IX_Employers_CityId",
+                table: "Employers",
+                column: "CityId");
 
             migrationBuilder.CreateIndex(
                 name: "IX_Employers_Email",
@@ -629,14 +752,21 @@ namespace StudHunter.DB.Postgres.Migrations
                 column: "SentAt");
 
             migrationBuilder.CreateIndex(
-                name: "IX_Messages_UserId",
-                table: "Messages",
-                column: "UserId");
-
-            migrationBuilder.CreateIndex(
                 name: "IX_Notifications_UserId_IsRead_CreatedAt",
                 table: "Notifications",
                 columns: new[] { "UserId", "IsRead", "CreatedAt" });
+
+            migrationBuilder.CreateIndex(
+                name: "IX_OrganizationDetails_EmployerId",
+                table: "OrganizationDetails",
+                column: "EmployerId",
+                unique: true);
+
+            migrationBuilder.CreateIndex(
+                name: "IX_OrganizationDetails_Inn",
+                table: "OrganizationDetails",
+                column: "Inn",
+                unique: true);
 
             migrationBuilder.CreateIndex(
                 name: "IX_ResumeAdditionalSkills_AdditionalSkillId",
@@ -655,10 +785,9 @@ namespace StudHunter.DB.Postgres.Migrations
                 unique: true);
 
             migrationBuilder.CreateIndex(
-                name: "IX_Specialities_Name",
-                table: "Specialities",
-                column: "Name",
-                unique: true);
+                name: "IX_Students_CityId",
+                table: "Students",
+                column: "CityId");
 
             migrationBuilder.CreateIndex(
                 name: "IX_Students_Email",
@@ -667,9 +796,20 @@ namespace StudHunter.DB.Postgres.Migrations
                 unique: true);
 
             migrationBuilder.CreateIndex(
+                name: "IX_StudyDirections_Name",
+                table: "StudyDirections",
+                column: "Name",
+                unique: true);
+
+            migrationBuilder.CreateIndex(
                 name: "IX_StudyPlanCourses_CourseId",
                 table: "StudyPlanCourses",
                 column: "CourseId");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_StudyPlans_DepartmentId",
+                table: "StudyPlans",
+                column: "DepartmentId");
 
             migrationBuilder.CreateIndex(
                 name: "IX_StudyPlans_FacultyId",
@@ -677,14 +817,25 @@ namespace StudHunter.DB.Postgres.Migrations
                 column: "FacultyId");
 
             migrationBuilder.CreateIndex(
-                name: "IX_StudyPlans_SpecialityId",
-                table: "StudyPlans",
-                column: "SpecialityId");
-
-            migrationBuilder.CreateIndex(
                 name: "IX_StudyPlans_StudentId",
                 table: "StudyPlans",
                 column: "StudentId",
+                unique: true);
+
+            migrationBuilder.CreateIndex(
+                name: "IX_StudyPlans_StudyDirectionId",
+                table: "StudyPlans",
+                column: "StudyDirectionId");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_StudyPlans_UniversityId",
+                table: "StudyPlans",
+                column: "UniversityId");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_Universities_Name",
+                table: "Universities",
+                column: "Name",
                 unique: true);
 
             migrationBuilder.CreateIndex(
@@ -722,6 +873,9 @@ namespace StudHunter.DB.Postgres.Migrations
                 name: "Notifications");
 
             migrationBuilder.DropTable(
+                name: "OrganizationDetails");
+
+            migrationBuilder.DropTable(
                 name: "ResumeAdditionalSkills");
 
             migrationBuilder.DropTable(
@@ -755,16 +909,25 @@ namespace StudHunter.DB.Postgres.Migrations
                 name: "Vacancies");
 
             migrationBuilder.DropTable(
+                name: "Departments");
+
+            migrationBuilder.DropTable(
                 name: "Faculties");
 
             migrationBuilder.DropTable(
-                name: "Specialities");
+                name: "StudyDirections");
+
+            migrationBuilder.DropTable(
+                name: "Universities");
 
             migrationBuilder.DropTable(
                 name: "Students");
 
             migrationBuilder.DropTable(
                 name: "Employers");
+
+            migrationBuilder.DropTable(
+                name: "Cities");
         }
     }
 }

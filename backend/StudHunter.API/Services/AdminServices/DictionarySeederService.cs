@@ -27,12 +27,12 @@ public class DictionarySeederService(StudHunterDbContext context)
             );
         }
 
-        if (!await context.Specialities.AnyAsync())
+        if (!await context.StudyDirections.AnyAsync())
         {
-            context.Specialities.AddRange(
-                new Speciality { Id = Guid.NewGuid(), Name = "Программная инженерия", Code = "09.03.04" },
-                new Speciality { Id = Guid.NewGuid(), Name = "Информационные системы и технологии", Code = "09.03.02" },
-                new Speciality { Id = Guid.NewGuid(), Name = "Кибербезопасность", Code = "10.03.01" }
+            context.StudyDirections.AddRange(
+                new StudyDirection { Id = Guid.NewGuid(), Name = "Программная инженерия", Code = "09.03.04" },
+                new StudyDirection { Id = Guid.NewGuid(), Name = "Информационные системы и технологии", Code = "09.03.02" },
+                new StudyDirection { Id = Guid.NewGuid(), Name = "Кибербезопасность", Code = "10.03.01" }
             );
         }
 

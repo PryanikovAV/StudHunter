@@ -22,6 +22,14 @@ public class Student : User
             _lastName = value.Trim();
         }
     }
+
+    private string? _patronymic;
+    public string? Patronymic
+    {
+        get => _patronymic;
+        set => _patronymic = value?.Trim();
+    }
+
     public StudentGender? Gender { get; set; }
     public DateOnly? BirthDate { get; set; }
     public bool? IsForeign { get; set; }

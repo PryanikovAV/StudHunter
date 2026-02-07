@@ -8,6 +8,7 @@ using StudHunter.API.Services.AdminServices;
 using StudHunter.API.Services.AuthService;
 using StudHunter.API.Services.Background;
 using StudHunter.DB.Postgres;
+using System.Text.Json;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -78,7 +79,7 @@ using (var scope = app.Services.CreateScope())   // <-- Заполнение словарей
     try
     {
         var context = services.GetRequiredService<StudHunterDbContext>();
-        await context.Database.MigrateAsync();
+        context.Database.Migrate();
 
         var seeder = services.GetRequiredService<DictionarySeederService>();
         await seeder.SeedAllAsync();

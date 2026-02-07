@@ -11,7 +11,7 @@ public abstract class BaseResumeService(StudHunterDbContext context) : BaseServi
     protected IQueryable<Resume> GetFullResumeQuery() =>
         _context.Resumes
             .Include(r => r.Student).ThenInclude(s => s.StudyPlan!).ThenInclude(sp => sp.Faculty)
-            .Include(r => r.Student).ThenInclude(s => s.StudyPlan!).ThenInclude(sp => sp.Speciality)
+            .Include(r => r.Student).ThenInclude(s => s.StudyPlan!).ThenInclude(sp => sp.StudyDirection)
             .Include(r => r.AdditionalSkills).ThenInclude(ras => ras.AdditionalSkill);
 
     public async Task<Result<ResumeDto>> GetResumeByStudentIdAsync(Guid studentId, Guid? currentUserId = null, bool ignoreFilters = true)

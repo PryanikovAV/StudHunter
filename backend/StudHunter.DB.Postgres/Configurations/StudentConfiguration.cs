@@ -18,6 +18,11 @@ public class StudentConfiguration : IEntityTypeConfiguration<Student>
                .HasMaxLength(50)
                .IsRequired();
 
+        builder.Property(s => s.Patronymic)
+               .HasColumnType("VARCHAR(50)")
+               .HasMaxLength(50)
+               .IsRequired(false);
+
         builder.Property(s => s.Gender)
                .HasColumnType("INTEGER")
                .IsRequired(false);
@@ -25,7 +30,7 @@ public class StudentConfiguration : IEntityTypeConfiguration<Student>
         builder.Property(s => s.Status)
                .HasColumnType("INTEGER")
                .HasDefaultValue(Student.StudentStatus.Studying)
-               .IsRequired();
+               .HasSentinel(Student.StudentStatus.Studying);
 
         builder.Property(s => s.BirthDate)
                .HasColumnType("DATE")

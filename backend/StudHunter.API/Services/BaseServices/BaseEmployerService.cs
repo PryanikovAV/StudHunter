@@ -16,6 +16,8 @@ public abstract class BaseEmployerService(StudHunterDbContext context) : BaseSer
 
         return await query
             .Include(e => e.Vacancies)
+            .Include(e => e.OrganizationDetails)
+            .Include(e => e.City)
             .FirstOrDefaultAsync(e => e.Id == employerId);
     }
 

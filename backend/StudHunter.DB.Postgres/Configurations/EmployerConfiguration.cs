@@ -33,7 +33,12 @@ public class EmployerConfiguration : IEntityTypeConfiguration<Employer>
                .HasForeignKey(v => v.EmployerId)
                .OnDelete(DeleteBehavior.Cascade)
                .IsRequired();
-       
+
+        builder.HasOne(e => e.OrganizationDetails)
+               .WithOne(od => od.Employer)
+               .HasForeignKey<OrganizationDetail>(od => od.EmployerId)
+               .OnDelete(DeleteBehavior.Cascade);
+
         builder.HasIndex(e => e.Email)
                .IsUnique();
     }

@@ -13,7 +13,6 @@ public class UserConfiguration : IEntityTypeConfiguration<User>
         builder.Property(u => u.RegistrationStage)
                .HasColumnType("INTEGER")
                .HasDefaultValue(User.AccountStatus.Anonymous)
-               .HasConversion<string>()
                .IsRequired();
 
         builder.Property(u => u.Id)
@@ -29,6 +28,10 @@ public class UserConfiguration : IEntityTypeConfiguration<User>
         builder.Property(u => u.PasswordHash)
                .HasColumnType("VARCHAR(255)")
                .IsRequired();
+
+        builder.Property(u => u.CityId)
+               .HasColumnType("UUID")
+               .IsRequired(false);
 
         builder.Property(u => u.ContactEmail)
                .HasColumnType("VARCHAR(255)")
@@ -66,11 +69,17 @@ public class UserConfiguration : IEntityTypeConfiguration<User>
         ConfigureRelationships(builder);
 
         builder.HasQueryFilter(u => !u.IsDeleted);
+
         builder.HasIndex(u => u.Email).IsUnique();
     }
 
     private static void ConfigureRelationships(EntityTypeBuilder<User> builder)
     {
+        builder.HasOne(u => u.City)
+               .WithMany()
+               .HasForeignKey(u => u.CityId)
+               .OnDelete(DeleteBehavior.Restrict);
+
         builder.HasMany(u => u.BlackLists)
                .WithOne(b => b.User)
                .HasForeignKey(b => b.UserId)

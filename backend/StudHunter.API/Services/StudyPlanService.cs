@@ -18,8 +18,10 @@ public class StudyPlanService(StudHunterDbContext context) : BaseService(context
     {
         var studyPlan = await _context.StudyPlans
             .IgnoreQueryFilters()
+            .Include(sp => sp.University)
             .Include(sp => sp.Faculty)
-            .Include(sp => sp.Speciality)
+            .Include(sp => sp.Department)
+            .Include(sp => sp.StudyDirection)
             .Include(sp => sp.StudyPlanCourses)
             .ThenInclude(spc => spc.Course)
             .FirstOrDefaultAsync(sp => sp.StudentId == studentId);

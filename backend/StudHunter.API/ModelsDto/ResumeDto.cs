@@ -48,7 +48,7 @@ public static class ResumeMapper
             displayPhone,
             fullName,
             r.Student.StudyPlan?.Faculty?.Name,
-            r.Student.StudyPlan?.Speciality?.Name,
+            r.Student.StudyPlan?.StudyDirection?.Name,
             r.Student.StudyPlan?.CourseNumber,
             isBlocked,
             r.AdditionalSkills?.Select(ras => ras.AdditionalSkill.Name)

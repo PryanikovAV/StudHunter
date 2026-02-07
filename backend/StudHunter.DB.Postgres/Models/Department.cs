@@ -1,6 +1,6 @@
 ﻿namespace StudHunter.DB.Postgres.Models;
 
-public class Speciality
+public class Department
 {
     public Guid Id { get; init; }
 
@@ -15,7 +15,6 @@ public class Speciality
         }
     }
 
-    public string? Code { get; set; }
     public string? Description { get; set; }
 
     public virtual ICollection<StudyPlan> StudyPlans { get; set; } = new HashSet<StudyPlan>();

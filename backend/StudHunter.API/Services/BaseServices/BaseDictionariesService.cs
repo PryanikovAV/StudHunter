@@ -19,7 +19,7 @@ public abstract class BaseDictionariesService(StudHunterDbContext context) : Bas
 
     public async Task<Result<List<SpecialityLookupDto>>> GetSpecialitiesAsync()
     {
-        var data = await _context.Specialities
+        var data = await _context.StudyDirections
             .AsNoTracking()
             .OrderBy(s => s.Name)
             .Select(s => new SpecialityLookupDto(s.Id, s.Name, s.Code))

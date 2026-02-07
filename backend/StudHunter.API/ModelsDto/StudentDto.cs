@@ -9,8 +9,11 @@ public record StudentDto(
     string RegistrationStage,
     string FirstName,
     string LastName,
+    string? Patronymic,
     string? ContactPhone,
     string? ContactEmail,
+    Guid? CityId,
+    string? CityName,
     string? Gender,
     DateOnly? BirthDate,
     string? AvatarUrl,
@@ -25,8 +28,11 @@ public record AdminStudentDto(
     string RegistrationStage,
     string FirstName,
     string LastName,
+    string? Patronymic,
     string? ContactPhone,
     string? ContactEmail,
+    Guid? CityId,
+    string? CityName,
     string? Gender,
     DateOnly? BirthDate,
     string? AvatarUrl,
@@ -35,15 +41,17 @@ public record AdminStudentDto(
     DateTime CreatedAt,
     Guid? ResumeId,
     bool IsDeleted)
-    : StudentDto(Id, Email, RegistrationStage, FirstName, LastName, ContactPhone, ContactEmail,
-                 Gender, BirthDate, AvatarUrl, IsForeign, Status, CreatedAt, ResumeId);
+    : StudentDto(Id, Email, RegistrationStage, FirstName, LastName, Patronymic, ContactPhone, ContactEmail,
+        CityId, CityName, Gender, BirthDate, AvatarUrl, IsForeign, Status, CreatedAt, ResumeId);
 
 public record UpdateStudentDto(
     [StringLength(50)] string? FirstName,
     [StringLength(50)] string? LastName,
+    [StringLength(50)] string? Patronymic,
     [Phone] string? ContactPhone,
     [StringLength(255)] string? AvatarUrl,
     [EmailAddress] string? ContactEmail,
+    Guid? CityId,
     [RegularExpression("Male|Female")] string? Gender,
     DateOnly? BirthDate,
     bool? IsForeign,
@@ -58,8 +66,11 @@ public static class StudentMapper
         s.RegistrationStage.ToString(),
         s.FirstName,
         s.LastName,
+        s.Patronymic,
         s.ContactPhone,
         s.ContactEmail,
+        s.CityId,
+        s.City?.Name,
         s.Gender?.ToString(),
         s.BirthDate,
         s.AvatarUrl,
@@ -74,8 +85,11 @@ public static class StudentMapper
         s.RegistrationStage.ToString(),
         s.FirstName,
         s.LastName,
+        s.Patronymic,
         s.ContactPhone,
         s.ContactEmail,
+        s.CityId,
+        s.City?.Name,
         s.Gender?.ToString(),
         s.BirthDate,
         s.AvatarUrl,
@@ -91,9 +105,12 @@ public static class StudentMapper
             student.FirstName = dto.FirstName.Trim();
         if (!string.IsNullOrWhiteSpace(dto.LastName))
             student.LastName = dto.LastName.Trim();
+        if (!string.IsNullOrWhiteSpace(dto.Patronymic))
+            student.Patronymic = dto.Patronymic.Trim();
 
         if (dto.ContactPhone != null) student.ContactPhone = dto.ContactPhone;
         if (dto.ContactEmail != null) student.ContactEmail = dto.ContactEmail;
+        if (dto.CityId.HasValue) student.CityId = dto.CityId.Value;
         if (dto.AvatarUrl != null) student.AvatarUrl = dto.AvatarUrl;
 
         if (dto.BirthDate.HasValue) student.BirthDate = dto.BirthDate;

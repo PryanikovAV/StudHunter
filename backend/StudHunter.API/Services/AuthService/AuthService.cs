@@ -61,8 +61,7 @@ public class AuthService(StudHunterDbContext context, IPasswordHasher passwordHa
         {
             Email = dto.Email,
             PasswordHash = passwordHasher.HashPassword(dto.Password),
-            Name = string.IsNullOrWhiteSpace(dto.Name) ? UserDefaultNames.DefaultCompanyName : dto.Name,
-            ContactPhone = dto.ContactPhone
+            Name = string.IsNullOrWhiteSpace(dto.Name) ? UserDefaultNames.DefaultCompanyName : dto.Name
         };
 
         _context.Employers.Add(employer);
