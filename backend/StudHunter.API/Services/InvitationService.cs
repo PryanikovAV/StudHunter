@@ -11,12 +11,21 @@ public interface IInvitationService
 {
     Task<Result<InvitationDto>> CreateInvitationAsync(Guid senderId, CreateInvitationDto dto, Invitation.InvitationType type);
     Task<Result<bool>> ChangeStatusAsync(Guid userId, Guid invitationId, Invitation.InvitationStatus newStatus);
-    Task<Result<PagedResult<InvitationDto>>> GetInvitationsAsync(Guid userId, InvitationSearchFilter filter);
+    Task<Result<PagedResult<InvitationCardDto>>> GetInvitationsForStudentAsync(Guid studentId, InvitationSearchFilter filter);
+    Task<Result<PagedResult<InvitationCardDto>>> GetInvitationsForEmployerAsync(Guid employerId, InvitationSearchFilter filter);
 }
 
-public class InvitationService(StudHunterDbContext context, INotificationService notificationService)
-    : BaseInvitationService(context, notificationService), IInvitationService
+public class InvitationService(StudHunterDbContext context,
+    INotificationService notificationService,
+    IRegistrationManager registrationManager)
+    : BaseInvitationService(context, notificationService, registrationManager), IInvitationService
 {
+    public async Task<Result<PagedResult<InvitationCardDto>>> GetInvitationsForStudentAsync(Guid studentId, InvitationSearchFilter filter) =>
+        await GetInvitationsInternalAsync(studentId, filter);
+
+    public async Task<Result<PagedResult<InvitationCardDto>>> GetInvitationsForEmployerAsync(Guid employerId, InvitationSearchFilter filter) =>
+        await GetInvitationsInternalAsync(employerId, filter);
+
     public async Task<Result<InvitationDto>> CreateInvitationAsync(Guid senderId, CreateInvitationDto dto, Invitation.InvitationType type)
     {
         var sender = await _context.Users.FindAsync(senderId);
@@ -41,6 +50,18 @@ public class InvitationService(StudHunterDbContext context, INotificationService
         if (existing)
             return Result<InvitationDto>.Failure("Вы уже отправили запрос, ожидайте ответа");
 
+        string? vacancyTitle = null;
+        if (dto.VacancyId.HasValue)
+        {
+            vacancyTitle = await _context.Vacancies
+                .Where(v => v.Id == dto.VacancyId)
+                .Select(v => v.Title)
+                .FirstOrDefaultAsync();
+
+            if (vacancyTitle == null)
+                return Result<InvitationDto>.Failure(ErrorMessages.EntityNotFound(nameof(Invitation)), StatusCodes.Status404NotFound);
+        }
+
         var invitation = new Invitation
         {
             SenderId = senderId,
@@ -48,7 +69,9 @@ public class InvitationService(StudHunterDbContext context, INotificationService
             VacancyId = dto.VacancyId,
             ResumeId = dto.ResumeId,
             Message = dto.Message?.Trim(),
-            Type = type
+            Type = type,
+            SnapshotSenderName = UserDisplayHelper.GetUserDisplayName(sender),
+            SnapshotVacancyTitle = vacancyTitle
         };
 
         await PopulateSnapshotsAsync(invitation);
@@ -65,7 +88,7 @@ public class InvitationService(StudHunterDbContext context, INotificationService
             await _notificationService.SendAsync(
                 dto.ReceiverId,
                 title,
-                $"Вы получили новое сообщение: {invitation.SnapshotVacancyTitle ?? "Просмотрите детали в личном кабинете"}",
+                $"По вакансии: {vacancyTitle ?? "Без названия"}",
                 Notification.NotificationType.InvitationIncome,
                 invitation.Id,
                 senderId: senderId
@@ -79,10 +102,6 @@ public class InvitationService(StudHunterDbContext context, INotificationService
 
     public async Task<Result<bool>> ChangeStatusAsync(Guid userId, Guid invitationId, Invitation.InvitationStatus newStatus)
     {
-        var user = await _context.Users.FindAsync(userId);
-        if (user == null)
-            return Result<bool>.Failure(ErrorMessages.EntityNotFound(nameof(User)), StatusCodes.Status404NotFound);
-
         var invitation = await _context.Invitations.FindAsync(invitationId);
         if (invitation == null)
             return Result<bool>.Failure(ErrorMessages.EntityNotFound(nameof(Invitation)), StatusCodes.Status404NotFound);
@@ -90,19 +109,27 @@ public class InvitationService(StudHunterDbContext context, INotificationService
         if (invitation.Status != Invitation.InvitationStatus.Sent)
             return Result<bool>.Failure("Этот запрос уже обработан или просрочен");
 
+        if (newStatus == Invitation.InvitationStatus.Cancelled)
+        {
+            if (invitation.SenderId != userId)
+                return Result<bool>.Failure("Вы не можете отозвать чужое приглашение", StatusCodes.Status403Forbidden);
+        }
+        else
+        {
+            if (invitation.ReceiverId != userId)
+                return Result<bool>.Failure("Вы не можете отвечать на это приглашение", StatusCodes.Status403Forbidden);
+        }
+
+        var user = await _context.Users.FindAsync(userId);
+        if (user == null)
+            return Result<bool>.Failure(ErrorMessages.EntityNotFound(nameof(User)), StatusCodes.Status404NotFound);
+
         if (newStatus == Invitation.InvitationStatus.Accepted)
         {
             var accessCheck = EnsureCanPerform(user, UserAction.AcceptInvitation);
             if (!accessCheck.IsSuccess)
                 return accessCheck;
         }
-
-        if ((newStatus == Invitation.InvitationStatus.Accepted || newStatus == Invitation.InvitationStatus.Rejected)
-            && invitation.ReceiverId != userId)
-            return Result<bool>.Failure("Вы не можете отвечать на это приглашение", StatusCodes.Status403Forbidden);
-
-        if (newStatus == Invitation.InvitationStatus.Cancelled && invitation.SenderId != userId)
-            return Result<bool>.Failure("Вы не можете отозвать чужое приглашение", StatusCodes.Status403Forbidden);
 
         invitation.Status = newStatus;
         invitation.UpdatedAt = DateTime.UtcNow;
@@ -119,14 +146,14 @@ public class InvitationService(StudHunterDbContext context, INotificationService
             {
                 Invitation.InvitationStatus.Accepted => "принято",
                 Invitation.InvitationStatus.Rejected => "отклонено",
-                Invitation.InvitationStatus.Cancelled => "отозвано отправителем",
+                Invitation.InvitationStatus.Cancelled => "отозвано",
                 _ => "обновлено"
             };
 
             await _notificationService.SendAsync(
                 receiverOfNotify,
-                "Обновление статуса взаимодействия",
-                $"Ваш запрос по вакансии \"{invitation.SnapshotVacancyTitle}\" был: {statusText}.",
+                "Изменение статуса",
+                $"Приглашение по вакансии \"{invitation.SnapshotVacancyTitle}\" было {statusText}.",
                 Notification.NotificationType.InvitationStatus,
                 invitationId,
                 senderId: userId
@@ -134,35 +161,5 @@ public class InvitationService(StudHunterDbContext context, INotificationService
         }
 
         return result;
-    }
-
-    public async Task<Result<PagedResult<InvitationDto>>> GetInvitationsAsync(Guid userId, InvitationSearchFilter filter)
-    {
-        var query = GetFullInvitationQuery();
-        var blockedIds = await GetBlockedUserIdsAsync(userId);
-
-        query = filter.Incoming
-            ? query.Where(i => i.ReceiverId == userId && !blockedIds.Contains(i.SenderId))
-            : query.Where(i => i.SenderId == userId && !blockedIds.Contains(i.SenderId));
-
-        if (filter.Status.HasValue)
-            query = query.Where(i => i.Status == filter.Status.Value);
-
-        if (filter.Type.HasValue)
-            query = query.Where(i => i.Type == filter.Type.Value);
-
-        var pagedInvitations = await query
-            .OrderByDescending(i => i.CreatedAt)
-            .ToPagedResultAsync(filter.Paging);
-
-        var dtos = pagedInvitations.Items.Select(i => InvitationMapper.ToDto(i)).ToList();
-
-        var pagedResult = new PagedResult<InvitationDto>(
-            Items: dtos,
-            TotalCount: pagedInvitations.TotalCount,
-            PageNumber: pagedInvitations.PageNumber,
-            PageSize: pagedInvitations.PageSize);
-
-        return Result<PagedResult<InvitationDto>>.Success(pagedResult);
     }
 }

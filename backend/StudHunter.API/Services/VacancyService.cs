@@ -18,7 +18,8 @@ public interface IVacancyService
     Task<Result<PagedResult<VacancyDto>>> SearchVacancyAsync(VacancySearchFilter filter, Guid? currentUserId = null);
 }
 
-public class VacancyService(StudHunterDbContext context) : BaseVacancyService(context), IVacancyService
+public class VacancyService(StudHunterDbContext context, IRegistrationManager registrationManager)
+    : BaseVacancyService(context, registrationManager), IVacancyService
 {
     public async Task<Result<VacancyDto>> UpdateVacancyAsync(Guid vacancyId, UpdateVacancyDto dto, Guid authorizedEmployerId)
     {
@@ -70,7 +71,7 @@ public class VacancyService(StudHunterDbContext context) : BaseVacancyService(co
         vacancy.IsDeleted = true;
         vacancy.DeletedAt = DateTime.UtcNow;
 
-        BaseEmployerService.RecalculateRegistrationStage(vacancy.Employer);
+        _registrationManager.RecalculateRegistrationStage(vacancy.Employer);
 
         var result = await SaveChangesAsync<Vacancy>();
 

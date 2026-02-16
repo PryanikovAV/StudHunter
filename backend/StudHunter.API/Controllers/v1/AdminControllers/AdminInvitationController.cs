@@ -14,7 +14,7 @@ public class AdminInvitationController(IAdminInvitationService adminInvitationSe
 {
     [HttpGet("user/{userId:guid}")]
     public async Task<IActionResult> GetUserInvitations(Guid userId, [FromQuery] InvitationSearchFilter filter) =>
-        HandleResult(await adminInvitationService.GetInvitationsAsync(userId, filter));
+        HandleResult(await adminInvitationService.GetInvitationsForUserAsync(userId, filter));
 
     [HttpPatch("{id:guid}/status")]
     public async Task<IActionResult> ForceUpdateStatus(Guid id, [FromQuery] Invitation.InvitationStatus status) =>

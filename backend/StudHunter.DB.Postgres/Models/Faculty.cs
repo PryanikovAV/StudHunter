@@ -1,5 +1,5 @@
 ﻿namespace StudHunter.DB.Postgres.Models;
-
+// TODO: Добавить связь с городом, факультетами, кафедрами и специальностями
 public class Faculty
 {
     public Guid Id { get; init; }

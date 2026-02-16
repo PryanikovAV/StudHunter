@@ -16,7 +16,8 @@ public interface IAdminStudentService
     Task<Result<bool>> RestoreAsync(Guid studentId);
 }
 
-public class AdminStudentService(StudHunterDbContext context) : BaseStudentService(context), IAdminStudentService
+public class AdminStudentService(StudHunterDbContext context, IRegistrationManager registrationManager)
+    : BaseStudentService(context, registrationManager), IAdminStudentService
 {
     public async Task<Result<List<AdminStudentDto>>> GetAllStudentsAsync()
     {
@@ -50,7 +51,7 @@ public class AdminStudentService(StudHunterDbContext context) : BaseStudentServi
 
         StudentMapper.ApplyUpdate(student, dto);
 
-        RecalculateRegistrationStage(student);
+        _registrationManager.RecalculateRegistrationStage(student);
 
         await _context.SaveChangesAsync();
         return Result<AdminStudentDto>.Success(StudentMapper.ToAdminDto(student));
@@ -98,7 +99,7 @@ public class AdminStudentService(StudHunterDbContext context) : BaseStudentServi
             student.Resume.DeletedAt = null;
         }
 
-        RecalculateRegistrationStage(student);
+        _registrationManager.RecalculateRegistrationStage(student);
 
         return await SaveChangesAsync<Student>();
     }

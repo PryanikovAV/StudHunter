@@ -1,76 +1,65 @@
 ﻿using Microsoft.EntityFrameworkCore;
 using StudHunter.API.Infrastructure;
-using StudHunter.API.ModelsDto;
 using StudHunter.DB.Postgres;
 using StudHunter.DB.Postgres.Models;
 
 namespace StudHunter.API.Services.BaseServices;
 
-public abstract class BaseResumeService(StudHunterDbContext context) : BaseService(context)
+public abstract class BaseResumeService(StudHunterDbContext context, IRegistrationManager registrationManager)
+    : BaseService(context, registrationManager)
 {
-    protected IQueryable<Resume> GetFullResumeQuery() =>
-        _context.Resumes
-            .Include(r => r.Student).ThenInclude(s => s.StudyPlan!).ThenInclude(sp => sp.Faculty)
-            .Include(r => r.Student).ThenInclude(s => s.StudyPlan!).ThenInclude(sp => sp.StudyDirection)
-            .Include(r => r.AdditionalSkills).ThenInclude(ras => ras.AdditionalSkill);
-
-    public async Task<Result<ResumeDto>> GetResumeByStudentIdAsync(Guid studentId, Guid? currentUserId = null, bool ignoreFilters = true)
+    protected IQueryable<Resume> GetFullResumeQuery(bool ignoreFilters = false)
     {
-        var query = GetFullResumeQuery();
+        var query = _context.Resumes.AsQueryable();
+
         if (ignoreFilters)
             query = query.IgnoreQueryFilters();
 
-        var resume = await query.FirstOrDefaultAsync(r => r.StudentId == studentId);
-        if (resume == null)
-            return Result<ResumeDto>.Failure(ErrorMessages.EntityNotFound(nameof(Resume)), StatusCodes.Status404NotFound);
-
-        if (currentUserId.HasValue)
-        {
-            var blackListCheck = await EnsureCommunicationAllowedAsync(currentUserId.Value, resume.StudentId);
-            if (!blackListCheck.IsSuccess)
-                return Result<ResumeDto>.Failure(ErrorMessages.CommunicationBlocked(), StatusCodes.Status403Forbidden);
-        }
-
-        return Result<ResumeDto>.Success(ResumeMapper.ToDto(resume));
+        return query
+            .Include(r => r.Student)
+                .ThenInclude(s => s!.StudyPlan).ThenInclude(sp => sp!.Faculty)
+            .Include(r => r.Student)
+                .ThenInclude(s => s!.StudyPlan).ThenInclude(sp => sp!.StudyDirection)
+            .Include(r => r.AdditionalSkills)
+                .ThenInclude(ras => ras.AdditionalSkill);
     }
 
-    protected void UpdateResumeSkills(Resume resume, List<Guid>? newSkillIds)
+    protected async Task<Result<bool>> SoftDeleteResumeInternalAsync(Guid studentId)
     {
-        var safeIds = newSkillIds ?? [];
-        var currentIds = resume.AdditionalSkills.Select(s => s.AdditionalSkillId).ToList();
+        var student = await _context.Students
+            .Include(s => s.Resume)
+            .Include(s => s.StudyPlan)
+            .FirstOrDefaultAsync(s => s.Id == studentId);
 
-        var toRemove = resume.AdditionalSkills.Where(s => !safeIds.Contains(s.AdditionalSkillId)).ToList();
-        foreach (var item in toRemove) resume.AdditionalSkills.Remove(item);
-
-        var toAdd = safeIds.Except(currentIds)
-            .Select(id => new ResumeAdditionalSkill { AdditionalSkillId = id, ResumeId = resume.Id });
-        foreach (var item in toAdd) resume.AdditionalSkills.Add(item);
-    }
-
-    public async Task<Result<bool>> SoftDeleteResumeAsync(Guid studentId)
-    {
-        var resume = await _context.Resumes.FirstOrDefaultAsync(r => r.StudentId == studentId);
-        if (resume == null)
+        if (student?.Resume == null || student.Resume.IsDeleted)
             return Result<bool>.Failure(ErrorMessages.EntityNotFound(nameof(Resume)), StatusCodes.Status404NotFound);
 
-        resume.IsDeleted = true;
-        resume.DeletedAt = DateTime.UtcNow;
+        student.Resume.IsDeleted = true;
+        student.Resume.DeletedAt = DateTime.UtcNow;
 
-        return (await SaveChangesAsync<Resume>()).IsSuccess
-            ? Result<bool>.Success(true)
-            : Result<bool>.Failure(ErrorMessages.FailedToDelete(nameof(Resume)));
-    }
-
-    public async Task<Result<ResumeDto>> RestoreResumeAsync(Guid studentId)
-    {
-        var resume = await _context.Resumes.IgnoreQueryFilters().FirstOrDefaultAsync(r => r.StudentId == studentId);
-        if (resume == null)
-            return Result<ResumeDto>.Failure(ErrorMessages.EntityNotFound(nameof(Resume)), StatusCodes.Status404NotFound);
-
-        resume.IsDeleted = false;
-        resume.DeletedAt = null;
+        _registrationManager.RecalculateRegistrationStage(student);
 
         await _context.SaveChangesAsync();
-        return await GetResumeByStudentIdAsync(studentId, null, true);
+        return Result<bool>.Success(true);
+    }
+
+    protected async Task<Result<bool>> RestoreResumeInternalAsync(Guid studentId)
+    {
+        var student = await _context.Students
+            .IgnoreQueryFilters()
+            .Include(s => s.Resume)
+            .Include(s => s.StudyPlan)
+            .FirstOrDefaultAsync(s => s.Id == studentId);
+
+        if (student?.Resume == null || !student.Resume.IsDeleted)
+            return Result<bool>.Failure(ErrorMessages.EntityNotFound(nameof(Resume)), StatusCodes.Status404NotFound);
+
+        student.Resume.IsDeleted = false;
+        student.Resume.DeletedAt = null;
+
+        _registrationManager.RecalculateRegistrationStage(student);
+
+        await _context.SaveChangesAsync();
+        return Result<bool>.Success(true);
     }
 }

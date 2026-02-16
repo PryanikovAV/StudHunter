@@ -6,7 +6,8 @@ using StudHunter.DB.Postgres.Models;
 
 namespace StudHunter.API.Services.BaseServices;
 
-public abstract class BaseVacancyService(StudHunterDbContext context) : BaseService(context)
+public abstract class BaseVacancyService(StudHunterDbContext context, IRegistrationManager registrationManager)
+    : BaseService(context, registrationManager)
 {
     protected IQueryable<Vacancy> GetFullVacancyQuery() =>
         _context.Vacancies
@@ -100,7 +101,7 @@ public abstract class BaseVacancyService(StudHunterDbContext context) : BaseServ
 
         _context.Vacancies.Add(vacancy);
 
-        BaseEmployerService.RecalculateRegistrationStage(employer);
+        _registrationManager.RecalculateRegistrationStage(employer);
 
         var result = await SaveChangesAsync<Vacancy>();
 

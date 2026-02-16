@@ -15,27 +15,43 @@ const confirmPassword = ref('')
 const isLoading = ref(false)
 const errorText = ref('')
 
+// Динамический заголовок
 const titleText = computed(() =>
-  role.value === 'student' ? 'Регистрация для поиска работы' : 'Регистрация для поиска сотрудников',
+  role.value === 'student' ? 'Регистрация студента' : 'Регистрация компании',
 )
 
 interface RegisterPayload {
   email: string
   password: string
-  name?: string // Знак вопроса делает поле необязательным
+  name?: string
 }
 
 const handleRegister = async () => {
   errorText.value = ''
 
-  if (password.value !== confirmPassword.value) {
-    errorText.value = 'Пароли не совпадают'
+  // 1. Простые проверки на клиенте
+  if (!email.value.trim()) {
+    errorText.value = 'Укажите email'
     return
   }
 
-  // Дополнительная проверка для работодателя на фронтенде
   if (role.value === 'employer' && !companyName.value.trim()) {
-    errorText.value = 'Введите название компании'
+    errorText.value = 'Укажите название компании'
+    return
+  }
+
+  if (!password.value) {
+    errorText.value = 'Придумайте пароль'
+    return
+  }
+
+  if (password.value.length < 8) {
+    errorText.value = 'Пароль слишком короткий (мин. 8)'
+    return
+  }
+
+  if (password.value !== confirmPassword.value) {
+    errorText.value = 'Пароли не совпадают'
     return
   }
 
@@ -45,12 +61,10 @@ const handleRegister = async () => {
     const isStudent = role.value === 'student'
     const endpoint = isStudent ? 'register/student' : 'register/employer'
 
-    // Формируем тело запроса динамически
     const payload: RegisterPayload = {
       email: email.value,
       password: password.value,
     }
-    // Если это работодатель, добавляем поле name согласно вашему DTO
     if (!isStudent) {
       payload.name = companyName.value
     }
@@ -64,9 +78,9 @@ const handleRegister = async () => {
     router.push('/')
   } catch (err: unknown) {
     if (isAxiosError(err)) {
-      errorText.value = err.response?.data?.detail || 'Ошибка при регистрации'
+      errorText.value = err.response?.data?.detail || 'Ошибка регистрации'
     } else {
-      errorText.value = 'Произошла ошибка сети'
+      errorText.value = 'Ошибка сети'
     }
   } finally {
     isLoading.value = false
@@ -75,176 +89,172 @@ const handleRegister = async () => {
 </script>
 
 <template>
-  <div class="login-container">
-    <header class="auth-header">
-      <div class="header-side">
-        <button @click="router.push('/')" class="back-button" type="button">
-          <IconBackButton class="icon-back" />
+  <div class="auth-wrapper">
+    <div class="auth-card">
+      <header class="auth-header">
+        <button @click="router.push('/')" class="btn-icon-back" type="button">
+          <IconBackButton class="icon-main" />
         </button>
-      </div>
-      <div class="auth-logo">
-        <IconLogo class="main-logo" />
-      </div>
-      <div class="header-side"></div>
-    </header>
-
-    <h1 class="auth-title">{{ titleText }}</h1>
-
-    <div class="role-selector">
-      <button
-        type="button"
-        class="role-btn"
-        :class="{ active: role === 'student' }"
-        @click="role = 'student'"
-      >
-        Студент
-      </button>
-      <button
-        type="button"
-        class="role-btn"
-        :class="{ active: role === 'employer' }"
-        @click="role = 'employer'"
-      >
-        Работодатель
-      </button>
-    </div>
-
-    <form @submit.prevent="handleRegister" class="auth-form">
-      <div class="input-group">
-        <label>Email *</label>
-        <input
-          id="reg-email"
-          v-model="email"
-          type="email"
-          placeholder="example@mail.ru"
-          class="auth-input"
-          required
-        />
-      </div>
-
-      <Transition name="slide">
-        <div v-if="role === 'employer'" class="input-group">
-          <label for="reg-company">Название компании *</label>
-          <input
-            id="reg-company"
-            v-model="companyName"
-            type="text"
-            placeholder="ООО 'Моя Компания'"
-            class="auth-input"
-            :required="role === 'employer'"
-          />
+        <div class="logo-center">
+          <IconLogo class="auth-logo" />
         </div>
-      </Transition>
+        <div class="spacer"></div>
+      </header>
 
-      <div class="input-group">
-        <label>Пароль *</label>
-        <input
-          id="reg-password"
-          v-model="password"
-          type="password"
-          placeholder="Минимум 8 символов"
-          class="auth-input"
-          required
-        />
-      </div>
+      <h1 class="page-title text-center">{{ titleText }}</h1>
 
-      <div class="input-group">
-        <label>Повтор пароля *</label>
-        <input
-          id="reg-confirm-password"
-          v-model="confirmPassword"
-          type="password"
-          placeholder="Повторите пароль"
-          class="auth-input"
-          required
-        />
-      </div>
-
-      <p v-if="errorText" class="error-message">{{ errorText }}</p>
-
-      <div class="auth-actions">
-        <button type="submit" class="btn-primary w-full" :disabled="isLoading">
-          {{ isLoading ? 'Создание...' : 'Создать аккаунт' }}
+      <div class="role-selector">
+        <button
+          type="button"
+          class="role-btn"
+          :class="{ active: role === 'student' }"
+          @click="role = 'student'"
+        >
+          Студент
         </button>
-        <button type="button" class="btn-outline w-full" @click="router.push('/login')">
-          У меня уже есть аккаунт
+        <button
+          type="button"
+          class="role-btn"
+          :class="{ active: role === 'employer' }"
+          @click="role = 'employer'"
+        >
+          Работодатель
         </button>
       </div>
-    </form>
+
+      <form @submit.prevent="handleRegister" class="auth-form" novalidate>
+        <div class="inputs-stack">
+          <div class="input-group">
+            <label for="reg-email" class="input-label">Email</label>
+            <input
+              id="reg-email"
+              v-model="email"
+              type="email"
+              placeholder="example@mail.ru"
+              class="input-main"
+              :class="{ 'input-error': errorText && !email }"
+              required
+              @input="errorText = ''"
+            />
+          </div>
+
+          <Transition name="slide">
+            <div v-if="role === 'employer'" class="input-group">
+              <label for="reg-company" class="input-label">Название компании</label>
+              <input
+                id="reg-company"
+                v-model="companyName"
+                type="text"
+                placeholder="ООО 'Технологии'"
+                class="input-main"
+                :class="{ 'input-error': errorText && !companyName }"
+                @input="errorText = ''"
+              />
+            </div>
+          </Transition>
+
+          <div class="input-group">
+            <label for="reg-password" class="input-label">Пароль</label>
+            <input
+              id="reg-password"
+              v-model="password"
+              type="password"
+              placeholder="Минимум 8 символов"
+              class="input-main"
+              :class="{ 'input-error': errorText && !password }"
+              required
+              @input="errorText = ''"
+            />
+          </div>
+
+          <div class="input-group">
+            <label for="reg-confirm" class="input-label">Повторите пароль</label>
+            <input
+              id="reg-confirm"
+              v-model="confirmPassword"
+              type="password"
+              placeholder="Повторите пароль"
+              class="input-main"
+              :class="{ 'input-error': errorText && password !== confirmPassword }"
+              required
+              @input="errorText = ''"
+            />
+          </div>
+        </div>
+
+        <div class="error-container" :class="{ visible: errorText }">
+          {{ errorText }}
+        </div>
+
+        <div class="actions-stack">
+          <button type="submit" class="btn-main btn-dark w-full" :disabled="isLoading">
+            {{ isLoading ? 'Создание...' : 'Создать аккаунт' }}
+          </button>
+
+          <button type="button" class="btn-main btn-outline w-full" @click="router.push('/login')">
+            У меня есть аккаунт
+          </button>
+        </div>
+      </form>
+    </div>
   </div>
 </template>
 
 <style scoped>
-.error-message {
-  color: #e11d48;
-  font-size: 13px;
-  margin-bottom: 15px;
-  padding-left: 4px;
+.auth-wrapper {
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+  background-color: var(--background-page);
 }
-.login-container {
+
+.auth-card {
   width: 100%;
-  max-width: 360px;
-  padding: 24px;
-  background: #ffffff;
-  box-sizing: border-box;
+  max-width: 320px;
+  display: flex;
+  flex-direction: column;
 }
 
 .auth-header {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  margin-bottom: 32px;
+  margin-bottom: 24px;
 }
 
-.header-side {
-  width: 40px;
-  display: flex;
-  align-items: center;
-}
-
-.auth-logo {
-  display: flex;
-  justify-content: center;
-  flex: 1;
-}
-.main-logo {
-  width: 50px;
-  height: auto;
-}
-
-.back-button {
+.btn-icon-back {
   background: none;
   border: none;
-  cursor: pointer;
   padding: 8px;
-  display: flex;
-  /* Принудительно задаем цвет, если в SVG стоит stroke="currentColor" */
+  cursor: pointer;
   color: var(--dark-text);
+  display: flex;
   margin-left: -8px;
 }
 
-.icon-back {
-  width: 24px;
-  height: 24px;
-  display: block;
+.logo-center {
+  flex: 1;
+  display: flex;
+  justify-content: center;
 }
 
-.auth-title {
-  text-align: center;
-  font-size: 18px; /* Чуть меньше, так как текст длиннее */
-  font-weight: 700;
-  margin-bottom: 32px;
-  color: var(--dark-text);
-  min-height: 54px; /* Чтобы текст не "прыгал" при смене длины строки */
+.auth-logo {
+  width: 48px;
+  height: 48px;
 }
 
-/* Стили переключателя */
+.spacer {
+  width: 40px;
+}
+
 .role-selector {
   display: flex;
-  background: #f1f5f9;
+  background: var(--gray-border);
   padding: 4px;
   border-radius: 100px;
-  margin-bottom: 32px;
+  margin-bottom: 24px;
 }
 
 .role-btn {
@@ -256,74 +266,93 @@ const handleRegister = async () => {
   font-weight: 600;
   cursor: pointer;
   background: transparent;
-  color: #64748b;
+  color: var(--gray-text);
   transition: all 0.2s ease;
 }
 
 .role-btn.active {
-  background: #ffffff;
+  background: var(--background-field);
   color: var(--dark-text);
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
 }
 
-/* Стили формы */
+.text-center {
+  text-align: center;
+  font-size: 20px;
+  margin-bottom: 24px;
+}
+
 .auth-form {
   display: flex;
   flex-direction: column;
 }
+
+.inputs-stack {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
 .input-group {
   display: flex;
   flex-direction: column;
-  gap: 8px;
-  margin-bottom: 16px;
+  gap: 6px;
 }
-.input-group label {
-  font-size: 14px;
+
+.input-label {
+  font-size: 13px;
   font-weight: 600;
   color: var(--dark-text);
-  padding-left: 4px;
+  padding-left: 12px;
 }
 
-.auth-input {
-  width: 100%;
-  height: 48px;
-  padding: 0 20px;
-  border-radius: 100px;
-  border: 1px solid #cbd5e1;
-  font-family: inherit;
-  font-size: 14px;
-  outline: none;
-  box-sizing: border-box;
+.input-error {
+  border-color: var(--red-text-error) !important;
 }
 
-.auth-input:focus {
-  border-color: #275886;
+.error-container {
+  min-height: 32px;
+  margin-top: 12px;
+  margin-bottom: 8px;
+  font-size: 13px;
+  color: var(--red-text-error);
+  padding-left: 12px;
+  opacity: 0;
+  transition: opacity 0.2s ease;
+  word-wrap: break-word;
 }
 
-.auth-actions {
+.error-container.visible {
+  opacity: 1;
+}
+
+.actions-stack {
   display: flex;
   flex-direction: column;
   gap: 12px;
-  margin-top: 32px;
 }
+
 .w-full {
   width: 100%;
-  height: 48px;
-  box-sizing: border-box;
+}
+
+button:disabled {
+  opacity: 0.7;
+  cursor: wait;
 }
 
 .slide-enter-active,
 .slide-leave-active {
-  transition: all 0.3s ease-out;
-  max-height: 100px; /* Достаточно для input-group */
+  transition: all 0.3s ease;
+  max-height: 100px;
   opacity: 1;
+  overflow: hidden;
 }
 
 .slide-enter-from,
 .slide-leave-to {
   max-height: 0;
   opacity: 0;
-  margin-bottom: 0;
-  transform: translateY(-10px);
+  margin-top: -16px;
 }
 </style>

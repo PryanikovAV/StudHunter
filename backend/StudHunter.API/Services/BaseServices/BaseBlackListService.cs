@@ -4,7 +4,8 @@ using StudHunter.DB.Postgres.Models;
 
 namespace StudHunter.API.Services.BaseServices;
 
-public abstract class BaseBlackListService(StudHunterDbContext context) : BaseService(context)
+public abstract class BaseBlackListService(StudHunterDbContext context, IRegistrationManager registrationManager)
+    : BaseService(context, registrationManager)
 {
     protected IQueryable<BlackList> GetBaseBlackListQuery(Guid userId) =>
         _context.BlackLists

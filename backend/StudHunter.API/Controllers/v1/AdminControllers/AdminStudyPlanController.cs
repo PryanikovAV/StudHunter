@@ -13,7 +13,7 @@ public class AdminStudyPlanController(IAdminStudyPlanService adminService) : Bas
 {
     [HttpGet("{studentId:guid}")]
     public async Task<IActionResult> GetStudentStudyPlan(Guid studentId) =>
-        HandleResult(await adminService.GetByStudentIdAsync(studentId));
+        HandleResult(await adminService.GetStudyPlanByStudentIdAsync(studentId));
 
     [HttpPost("{studentId:guid}")]
     public async Task<IActionResult> CreateForStudent(Guid studentId, [FromBody] UpdateStudyPlanDto dto) =>
@@ -21,7 +21,7 @@ public class AdminStudyPlanController(IAdminStudyPlanService adminService) : Bas
 
     [HttpPut("{studentId:guid}")]
     public async Task<IActionResult> UpdateForStudent(Guid studentId, [FromBody] UpdateStudyPlanDto dto) =>
-        HandleResult(await adminService.UpdateAsync(studentId, dto));
+        HandleResult(await adminService.UpdateStudyPlanAsync(studentId, dto));
 
     [HttpDelete("{id:guid}")]
     public async Task<IActionResult> Delete(Guid id, [FromQuery] bool hardDelete = false) =>

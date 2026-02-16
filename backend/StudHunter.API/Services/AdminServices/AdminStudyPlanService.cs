@@ -12,7 +12,8 @@ public interface IAdminStudyPlanService : IStudyPlanService
     Task<Result<bool>> DeleteAsync(Guid id, bool hardDelete);
 }
 
-public class AdminStudyPlanService(StudHunterDbContext context) : StudyPlanService(context), IAdminStudyPlanService
+public class AdminStudyPlanService(StudHunterDbContext context, IRegistrationManager registrationManager)
+    : StudyPlanService(context, registrationManager), IAdminStudyPlanService
 {
     public async Task<Result<StudyPlanDto>> CreateAsync(Guid studentId, UpdateStudyPlanDto dto)
     {
@@ -30,7 +31,7 @@ public class AdminStudyPlanService(StudHunterDbContext context) : StudyPlanServi
         var result = await SaveChangesAsync<StudyPlan>();
 
         return result.IsSuccess
-            ? await GetByStudentIdAsync(studentId)
+            ? await GetStudyPlanByStudentIdAsync(studentId)
             : Result<StudyPlanDto>.Failure(result.ErrorMessage!);
     }
 

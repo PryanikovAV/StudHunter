@@ -1,8 +1,18 @@
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap');
 
 :root {
-  --susu-blue: #275886;
+  --susu-blue: rgb(39, 88, 134);
+  --white-text: #ffffff;
+  --gray-text: #94a3b8;
+  --gray-text-focus: #333333;
   --dark-text: #1a1a1a;
+  --red-text-error: #ef4444;
+  --green-text-success: #22c55e;
+  --gray-border: #e2e8f0;
+  --gray-border-focus: #94a3b8;
+  --background-page: #f8fafc;
+  --background-field: #ffffff;
+  --header-dark-theme: #0f172a;
 }
 
 body {
@@ -11,80 +21,114 @@ body {
     -apple-system,
     sans-serif;
   color: var(--dark-text);
+  background-color: var(--background-page);
   margin: 0;
   padding: 0;
-  background-color: #f8fafc;
   -webkit-font-smoothing: antialiased;
+  line-height: 1.5;
 }
-
 .container {
   max-width: 1200px;
+  width: 100%;
   margin: 0 auto;
   padding: 0 20px;
-  width: 100%;
+  box-sizing: border-box;
 }
-
-/* 1. Кнопка "Создать резюме" и "Найти" */
-.btn-primary {
-  padding: 10px 22px;
-  border-radius: 100px;
+.page-title {
+  font-size: 22px;
+  font-weight: 600;
+  color: var(--dark-text);
+  margin: 0 0 24px 0;
+  line-height: 1.2;
+}
+.text-muted {
+  color: var(--gray-text);
   font-size: 14px;
-  font-weight: 400;
-  cursor: pointer;
-  background-color: var(--dark-text); /* Твой темно-серый/черный */
-  color: #fff;
-  border: none;
-  transition: all 0.2s ease;
+}
+/* Базовый стиль кнопок */
+.btn-main {
+  height: 48px;
+  padding: 0px 24px;
   display: inline-flex;
   align-items: center;
   justify-content: center;
-}
-
-.btn-primary:hover {
-  background-color: #000; /* Становится чуть темнее */
-}
-
-/* 2. Кнопка "Войти" */
-.btn-outline {
-  padding: 10px 22px;
+  gap: 8px;
   border-radius: 100px;
-  font-size: 14px;
+  font-family: inherit;
+  font-size: 16px;
   font-weight: 400;
   cursor: pointer;
+  transition: all 0.1s ease;
+  text-decoration: none;
+  border: 1px solid transparent;
+  box-sizing: border-box;
+}
+/* Кнопки с чёрной заливкой */
+.btn-dark {
+  background-color: var(--dark-text);
+  color: var(--white-text);
+}
+/* Кнопки с чёрной заливкой при наведении*/
+.btn-dark:hover {
+  background-color: #000000;
+}
+/* Кнопки прозрачные */
+.btn-outline {
   background-color: transparent;
   color: var(--dark-text);
-  border: 1px solid var(--dark-text); /* Рамка */
-  transition: all 0.2s ease;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
+  border: 1px solid var(--dark-text);
 }
-
+/* Кнопки прозрачные при наведении */
 .btn-outline:hover {
-  background-color: rgba(0, 0, 0, 0.05); /* Легкий серый фон при наведении */
+  background-color: rgba(0, 0, 0, 0.05);
 }
-
-/* В main.css */
-.btn-text {
-  background: none;
-  border: none;
+/* Второстепенные кнопки */
+.btn-secondary {
+  height: 32px;
+  background-color: transparent;
+  border: 1px solid transparent;
+  color: var(--gray-text);
+  padding-left: 0;
+  padding-right: 0;
+}
+/* Второстепенные кнопки при наведении */
+.btn-secondary:hover {
+  color: var(--gray-text-focus);
+}
+.input-main {
+  width: 100%;
+  height: 48px;
+  padding: 0 16px;
+  border: 1px solid var(--gray-border);
+  border-radius: 8px;
   font-family: inherit;
+  outline: none;
+  font-size: 16px;
+  box-sizing: border-box;
+  background-color: var(--background-field);
+  transition: border-color 0.1s;
+}
+.input-main:focus {
+  border-color: var(--gray-border-focus);
+}
+.card {
+  background-color: var(--background-field);
+  border: 1px solid var(--gray-border);
+  border-radius: 16px;
+  padding: 20px;
   cursor: pointer;
-  font-size: 14px;
-  padding: 8px 0;
-  transition: all 0.2s ease;
-  display: inline-flex;
-  align-items: center;
-  user-select: none;
-  border-bottom: 2px solid transparent; /* Резервируем место под линию */
+  transition: all 0.1s ease;
 }
-
-.btn-text-blue {
-  color: #275886;
-  font-weight: 600;
+.card:hover {
+  border: 1px solid var(--gray-border-focus);
 }
-
-.btn-text-gray {
-  color: #64748b;
-  font-weight: 400;
+.icon-main {
+  width: 24px;
+  height: 24px;
+  flex-shrink: 0;
+  display: block;
+}
+/* Если нужно скрыть на мобильном или десктопе */
+.hidden {
+  display: none !important;
 }

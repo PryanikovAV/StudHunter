@@ -13,7 +13,7 @@ public class AdminDictionariesController(IAdminDictionariesService adminDictiona
 {
     [HttpGet("skills/all")]
     public async Task<IActionResult> GetAllSkills() =>
-        HandleResult(await adminDictionariesService.GetAllSkillsAsync());
+        HandleResult(await adminDictionariesService.GetSkillsAsync());
 
     [HttpPost("skills")]
     public async Task<IActionResult> CreateSkill([FromBody] CreateSkillDto dto) =>

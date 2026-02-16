@@ -4,7 +4,8 @@ using StudHunter.DB.Postgres.Models;
 
 namespace StudHunter.API.Services.BaseServices;
 
-public abstract class BaseNotificationService(StudHunterDbContext context) : BaseService(context)
+public abstract class BaseNotificationService(StudHunterDbContext context, IRegistrationManager registrationManager)
+    : BaseService(context, registrationManager)
 {
     protected IQueryable<Notification> GetBaseNotificationQuery(Guid userId) =>
         _context.Notifications

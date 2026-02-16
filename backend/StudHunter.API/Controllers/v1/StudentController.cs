@@ -14,6 +14,10 @@ public class StudentController(IStudentService studentService) : BaseController
     public async Task<IActionResult> GetProfile() =>
         HandleResult(await studentService.GetStudentAsync(AuthorizedUserId));
 
+    [HttpGet("hero")]
+    public async Task<IActionResult> GetStudentHero() =>
+        HandleResult(await studentService.GetStudentHeroAsync(AuthorizedUserId));
+
     [HttpPut]
     public async Task<IActionResult> UpdateProfile([FromBody] UpdateStudentDto dto) =>
         HandleResult(await studentService.UpdateStudentAsync(AuthorizedUserId, dto));

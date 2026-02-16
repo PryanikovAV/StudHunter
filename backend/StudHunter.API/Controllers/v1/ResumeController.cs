@@ -14,23 +14,15 @@ public class ResumeController(IResumeService resumeService) : BaseController
 {
     [HttpGet]
     public async Task<IActionResult> GetMyResume() =>
-        HandleResult(await resumeService.GetResumeByStudentIdAsync(AuthorizedUserId, null, true));
-
-    [HttpPost]
-    public async Task<IActionResult> Create([FromBody] UpdateResumeDto dto) =>
-        HandleResult(await resumeService.CreateResumeAsync(AuthorizedUserId, dto));
+        HandleResult(await resumeService.GetMyResumeAsync(AuthorizedUserId));
 
     [HttpPut]
-    public async Task<IActionResult> Update([FromBody] UpdateResumeDto dto) =>
-        HandleResult(await resumeService.UpdateResumeAsync(AuthorizedUserId, dto));
+    public async Task<IActionResult> Upsert([FromBody] ResumeFillDto dto) =>
+        HandleResult(await resumeService.UpsertResumeAsync(AuthorizedUserId, dto));
 
     [HttpDelete]
     public async Task<IActionResult> Delete() =>
         HandleResult(await resumeService.SoftDeleteResumeAsync(AuthorizedUserId));
-
-    [HttpPost("restore")]
-    public async Task<IActionResult> Restore() =>
-        HandleResult(await resumeService.RestoreResumeAsync(AuthorizedUserId));
 }
 
 [Authorize(Roles = UserRoles.Employer)]
@@ -43,12 +35,12 @@ public class EmployerResumeController(IResumeService resumeService, IInvitationS
 
     [HttpGet("{studentId:guid}")]
     public async Task<IActionResult> GetStudentResume(Guid studentId) =>
-        HandleResult(await resumeService.GetResumeByStudentIdAsync(studentId, AuthorizedUserId));
+        HandleResult(await resumeService.GetResumeForEmployerAsync(studentId, AuthorizedUserId));
 
     [HttpPost("{studentId:guid}/invite")]
     public async Task<IActionResult> Invite(Guid studentId, [FromBody] CreateOfferRequest request)
     {
-        var resumeResult = await resumeService.GetResumeByStudentIdAsync(studentId, AuthorizedUserId);
+        var resumeResult = await resumeService.GetResumeForEmployerAsync(studentId, AuthorizedUserId);
         if (!resumeResult.IsSuccess)
             return HandleResult(resumeResult);
 

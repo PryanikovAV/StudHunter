@@ -52,20 +52,22 @@ builder.Services.AddScoped<IEmployerService, EmployerService>();
 builder.Services.AddScoped<IFavoriteService, FavoriteService>();
 builder.Services.AddScoped<IInvitationService, InvitationService>();
 builder.Services.AddScoped<INotificationService, NotificationService>();
+builder.Services.AddScoped<IRegistrationManager, RegistrationManager>();
 builder.Services.AddScoped<IResumeService, ResumeService>();
+builder.Services.AddScoped<IStudentProfileService, StudentProfileService>();
 builder.Services.AddScoped<IStudentService, StudentService>();
 builder.Services.AddScoped<IStudyPlanService, StudyPlanService>();
 builder.Services.AddScoped<IVacancyService, VacancyService>();
 
 /* Административные сервисы */
-builder.Services.AddScoped<IAdminChatService, AdminChatService>();
-builder.Services.AddScoped<IAdminDictionariesService, AdminDictionariesService>();
-builder.Services.AddScoped<IAdminEmployerService, AdminEmployerService>();
-builder.Services.AddScoped<IAdminInvitationService, AdminInvitationService>();
-builder.Services.AddScoped<IAdminResumeService, AdminResumeService>();
-builder.Services.AddScoped<IAdminStudentService, AdminStudentService>();
-builder.Services.AddScoped<IAdminStudyPlanService, AdminStudyPlanService>();
-builder.Services.AddScoped<IAdminVacancyService, AdminVacancyService>();
+//builder.Services.AddScoped<IAdminChatService, AdminChatService>();
+//builder.Services.AddScoped<IAdminDictionariesService, AdminDictionariesService>();
+//builder.Services.AddScoped<IAdminEmployerService, AdminEmployerService>();
+//builder.Services.AddScoped<IAdminInvitationService, AdminInvitationService>();
+//builder.Services.AddScoped<IAdminResumeService, AdminResumeService>();
+//builder.Services.AddScoped<IAdminStudentService, AdminStudentService>();
+//builder.Services.AddScoped<IAdminStudyPlanService, AdminStudyPlanService>();
+//builder.Services.AddScoped<IAdminVacancyService, AdminVacancyService>();
 
 builder.Services.AddScoped<DictionarySeederService>();  // <-- Заполнение словарей
 

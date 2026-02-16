@@ -23,10 +23,9 @@
 
 <style scoped>
 .app-download {
-  /* Голубая полоска на всю ширину */
   background-color: rgba(39, 88, 134, 0.1);
   width: 100%;
-  margin-top: 100px; /* Отступ сверху, чтобы телефону было куда "выступать" */
+  margin-top: 100px;
   position: relative;
 }
 
@@ -34,16 +33,15 @@
   display: flex;
   align-items: center;
   position: relative;
-  min-height: 200px; /* Фиксированная высота полоски на десктопе */
+  min-height: 200px;
 }
 
-/* QR-код 160x160 */
 .qr-section {
   flex-shrink: 0;
 }
 
 .qr-box {
-  background: white;
+  background: var(--background-field);
   padding: 10px;
   border-radius: 12px;
   display: flex;
@@ -57,7 +55,6 @@
   height: 100%;
 }
 
-/* Текст по центру, выравнивание по левому краю */
 .text-section {
   flex: 1;
   padding: 0 60px;
@@ -78,7 +75,6 @@
   line-height: 1.4;
 }
 
-/* Смартфон с выступом */
 .phone-section {
   flex-shrink: 0;
   display: flex;
@@ -88,12 +84,10 @@
 }
 
 .phone-img {
-  height: 280px; /* Высота телефона больше, чем высота полоски */
-  margin-top: -80px; /* Магия: выталкиваем верхнюю часть за пределы фона */
+  height: 280px;
+  margin-top: -80px;
   display: block;
 }
-
-/* --- АДАПТИВНОСТЬ ПОД ТЕЛЕФОН --- */
 
 @media (max-width: 992px) {
   .app-download {
@@ -115,7 +109,7 @@
   }
 
   .phone-img {
-    margin-top: 0; /* На мобилках не выступает, чтобы не перекрывать текст */
+    margin-top: 0;
     height: 280px;
   }
 

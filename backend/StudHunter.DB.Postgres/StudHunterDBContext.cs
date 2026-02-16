@@ -41,6 +41,6 @@ public class StudHunterDbContext : DbContext
     {
         base.OnModelCreating(modelBuilder);
         modelBuilder.Entity<User>().UseTpcMappingStrategy();
-        modelBuilder.ApplyConfigurationsFromAssembly(typeof(UserConfiguration).Assembly);
+        modelBuilder.ApplyConfigurationsFromAssembly(typeof(StudHunterDbContext).Assembly);
     }
 }

@@ -1,6 +1,7 @@
 ﻿using Microsoft.EntityFrameworkCore;
 using StudHunter.API.Infrastructure;
 using StudHunter.API.ModelsDto;
+using StudHunter.API.Services.BaseServices;
 using StudHunter.DB.Postgres;
 using StudHunter.DB.Postgres.Models;
 
@@ -8,26 +9,26 @@ namespace StudHunter.API.Services;
 
 public interface IStudyPlanService
 {
-    Task<Result<StudyPlanDto>> GetByStudentIdAsync(Guid studentId);
-    Task<Result<StudyPlanDto>> UpdateAsync(Guid studentId, UpdateStudyPlanDto dto);
+    Task<Result<StudyPlanDto>> GetStudyPlanByStudentIdAsync(Guid studentId);
+    Task<Result<StudyPlanDto>> UpdateStudyPlanAsync(Guid studentId, UpdateStudyPlanDto dto);
 }
 
-public class StudyPlanService(StudHunterDbContext context) : BaseService(context), IStudyPlanService
+public class StudyPlanService(StudHunterDbContext context, IRegistrationManager registrationManager)
+    : BaseStudyPlanService(context, registrationManager), IStudyPlanService
 {
-    public virtual async Task<Result<StudyPlanDto>> GetByStudentIdAsync(Guid studentId)
+    public virtual async Task<Result<StudyPlanDto>> GetStudyPlanByStudentIdAsync(Guid studentId)
     {
-        var studyPlan = await _context.StudyPlans
-            .IgnoreQueryFilters()
-            .Include(sp => sp.University)
-            .Include(sp => sp.Faculty)
-            .Include(sp => sp.Department)
-            .Include(sp => sp.StudyDirection)
-            .Include(sp => sp.StudyPlanCourses)
-            .ThenInclude(spc => spc.Course)
+        var studyPlan = await GetFullStudyPlanQuery()
             .FirstOrDefaultAsync(sp => sp.StudentId == studentId);
 
         if (studyPlan == null)
-            return await CreateInternalAsync(studentId);
+        {
+            studyPlan = new StudyPlan { StudentId = studentId };
+            _context.StudyPlans.Add(studyPlan);
+            await _context.SaveChangesAsync();
+
+            return Result<StudyPlanDto>.Success(StudyPlanMapper.ToDto(studyPlan));
+        }
 
         if (studyPlan.IsDeleted)
         {
@@ -39,33 +40,16 @@ public class StudyPlanService(StudHunterDbContext context) : BaseService(context
         return Result<StudyPlanDto>.Success(StudyPlanMapper.ToDto(studyPlan));
     }
 
-    protected async Task<Result<StudyPlanDto>> CreateInternalAsync(Guid studentId)
+    public async Task<Result<StudyPlanDto>> UpdateStudyPlanAsync(Guid studentId, UpdateStudyPlanDto dto)
     {
-        var studyPlan = new StudyPlan
-        {
-            StudentId = studentId
-        };
-
-        _context.StudyPlans.Add(studyPlan);
-        await _context.SaveChangesAsync();
-
-        return await GetByStudentIdAsync(studentId);
-    }
-
-    public async Task<Result<StudyPlanDto>> UpdateAsync(Guid studentId, UpdateStudyPlanDto dto)
-    {
-        var studyPlan = await _context.StudyPlans
-            .IgnoreQueryFilters()
+        var studyPlan = await GetFullStudyPlanQuery()
             .FirstOrDefaultAsync(sp => sp.StudentId == studentId);
 
         if (studyPlan == null)
         {
-            var createResult = await CreateInternalAsync(studentId);
-            if (!createResult.IsSuccess)
-                return createResult;
+            studyPlan = new StudyPlan { StudentId = studentId };
+            _context.StudyPlans.Add(studyPlan);
         }
-
-        studyPlan = await _context.StudyPlans.FirstAsync(sp => sp.StudentId == studentId);
 
         if (studyPlan.IsDeleted)
         {
@@ -77,8 +61,9 @@ public class StudyPlanService(StudHunterDbContext context) : BaseService(context
 
         var result = await SaveChangesAsync<StudyPlan>();
 
-        return result.IsSuccess
-            ? await GetByStudentIdAsync(studentId)
-            : Result<StudyPlanDto>.Failure(result.ErrorMessage!);
+        if (!result.IsSuccess)
+            return Result<StudyPlanDto>.Failure(result.ErrorMessage!);
+
+        return Result<StudyPlanDto>.Success(StudyPlanMapper.ToDto(studyPlan));
     }
 }

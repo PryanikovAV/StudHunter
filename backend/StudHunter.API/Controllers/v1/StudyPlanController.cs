@@ -12,9 +12,9 @@ public class StudyPlanController(IStudyPlanService studyPlanService) : BaseContr
 {
     [HttpGet]
     public async Task<IActionResult> GetMyStudyPlan() =>
-        HandleResult(await studyPlanService.GetByStudentIdAsync(AuthorizedUserId));
+        HandleResult(await studyPlanService.GetStudyPlanByStudentIdAsync(AuthorizedUserId));
 
     [HttpPut]
     public async Task<IActionResult> Update([FromBody] UpdateStudyPlanDto dto) =>
-        HandleResult(await studyPlanService.UpdateAsync(AuthorizedUserId, dto));
+        HandleResult(await studyPlanService.UpdateStudyPlanAsync(AuthorizedUserId, dto));
 }

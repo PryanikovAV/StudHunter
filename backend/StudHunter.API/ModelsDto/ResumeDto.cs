@@ -3,68 +3,109 @@ using System.ComponentModel.DataAnnotations;
 
 namespace StudHunter.API.ModelsDto;
 
-public record ResumeDto(
+public record ResumeFillDto(
+    Guid? Id,
+    [Required(ErrorMessage = "Заголовок резюме обязателен")] string Title,
+    string? Description,
+    List<Guid> SkillIds,
+    List<LookupDto>? Skills = null
+);
+
+public record ResumeSearchDto(
     Guid Id,
     Guid StudentId,
     string Title,
     string? Description,
-    DateTime CreatedAt,
     DateTime UpdatedAt,
-
     string? Email,
     string? Phone,
-
     string FullName,
     string? FacultyName,
-    string? SpecialityName,
+    string? StudyDirectionName,
     int? CourseNumber,
-    bool IsCommunicationBlocked,
     List<string> Skills
 );
 
-public record UpdateResumeDto(
-    [StringLength(255)] string? Title,
-    [StringLength(5000)] string? Description,
-    List<Guid>? SkillIds
-);
+public record ResumeSearchFilter
+{
+    public string? SearchTerm { get; init; }
+
+    public List<Guid> SkillIds { get; init; } = new();
+
+    public PaginationParams Paging { get; init; } = new PaginationParams();
+}
 
 public static class ResumeMapper
 {
-    public static ResumeDto ToDto(Resume r, bool isBlocked = false, bool maskContacts = false)
+    public static ResumeFillDto ToFillDto(Resume? resume)
     {
-        var fullName = $"{r.Student.LastName} {r.Student.FirstName}".Trim();
+        if (resume == null)
+            return new ResumeFillDto(null, string.Empty, null, new List<Guid>(), new List<LookupDto>());
 
-        string? displayEmail = maskContacts ? "Доступно после аккредитации" : r.Student.Email;
-        string? displayPhone = maskContacts ? "Скрыто" : r.Student.ContactPhone;
-
-        return new ResumeDto(
-            r.Id,
-            r.StudentId,
-            r.Title,
-            r.Description,
-            r.CreatedAt,
-            r.UpdatedAt,
-            displayEmail,
-            displayPhone,
-            fullName,
-            r.Student.StudyPlan?.Faculty?.Name,
-            r.Student.StudyPlan?.StudyDirection?.Name,
-            r.Student.StudyPlan?.CourseNumber,
-            isBlocked,
-            r.AdditionalSkills?.Select(ras => ras.AdditionalSkill.Name)
-                               .OrderBy(n => n)
-                               .ToList() ?? new List<string>()
+        return new ResumeFillDto(
+            Id: resume.Id,
+            Title: resume.Title,
+            Description: resume.Description,
+            SkillIds: resume.AdditionalSkills?.Select(s => s.AdditionalSkillId).ToList() ?? new List<Guid>(),
+            Skills: resume.AdditionalSkills?.Select(s => new LookupDto(s.AdditionalSkill.Id, s.AdditionalSkill.Name)).ToList() ?? new List<LookupDto>()
         );
     }
 
-    public static void ApplyUpdate(Resume resume, UpdateResumeDto dto)
+    public static void ApplyUpdate(Resume resume, ResumeFillDto dto)
     {
-        if (!string.IsNullOrWhiteSpace(dto.Title))
-            resume.Title = dto.Title.Trim();
-
-        if (dto.Description != null)
-            resume.Description = dto.Description.Trim();
-
+        resume.Title = dto.Title.Trim();
+        resume.Description = dto.Description?.Trim();
         resume.UpdatedAt = DateTime.UtcNow;
+
+        var dtoSkillIds = dto.SkillIds ?? new List<Guid>();
+
+        var skillsToRemove = resume.AdditionalSkills
+            .Where(ras => !dtoSkillIds.Contains(ras.AdditionalSkillId))
+            .ToList();
+
+        foreach (var skill in skillsToRemove)
+            resume.AdditionalSkills.Remove(skill);
+
+        var existingSkillIds = resume.AdditionalSkills.Select(ras => ras.AdditionalSkillId).ToHashSet();
+
+        foreach (var skillId in dtoSkillIds)
+        {
+            if (!existingSkillIds.Contains(skillId))
+            {
+                resume.AdditionalSkills.Add(new ResumeAdditionalSkill
+                {
+                    ResumeId = resume.Id,
+                    AdditionalSkillId = skillId
+                });
+            }
+        }
+    }
+
+    public static ResumeSearchDto ToSearchDto(Resume r, bool maskContacts)
+    {
+        var fullName = $"{r.Student.LastName} {r.Student.FirstName}".Trim();
+
+        string? displayEmail = maskContacts ? "Доступно после аккредитации" : r.Student.ContactEmail ?? r.Student.Email;
+        string? displayPhone = maskContacts ? "Скрыто" : r.Student.ContactPhone;
+
+        var sp = r.Student.StudyPlan;
+
+        return new ResumeSearchDto(
+            Id: r.Id,
+            StudentId: r.StudentId,
+            Title: r.Title,
+            Description: r.Description,
+            UpdatedAt: r.UpdatedAt,
+            Email: displayEmail,
+            Phone: displayPhone,
+            FullName: fullName,
+            FacultyName: sp?.Faculty?.Name,
+            StudyDirectionName: sp?.StudyDirection?.Name,
+            CourseNumber: sp?.CourseNumber,
+            Skills: r.AdditionalSkills?
+                        .Select(ras => ras.AdditionalSkill.Name)
+                        .OrderBy(n => n)
+                        .ToList() ?? new List<string>()
+        );
     }
 }

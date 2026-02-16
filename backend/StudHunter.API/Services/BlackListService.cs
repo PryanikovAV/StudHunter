@@ -13,7 +13,8 @@ public interface IBlackListService
     Task<Result<PagedResult<BlackListDto>>> GetMyBlackListAsync(Guid userId, PaginationParams paging);
 }
 
-public class BlackListService(StudHunterDbContext context) : BaseBlackListService(context), IBlackListService
+public class BlackListService(StudHunterDbContext context, IRegistrationManager registrationManager)
+    : BaseBlackListService(context, registrationManager), IBlackListService
 {
     public async Task<Result<PagedResult<BlackListDto>>> GetMyBlackListAsync(Guid userId, PaginationParams paging)
     {

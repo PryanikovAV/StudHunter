@@ -5,9 +5,10 @@ using StudHunter.DB.Postgres.Models;
 
 namespace StudHunter.API.Services;
 
-public abstract class BaseService(StudHunterDbContext context)
+public abstract class BaseService(StudHunterDbContext context, IRegistrationManager registrationManager)
 {
     protected readonly StudHunterDbContext _context = context;
+    protected readonly IRegistrationManager _registrationManager = registrationManager;
 
     protected Result<bool> EnsureCanPerform(User user, UserAction action)
     {
@@ -60,14 +61,6 @@ public abstract class BaseService(StudHunterDbContext context)
     }
 
     protected string GetRole(User user) => UserRoles.GetRole(user);
-
-    protected string GetUserDisplayName(User user) => user switch
-    {
-        Student s => $"{s.LastName} {s.FirstName}".Trim(),
-        Employer e => e.Name,
-        Administrator => UserRoles.Administrator,
-        _ => user.Email ?? nameof(User)
-    };
 
     protected async Task<Result<bool>> SaveChangesAsync<T>()
     {

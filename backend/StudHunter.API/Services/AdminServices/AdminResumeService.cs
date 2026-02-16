@@ -6,45 +6,69 @@ using StudHunter.DB.Postgres;
 using StudHunter.DB.Postgres.Models;
 
 namespace StudHunter.API.Services.AdminServices;
-// TODO: добавить пагинацию
+
 public interface IAdminResumeService
 {
-    Task<Result<ResumeDto>> GetResumeByStudentIdAsync(Guid studentId, Guid? currentUserId = null, bool ignoreFilters = true);
-    Task<Result<ResumeDto>> UpdateResumeAsync(Guid studentId, UpdateResumeDto dto);
-    Task<Result<bool>> HardDeleteResumeAsync(Guid studentId);
+    Task<Result<ResumeSearchDto>> GetResumeAsync(Guid studentId);
+    Task<Result<ResumeFillDto>> UpdateResumeAsync(Guid studentId, ResumeFillDto dto);
     Task<Result<bool>> SoftDeleteResumeAsync(Guid studentId);
-    Task<Result<ResumeDto>> RestoreResumeAsync(Guid studentId);
+    Task<Result<bool>> HardDeleteResumeAsync(Guid studentId);
+    Task<Result<bool>> RestoreResumeAsync(Guid studentId);
 }
 
-public class AdminResumeService(StudHunterDbContext context) : BaseResumeService(context), IAdminResumeService
+public class AdminResumeService(StudHunterDbContext context, IRegistrationManager registrationManager)
+    : BaseResumeService(context, registrationManager), IAdminResumeService
 {
-    public async Task<Result<ResumeDto>> UpdateResumeAsync(Guid studentId, UpdateResumeDto dto)
+    public async Task<Result<ResumeSearchDto>> GetResumeAsync(Guid studentId)
     {
-        var resume = await GetFullResumeQuery()
-            .IgnoreQueryFilters()
+        var resume = await GetFullResumeQuery(ignoreFilters: true)
             .FirstOrDefaultAsync(r => r.StudentId == studentId);
 
         if (resume == null)
-            return Result<ResumeDto>.Failure(ErrorMessages.EntityNotFound(nameof(Resume)), StatusCodes.Status404NotFound);
+            return Result<ResumeSearchDto>.Failure(ErrorMessages.EntityNotFound(nameof(Resume)));
 
-        ResumeMapper.ApplyUpdate(resume, dto);
-        if (dto.SkillIds != null)
-            UpdateResumeSkills(resume, dto.SkillIds);
-
-        var result = await SaveChangesAsync<Resume>();
-        return result.IsSuccess
-            ? await GetResumeByStudentIdAsync(studentId, ignoreFilters: true)
-            : Result<ResumeDto>.Failure(result.ErrorMessage!);
+        return Result<ResumeSearchDto>.Success(ResumeMapper.ToSearchDto(resume, maskContacts: false));
     }
+
+    public async Task<Result<ResumeFillDto>> UpdateResumeAsync(Guid studentId, ResumeFillDto dto)
+    {
+        var student = await _context.Students
+            .IgnoreQueryFilters()
+            .Include(s => s.StudyPlan)
+            .Include(s => s.Resume).ThenInclude(r => r!.AdditionalSkills)
+            .FirstOrDefaultAsync(s => s.Id == studentId);
+
+        if (student?.Resume == null)
+            return Result<ResumeFillDto>.Failure(ErrorMessages.EntityNotFound(nameof(Resume)));
+
+        ResumeMapper.ApplyUpdate(student.Resume, dto);
+        _registrationManager.RecalculateRegistrationStage(student);
+
+        var result = await SaveChangesAsync<Student>();
+        return result.IsSuccess
+            ? Result<ResumeFillDto>.Success(ResumeMapper.ToFillDto(student.Resume))
+            : Result<ResumeFillDto>.Failure(result.ErrorMessage!);
+    }
+
+    public Task<Result<bool>> SoftDeleteResumeAsync(Guid studentId) => SoftDeleteResumeInternalAsync(studentId);
+    public Task<Result<bool>> RestoreResumeAsync(Guid studentId) => RestoreResumeInternalAsync(studentId);
 
     public async Task<Result<bool>> HardDeleteResumeAsync(Guid studentId)
     {
-        var resume = await _context.Resumes.IgnoreQueryFilters().FirstOrDefaultAsync(r => r.StudentId == studentId);
-        if (resume == null)
-            return Result<bool>.Failure(ErrorMessages.EntityNotFound(nameof(Resume)), StatusCodes.Status404NotFound);
+        var student = await _context.Students
+            .IgnoreQueryFilters()
+            .Include(s => s.Resume)
+            .Include(s => s.StudyPlan)
+            .FirstOrDefaultAsync(s => s.Id == studentId);
 
-        _context.Resumes.Remove(resume);
-        return (await SaveChangesAsync<Resume>()).IsSuccess
+        if (student?.Resume == null) return Result<bool>.Failure(ErrorMessages.EntityNotFound(nameof(Resume)));
+
+        _context.Resumes.Remove(student.Resume);
+
+        student.Resume = null;
+        _registrationManager.RecalculateRegistrationStage(student);
+
+        return (await SaveChangesAsync<Student>()).IsSuccess
             ? Result<bool>.Success(true)
             : Result<bool>.Failure("Ошибка удаления");
     }

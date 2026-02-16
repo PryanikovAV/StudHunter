@@ -40,6 +40,23 @@ namespace StudHunter.DB.Postgres.Migrations
                         .IsUnique();
 
                     b.ToTable("AdditionalSkills");
+
+                    b.HasData(
+                        new
+                        {
+                            Id = new Guid("cccccccc-5e11-4b2a-9e1d-3b5a1f2c4d5e"),
+                            Name = "c#"
+                        },
+                        new
+                        {
+                            Id = new Guid("dddddddd-5e11-4b2a-9e1d-3b5a1f2c4d5e"),
+                            Name = "postgresql"
+                        },
+                        new
+                        {
+                            Id = new Guid("eeeeeeee-5e11-4b2a-9e1d-3b5a1f2c4d5e"),
+                            Name = "vue.js"
+                        });
                 });
 
             modelBuilder.Entity("StudHunter.DB.Postgres.Models.BlackList", b =>
@@ -128,6 +145,11 @@ namespace StudHunter.DB.Postgres.Migrations
                         {
                             Id = new Guid("8f8e833b-8f9b-4b2a-9e1d-3b5a1f2c4d5e"),
                             Name = "Челябинск"
+                        },
+                        new
+                        {
+                            Id = new Guid("11111111-8f9b-4b2a-9e1d-3b5a1f2c4d5e"),
+                            Name = "Екатеринбург"
                         });
                 });
 
@@ -153,6 +175,18 @@ namespace StudHunter.DB.Postgres.Migrations
                         .IsUnique();
 
                     b.ToTable("Courses");
+
+                    b.HasData(
+                        new
+                        {
+                            Id = new Guid("ffffffff-c001-4b2a-9e1d-3b5a1f2c4d5e"),
+                            Name = "Объектно-ориентированное программирование"
+                        },
+                        new
+                        {
+                            Id = new Guid("00000000-c001-4b2a-9e1d-3b5a1f2c4d5e"),
+                            Name = "Базы данных"
+                        });
                 });
 
             modelBuilder.Entity("StudHunter.DB.Postgres.Models.Department", b =>
@@ -176,6 +210,18 @@ namespace StudHunter.DB.Postgres.Migrations
                         .IsUnique();
 
                     b.ToTable("Departments");
+
+                    b.HasData(
+                        new
+                        {
+                            Id = new Guid("88888888-deaf-4b2a-9e1d-3b5a1f2c4d5e"),
+                            Name = "Информационно-измерительная техника"
+                        },
+                        new
+                        {
+                            Id = new Guid("99999999-deaf-4b2a-9e1d-3b5a1f2c4d5e"),
+                            Name = "Прикладная математика и информатика"
+                        });
                 });
 
             modelBuilder.Entity("StudHunter.DB.Postgres.Models.Faculty", b =>
@@ -200,6 +246,26 @@ namespace StudHunter.DB.Postgres.Migrations
                         .IsUnique();
 
                     b.ToTable("Faculties");
+
+                    b.HasData(
+                        new
+                        {
+                            Id = new Guid("55555555-face-4b2a-9e1d-3b5a1f2c4d5e"),
+                            Description = "ВШЭКН ЮУрГУ",
+                            Name = "Высшая школа электроники и компьютерных наук"
+                        },
+                        new
+                        {
+                            Id = new Guid("66666666-face-4b2a-9e1d-3b5a1f2c4d5e"),
+                            Description = "ИЕТН",
+                            Name = "Институт естественных и точных наук"
+                        },
+                        new
+                        {
+                            Id = new Guid("77777777-face-4b2a-9e1d-3b5a1f2c4d5e"),
+                            Description = "ЧГиК",
+                            Name = "Факультет культурологии"
+                        });
                 });
 
             modelBuilder.Entity("StudHunter.DB.Postgres.Models.Favorite", b =>
@@ -557,6 +623,20 @@ namespace StudHunter.DB.Postgres.Migrations
                         .IsUnique();
 
                     b.ToTable("StudyDirections");
+
+                    b.HasData(
+                        new
+                        {
+                            Id = new Guid("aaaaaaaa-d1e1-4b2a-9e1d-3b5a1f2c4d5e"),
+                            Code = "09.03.04",
+                            Name = "Программная инженерия"
+                        },
+                        new
+                        {
+                            Id = new Guid("bbbbbbbb-d1e2-4b2a-9e1d-3b5a1f2c4d5e"),
+                            Code = "10.05.03",
+                            Name = "Информационная безопасность"
+                        });
                 });
 
             modelBuilder.Entity("StudHunter.DB.Postgres.Models.StudyPlan", b =>
@@ -652,6 +732,26 @@ namespace StudHunter.DB.Postgres.Migrations
                         .IsUnique();
 
                     b.ToTable("Universities");
+
+                    b.HasData(
+                        new
+                        {
+                            Id = new Guid("22222222-1234-4b2a-9e1d-3b5a1f2c4d5e"),
+                            Abbreviation = "ЮУрГУ",
+                            Name = "Южно-Уральский государственный университет"
+                        },
+                        new
+                        {
+                            Id = new Guid("33333333-1234-4b2a-9e1d-3b5a1f2c4d5e"),
+                            Abbreviation = "ЧелГУ",
+                            Name = "Челябинский государственный университет"
+                        },
+                        new
+                        {
+                            Id = new Guid("44444444-1234-4b2a-9e1d-3b5a1f2c4d5e"),
+                            Abbreviation = "ЧГиК",
+                            Name = "Челябинский государственный институт культуры"
+                        });
                 });
 
             modelBuilder.Entity("StudHunter.DB.Postgres.Models.User", b =>

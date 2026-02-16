@@ -10,12 +10,16 @@ namespace StudHunter.API.Services;
 public interface IStudentService
 {
     Task<Result<StudentDto>> GetStudentAsync(Guid studentId);
+    Task<Result<StudentHeroDto>> GetStudentHeroAsync(Guid studentId);
     Task<Result<StudentDto>> UpdateStudentAsync(Guid studentId, UpdateStudentDto dto);
     Task<Result<bool>> DeleteStudentAsync(Guid studentId);
 }
 
-public class StudentService(StudHunterDbContext context, IPasswordHasher passwordHasher)
-    : BaseStudentService(context), IStudentService
+public class StudentService(StudHunterDbContext context,
+    IStudyPlanService studyPlanService,
+    IPasswordHasher passwordHasher,
+    IRegistrationManager registrationManager)
+    : BaseStudentService(context, registrationManager), IStudentService
 {
     public async Task<Result<StudentDto>> GetStudentAsync(Guid studentId)
     {
@@ -25,6 +29,20 @@ public class StudentService(StudHunterDbContext context, IPasswordHasher passwor
             return Result<StudentDto>.Failure(ErrorMessages.EntityNotFound(nameof(Student)), StatusCodes.Status404NotFound);
 
         return Result<StudentDto>.Success(StudentMapper.ToDto(student));
+    }
+
+    public async Task<Result<StudentHeroDto>> GetStudentHeroAsync(Guid studentId)
+    {
+        var student = await GetStudentInternalAsync(studentId);
+
+        if (student == null)
+            return Result<StudentHeroDto>.Failure(ErrorMessages.EntityNotFound(nameof(Student)), StatusCodes.Status404NotFound);
+
+        var studyPlan = await studyPlanService.GetStudyPlanByStudentIdAsync(studentId);
+        
+        var studyPlanDto = studyPlan.IsSuccess ? studyPlan.Value : null;
+
+        return Result<StudentHeroDto>.Success(StudentMapper.ToHeroDto(student, studyPlanDto));
     }
 
     public async Task<Result<StudentDto>> UpdateStudentAsync(Guid studentId, UpdateStudentDto dto)
@@ -39,7 +57,7 @@ public class StudentService(StudHunterDbContext context, IPasswordHasher passwor
         if (!string.IsNullOrWhiteSpace(dto.Password))
             student.PasswordHash = passwordHasher.HashPassword(dto.Password);
 
-        RecalculateRegistrationStage(student);
+        _registrationManager.RecalculateRegistrationStage(student);
 
         var result = await SaveChangesAsync<Student>();
 

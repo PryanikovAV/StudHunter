@@ -9,9 +9,17 @@ namespace StudHunter.API.Controllers.v1;
 [Route("api/v1/dictionaries")]
 public class DictionariesController(IDictionariesService dictionariesService) : BaseController
 {
+    [HttpGet("universities")]
+    public async Task<IActionResult> GetUniversities() =>
+        HandleResult(await dictionariesService.GetUniversitiesAsync());
+
     [HttpGet("faculties")]
     public async Task<IActionResult> GetFaculties() =>
         HandleResult(await dictionariesService.GetFacultiesAsync());
+
+    [HttpGet("departments")]
+    public async Task<IActionResult> GetDepartments() =>
+        HandleResult(await dictionariesService.GetDepartmentsAsync());
 
     [HttpGet("specialities")]
     public async Task<IActionResult> GetSpecialities() =>
@@ -23,5 +31,18 @@ public class DictionariesController(IDictionariesService dictionariesService) : 
 
     [HttpGet("courses")]
     public async Task<IActionResult> GetCourses() =>
-        HandleResult(await dictionariesService.GetCoursesAsync());
+        HandleResult(await dictionariesService.GetAllCoursesAsync());
+
+    [HttpGet("courses/search")]
+    public async Task<IActionResult> SearchCourses([FromQuery] string q, [FromQuery] int limit = 10) =>
+        HandleResult(await dictionariesService.SearchCoursesAsync(q, limit));
+
+    [HttpGet("skills/search")]
+    public async Task<IActionResult> SearchSkills([FromQuery] string q, [FromQuery] int limit = 10) =>
+        HandleResult(await dictionariesService.SearchSkillsAsync(q, limit));
+
+    [AllowAnonymous]
+    [HttpGet("cities")]
+    public async Task<IActionResult> GetCities() =>
+        HandleResult(await dictionariesService.GetCitiesAsync());
 }

@@ -6,12 +6,12 @@ import IconTranslate from '@/components/icons/IconTranslate.vue'
   <footer class="app-footer">
     <div class="container">
       <div class="footer-actions">
-        <button class="btn-text btn-text-gray footer-action-btn">
-          <IconTranslate class="icon-translate" />
+        <button class="btn-main btn-secondary">
+          <IconTranslate class="icon-main" />
           <span>Русский</span>
         </button>
-        <button class="btn-text btn-text-gray footer-action-btn">Задать вопрос</button>
-        <button class="btn-text btn-text-gray footer-action-btn">Сообщить об ошибке</button>
+        <button class="btn-main btn-secondary">Задать вопрос</button>
+        <button class="btn-main btn-secondary">Сообщить об ошибке</button>
       </div>
 
       <div class="footer-legal">
@@ -41,51 +41,32 @@ import IconTranslate from '@/components/icons/IconTranslate.vue'
 
 <style scoped>
 .app-footer {
-  background-color: #ffffff; /* Белый фон сайта */
-  padding: 40px 0 60px; /* Отступы: сверху 40, снизу 60 */
-  border-top: 1px solid #f1f5f9; /* Тонкая линия отделения от контента */
+  padding: 40px 0 60px;
 }
 
-.icon-translate {
-  width: 18px;
-  height: 18px;
-  flex-shrink: 0;
-}
-
-/* Группировка кнопок */
 .footer-actions {
   display: flex;
-  flex-direction: column; /* Одна над другой */
+  flex-direction: column;
   align-items: flex-start; /* Выравнивание по левому краю */
   gap: 4px; /* Расстояние между кнопками */
-  margin-bottom: 24px; /* Отступ до текста */
-}
-
-/* Локальная правка для кнопок в футере */
-.footer-action-btn {
-  padding: 4px 0; /* Делаем их чуть компактнее */
-  font-size: 14px; /* Как в кнопке "я ищу сотрудника" */
 }
 
 /* Сетка для правового текста */
 .footer-legal {
   display: grid;
-  grid-template-columns: 1fr 1fr; /* 2 одинаковые колонки */
-  gap: 40px; /* Расстояние между колонками */
+  grid-template-columns: 1fr 1fr;
+  gap: 40px;
 }
 
-.legal-column p {
-  font-size: 12px; /* По ТЗ */
-  color: #94a3b8; /* Серый цвет текста */
+.legal-column {
+  font-size: 12px;
+  color: var(--gray-text); /* Серый цвет текста */
   line-height: 1.6;
-  margin: 0;
 }
-
-/* --- АДАПТИВНОСТЬ --- */
 
 @media (max-width: 768px) {
   .footer-legal {
-    grid-template-columns: 1fr; /* В один столбец на мобильных */
+    grid-template-columns: 1fr;
     gap: 20px;
   }
 

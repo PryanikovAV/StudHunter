@@ -17,7 +17,8 @@ public interface IAdminEmployerService
     Task<Result<bool>> RestoreAsync(Guid employerId);
 }
 
-public class AdminEmployerService(StudHunterDbContext context) : BaseEmployerService(context), IAdminEmployerService
+public class AdminEmployerService(StudHunterDbContext context, IRegistrationManager registrationManager)
+    : BaseEmployerService(context, registrationManager), IAdminEmployerService
 {
     public async Task<Result<List<AdminEmployerDto>>> GetAllEmployersAsync()
     {
@@ -51,7 +52,7 @@ public class AdminEmployerService(StudHunterDbContext context) : BaseEmployerSer
 
         EmployerMapper.ApplyUpdate(employer, dto);
 
-        RecalculateRegistrationStage(employer);
+        _registrationManager.RecalculateRegistrationStage(employer);
 
         return await SaveChangesAsync<Employer>();
     }
@@ -65,7 +66,7 @@ public class AdminEmployerService(StudHunterDbContext context) : BaseEmployerSer
 
         employer.RegistrationStage = User.AccountStatus.FullyActivated;
 
-        RecalculateRegistrationStage(employer);
+        _registrationManager.RecalculateRegistrationStage(employer);
 
         return await SaveChangesAsync<Employer>();
     }
@@ -112,7 +113,7 @@ public class AdminEmployerService(StudHunterDbContext context) : BaseEmployerSer
             v.DeletedAt = null;
         }
 
-        RecalculateRegistrationStage(employer);
+        _registrationManager.RecalculateRegistrationStage(employer);
 
         return await SaveChangesAsync<Employer>();
     }

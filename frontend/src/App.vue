@@ -21,6 +21,5 @@ import AppFooter from '@/components/AppFooter.vue'
   display: flex;
   align-items: center;
   justify-content: center;
-  background-color: #ffffff;
 }
 </style>

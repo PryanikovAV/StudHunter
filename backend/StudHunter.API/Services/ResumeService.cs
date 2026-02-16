@@ -9,128 +9,103 @@ namespace StudHunter.API.Services;
 
 public interface IResumeService
 {
-    Task<Result<ResumeDto>> GetResumeByStudentIdAsync(Guid studentId, Guid? currentUserId = null, bool ignoreFilters = true);
-    Task<Result<ResumeDto>> CreateResumeAsync(Guid studentId, UpdateResumeDto dto);
-    Task<Result<ResumeDto>> UpdateResumeAsync(Guid studentId, UpdateResumeDto dto);
+    Task<Result<ResumeFillDto>> GetMyResumeAsync(Guid studentId);
+    Task<Result<ResumeSearchDto>> GetResumeForEmployerAsync(Guid studentId, Guid currentUserId);
+    Task<Result<ResumeFillDto>> UpsertResumeAsync(Guid studentId, ResumeFillDto dto);
     Task<Result<bool>> SoftDeleteResumeAsync(Guid studentId);
-    Task<Result<ResumeDto>> RestoreResumeAsync(Guid studentId);
-    Task<Result<PagedResult<ResumeDto>>> SearchResumesAsync(ResumeSearchFilter filter, Guid? currentUserId = null);
+    Task<Result<PagedResult<ResumeSearchDto>>> SearchResumesAsync(ResumeSearchFilter filter, Guid? currentUserId = null);
 }
 
-public class ResumeService(StudHunterDbContext context) : BaseResumeService(context), IResumeService
+public class ResumeService(StudHunterDbContext context, IRegistrationManager registrationManager)
+    : BaseResumeService(context, registrationManager), IResumeService
 {
-    public async Task<Result<ResumeDto>> CreateResumeAsync(Guid studentId, UpdateResumeDto dto)
-    {
-        var student = await _context.Users.FindAsync(studentId);
-        if (student == null)
-            return Result<ResumeDto>.Failure(ErrorMessages.EntityNotFound(nameof(Student)));
-
-        var permission = EnsureCanPerform(student, UserAction.CreateResume);
-        if (!permission.IsSuccess)
-            return Result<ResumeDto>.Failure(permission.ErrorMessage!, permission.StatusCode);
-
-        if (await _context.Resumes.AnyAsync(r => r.StudentId == studentId))
-            return Result<ResumeDto>.Failure(ErrorMessages.AlreadyExists(nameof(Resume)));
-
-        var resume = new Resume
-        {
-            StudentId = studentId,
-            Title = dto.Title?.Trim() ?? "Новое резюме",
-            Description = dto.Description?.Trim()
-        };
-
-        if (dto.SkillIds?.Any() == true)
-            UpdateResumeSkills(resume, dto.SkillIds);
-
-        _context.Resumes.Add(resume);
-
-        var result = await SaveChangesAsync<Resume>();
-
-        return result.IsSuccess
-            ? await GetResumeByStudentIdAsync(studentId, null, true)
-            : Result<ResumeDto>.Failure(result.ErrorMessage!);
-    }
-
-    public async Task<Result<ResumeDto>> UpdateResumeAsync(Guid studentId, UpdateResumeDto dto)
+    public async Task<Result<ResumeFillDto>> GetMyResumeAsync(Guid studentId)
     {
         var resume = await _context.Resumes
+            .AsNoTracking()
             .Include(r => r.AdditionalSkills)
-            .FirstOrDefaultAsync(r => r.StudentId == studentId);
+            .ThenInclude(ras => ras.AdditionalSkill)
+            .FirstOrDefaultAsync(r => r.StudentId == studentId && !r.IsDeleted);
 
-        if (resume == null)
-            return Result<ResumeDto>.Failure(ErrorMessages.EntityNotFound(nameof(Resume)), StatusCodes.Status404NotFound);
-
-        ResumeMapper.ApplyUpdate(resume, dto);
-        if (dto.SkillIds != null)
-            UpdateResumeSkills(resume, dto.SkillIds);
-
-        var result = await SaveChangesAsync<Resume>();
-        return result.IsSuccess
-            ? await GetResumeByStudentIdAsync(studentId, null, true)
-            : Result<ResumeDto>.Failure(result.ErrorMessage!);
+        return Result<ResumeFillDto>.Success(ResumeMapper.ToFillDto(resume));
     }
 
-    public async Task<Result<PagedResult<ResumeDto>>> SearchResumesAsync(ResumeSearchFilter filter, Guid? currentUserId = null)
+    public async Task<Result<ResumeSearchDto>> GetResumeForEmployerAsync(Guid studentId, Guid currentUserId)
     {
-        if (currentUserId.HasValue)
+        var resume = await GetFullResumeQuery()
+            .FirstOrDefaultAsync(r => r.StudentId == studentId && !r.IsDeleted && r.Student.RegistrationStage == User.AccountStatus.FullyActivated);
+
+        if (resume == null)
+            return Result<ResumeSearchDto>.Failure(ErrorMessages.EntityNotFound(nameof(Resume)));
+
+        var user = await _context.Users.AsNoTracking().FirstOrDefaultAsync(u => u.Id == currentUserId);
+        bool maskContacts = user == null || !UserPermissions.IsAllowed(UserRoles.GetRole(user), user.RegistrationStage, UserAction.ViewContacts);
+
+        return Result<ResumeSearchDto>.Success(ResumeMapper.ToSearchDto(resume, maskContacts));
+    }
+
+    public async Task<Result<ResumeFillDto>> UpsertResumeAsync(Guid studentId, ResumeFillDto dto)
+    {
+        var student = await _context.Students
+            .Include(s => s.StudyPlan)
+            .Include(s => s.Resume).ThenInclude(r => r!.AdditionalSkills)
+            .FirstOrDefaultAsync(s => s.Id == studentId);
+
+        if (student == null)
+            return Result<ResumeFillDto>.Failure(ErrorMessages.EntityNotFound(nameof(Student)));
+
+        if (student.Resume == null)
         {
-            var currentUser = await _context.Users.FindAsync(currentUserId.Value);
-            var permission = EnsureCanPerform(currentUser!, UserAction.ViewResumes);
-            if (!permission.IsSuccess)
-                return Result<PagedResult<ResumeDto>>.Failure(permission.ErrorMessage!, permission.StatusCode);
+            student.Resume = new Resume { StudentId = studentId, Title = dto.Title };
+            _context.Resumes.Add(student.Resume);
+        }
+        else if (student.Resume.IsDeleted)
+        {
+            student.Resume.IsDeleted = false;
+            student.Resume.DeletedAt = null;
         }
 
-        var query = GetFullResumeQuery();
-        query = query.Where(r => r.Student.RegistrationStage == User.AccountStatus.FullyActivated);
+        ResumeMapper.ApplyUpdate(student.Resume, dto);
+        _registrationManager.RecalculateRegistrationStage(student);
 
-        if (currentUserId.HasValue)
-        {
-            var blockedIds = await GetBlockedUserIdsAsync(currentUserId.Value);
-            if (blockedIds.Any())
-                query = query.Where(r => !blockedIds.Contains(r.StudentId));
-        }
+        var result = await SaveChangesAsync<Student>();
+        if (!result.IsSuccess)
+            return Result<ResumeFillDto>.Failure(result.ErrorMessage!);
+
+        return await GetMyResumeAsync(studentId);
+    }
+
+    public Task<Result<bool>> SoftDeleteResumeAsync(Guid studentId) => SoftDeleteResumeInternalAsync(studentId);
+
+    public async Task<Result<PagedResult<ResumeSearchDto>>> SearchResumesAsync(ResumeSearchFilter filter, Guid? currentUserId = null)
+    {
+        var query = GetFullResumeQuery()
+            .Where(r => !r.IsDeleted && !r.Student.IsDeleted && r.Student.RegistrationStage == User.AccountStatus.FullyActivated);
 
         if (!string.IsNullOrWhiteSpace(filter.SearchTerm))
         {
-            var term = filter.SearchTerm.ToLower();
-            query = query.Where(r => r.Title.ToLower().Contains(term)
-            || (r.Description != null && r.Description.ToLower().Contains(term)));
+            var term = $"%{filter.SearchTerm.Trim()}%";
+            query = query.Where(r => EF.Functions.ILike(r.Title, term) || (r.Description != null && EF.Functions.ILike(r.Description, term)));
         }
 
         if (filter.SkillIds?.Any() == true)
-            query = query.Where(r => r.AdditionalSkills.Any(s => filter.SkillIds.Contains(s.AdditionalSkillId)));
-
-        var pagedEntities = await query
-            .OrderByDescending(r => r.UpdatedAt)
-            .ToPagedResultAsync(filter.Paging);
-
-        bool maskContacts = false;
-        if (currentUserId.HasValue)
         {
-            var user = await _context.Users.FindAsync(currentUserId.Value);
-            maskContacts = !UserPermissions.IsAllowed(UserRoles.GetRole(user!), user!.RegistrationStage, UserAction.ViewContacts);
+            query = query.Where(r => r.AdditionalSkills.Any(s => filter.SkillIds.Contains(s.AdditionalSkillId)));
         }
 
-        var dtos = pagedEntities.Items
-            .Select(r => ResumeMapper.ToDto(r, false, maskContacts))
-            .ToList();
+        var pagedEntities = await query.OrderByDescending(r => r.UpdatedAt).ToPagedResultAsync(filter.Paging);
 
-        var results = new PagedResult<ResumeDto>(
-            Items: dtos,
-            TotalCount: pagedEntities.TotalCount,
-            PageNumber: pagedEntities.PageNumber,
-            PageSize: pagedEntities.PageSize
-        );
+        bool maskContacts = true;
+        if (currentUserId.HasValue)
+        {
+            var user = await _context.Users.AsNoTracking().FirstOrDefaultAsync(u => u.Id == currentUserId.Value);
+            if (user != null)
+                maskContacts = !UserPermissions.IsAllowed(UserRoles.GetRole(user), user.RegistrationStage, UserAction.ViewContacts);
+        }
 
-        return Result<PagedResult<ResumeDto>>.Success(results);
+        var dtos = pagedEntities.Items.Select(r => ResumeMapper.ToSearchDto(r, maskContacts)).ToList();
+
+        return Result<PagedResult<ResumeSearchDto>>.Success(new PagedResult<ResumeSearchDto>(
+            dtos, pagedEntities.TotalCount, pagedEntities.PageNumber, pagedEntities.PageSize));
     }
 }
-
-public record ResumeSearchFilter(
-    string? SearchTerm = null,
-    List<Guid>? SkillIds = null,
-    PaginationParams Paging = null!
-)
-{
-    public PaginationParams Paging { get; init; } = Paging ?? new PaginationParams();
-};

@@ -13,7 +13,8 @@ public interface IFavoriteService
     Task<Result<bool>> ToggleFavoriteAsync(Guid userId, FavoriteRequest request);
 }
 
-public class FavoriteService(StudHunterDbContext context) : BaseFavoriteService(context), IFavoriteService
+public class FavoriteService(StudHunterDbContext context, IRegistrationManager registrationManager)
+    : BaseFavoriteService(context, registrationManager), IFavoriteService
 {
     public async Task<Result<PagedResult<FavoriteDto>>> GetMyFavoritesAsync(Guid userId, PaginationParams paging)
     {

@@ -44,6 +44,18 @@ public record AdminStudentDto(
     : StudentDto(Id, Email, RegistrationStage, FirstName, LastName, Patronymic, ContactPhone, ContactEmail,
         CityId, CityName, Gender, BirthDate, AvatarUrl, IsForeign, Status, CreatedAt, ResumeId);
 
+public record StudentHeroDto(
+    string FullName,
+    DateOnly? BirthDate,
+    string? AvatarUrl,
+    string Status,
+    string? UniversityName,
+    string? FacultyName,
+    string? DepartmentName,
+    string? StudyDirectionName,
+    int? CourseNumber
+);
+
 public record UpdateStudentDto(
     [StringLength(50)] string? FirstName,
     [StringLength(50)] string? LastName,
@@ -98,6 +110,19 @@ public static class StudentMapper
         s.CreatedAt,
         s.Resume?.Id,
         s.IsDeleted);
+
+    public static StudentHeroDto ToHeroDto(Student student, StudyPlanDto? studyPlan) => new(
+        FullName: $"{student.LastName} {student.FirstName} {student.Patronymic}".Trim(),
+        BirthDate: student.BirthDate,
+        AvatarUrl: student.AvatarUrl,
+        Status: student.Status.ToString(),
+
+        UniversityName: studyPlan?.UniversityName,
+        FacultyName: studyPlan?.FacultyName,
+        DepartmentName: studyPlan?.DepartmentName,
+        StudyDirectionName: studyPlan?.StudyDirectionName,
+        CourseNumber: studyPlan?.CourseNumber
+    );
 
     public static void ApplyUpdate(Student student, UpdateStudentDto dto)
     {

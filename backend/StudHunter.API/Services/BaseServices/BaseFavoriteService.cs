@@ -5,7 +5,8 @@ using StudHunter.DB.Postgres.Models;
 
 namespace StudHunter.API.Services.BaseServices;
 
-public abstract class BaseFavoriteService(StudHunterDbContext context) : BaseService(context)
+public abstract class BaseFavoriteService(StudHunterDbContext context, IRegistrationManager registrationManager)
+    : BaseService(context, registrationManager)
 {
     protected IQueryable<Favorite> GetFullFavoriteQuery() =>
         _context.Favorites

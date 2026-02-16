@@ -2,26 +2,28 @@
 import { computed, ref, onMounted, watch } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
 
-// Импорт иконок
 import IconMapPin from '@/components/icons/IconMapPin.vue'
 import IconBuilding from '@/components/icons/IconBuilding.vue'
 import IconUser from '@/components/icons/IconUser.vue'
 import IconResume from '@/components/icons/IconResume.vue'
-import IconVacancies from '@/components/icons/IconVacancies.vue'
 import IconInvitations from '@/components/icons/IconInvitations.vue'
 import IconSignOut from '@/components/icons/IconSignOut.vue'
+import IconChat from '@/components/icons/IconChat.vue'
+import IconFavorites from '@/components/icons/IconFavorites.vue'
+import IconVacancies from '@/components/icons/IconVacancies.vue'
+import IconLogo from '@/components/icons/IconLogo.vue'
+
+const CURRENT_CITY = 'Челябинск'
+const CURRENT_UNIVERSITY = 'ЮУрГУ'
 
 const router = useRouter()
 const route = useRoute()
 
-// Состояние авторизации
 const isAuth = ref(false)
 const userRole = ref<string>('')
 
-// Проверяем, главная ли это страница
 const isHomePage = computed(() => route.path === '/')
 
-// Функция обновления данных из localStorage
 const checkAuth = () => {
   const token = localStorage.getItem('token')
   const role = localStorage.getItem('userRole')
@@ -29,11 +31,9 @@ const checkAuth = () => {
   userRole.value = role ? role.toLowerCase() : ''
 }
 
-// Проверяем авторизацию при монтировании и при смене маршрута
 onMounted(checkAuth)
 watch(() => route.path, checkAuth)
 
-// Логика выхода
 const handleLogout = () => {
   localStorage.removeItem('token')
   localStorage.removeItem('userRole')
@@ -42,75 +42,97 @@ const handleLogout = () => {
   router.push('/login')
 }
 
-// Проверка активности ссылки для "переключателя" на черном хедере
-const isActive = (path: string) => route.path.startsWith(path)
+// Проверка активности ссылки
+const isActive = (path: string) => route.path === path || route.path.startsWith(path + '/')
 </script>
 
 <template>
   <header :class="['header-outer', isHomePage ? 'theme-light' : 'theme-dark']">
     <div class="container header-inner">
       <div class="left-group">
-        <div class="info-item">
-          <IconMapPin class="header-icon" />
-          <span>Челябинск</span>
+        <router-link to="/" class="nav-btn logo-btn">
+          <IconLogo class="icon-main" />
+        </router-link>
+
+        <div class="nav-btn">
+          <IconMapPin class="icon-main" />
+          <span class="btn-text">{{ CURRENT_CITY }}</span>
         </div>
-        <div class="info-item">
-          <IconBuilding class="header-icon" />
-          <span>ЮУрГУ</span>
+
+        <div class="nav-btn">
+          <IconBuilding class="icon-main" />
+          <span class="btn-text">{{ CURRENT_UNIVERSITY }}</span>
         </div>
       </div>
 
       <div class="right-group">
         <template v-if="isHomePage">
-          <button class="nav-btn" @click="router.push(isAuth ? '/profile' : '/login')">
-            <IconUser class="header-icon" />
-            <span>Профиль</span>
+          <button class="nav-btn" @click="router.push(isAuth ? '/student/profile' : '/login')">
+            <IconUser class="icon-main" />
+            <span>{{ isAuth ? 'Профиль' : 'Войти' }}</span>
           </button>
         </template>
 
         <template v-else>
           <nav class="internal-nav">
-            <button
-              class="nav-btn"
-              :class="{ active: isActive('/profile') }"
-              @click="router.push('/profile')"
-            >
-              <IconUser class="header-icon" />
-              <span>Профиль</span>
-            </button>
+            <template v-if="userRole === 'student'">
+              <button
+                class="nav-btn"
+                :class="{ active: isActive('/student/favorites') }"
+                @click="router.push('/student/favorites')"
+              >
+                <IconFavorites class="icon-main" />
+                <span class="btn-text">Избранное</span>
+              </button>
 
-            <button
-              v-if="userRole === 'student'"
-              class="nav-btn"
-              :class="{ active: isActive('/resume') }"
-              @click="router.push('/resume')"
-            >
-              <IconResume class="header-icon" />
-              <span>Резюме</span>
-            </button>
+              <button
+                class="nav-btn"
+                :class="{ active: isActive('/student/messages') }"
+                @click="router.push('/student/messages')"
+              >
+                <IconChat class="icon-main" />
+                <span class="btn-text">Сообщения</span>
+              </button>
 
-            <button
-              v-else-if="userRole === 'employer'"
-              class="nav-btn"
-              :class="{ active: isActive('/vacancies') }"
-              @click="router.push('/vacancies')"
-            >
-              <IconVacancies class="header-icon" />
-              <span>Вакансии</span>
-            </button>
+              <button
+                class="nav-btn"
+                :class="{ active: isActive('/student/invitations') }"
+                @click="router.push('/student/invitations')"
+              >
+                <IconInvitations class="icon-main" />
+                <span class="btn-text">Отклики</span>
+              </button>
 
-            <button
-              class="nav-btn"
-              :class="{ active: isActive('/invitations') }"
-              @click="router.push('/invitations')"
-            >
-              <IconInvitations class="header-icon" />
-              <span>Отклики</span>
-            </button>
+              <button
+                class="nav-btn"
+                :class="{ active: isActive('/student/resume') }"
+                @click="router.push('/student/resume')"
+              >
+                <IconResume class="icon-main" />
+                <span class="btn-text">Резюме</span>
+              </button>
+
+              <button
+                class="nav-btn"
+                :class="{ active: isActive('/student/profile') }"
+                @click="router.push('/student/profile')"
+              >
+                <IconUser class="icon-main" />
+                <span class="btn-text">Профиль</span>
+              </button>
+            </template>
+
+            <template v-else-if="userRole === 'employer'">
+              <button class="nav-btn" @click="router.push('/vacancies')">
+                <IconVacancies class="icon-main" />
+                <span>Вакансии</span>
+              </button>
+            </template>
 
             <div class="divider"></div>
-            <button class="nav-btn btn-logout" @click="handleLogout">
-              <IconSignOut class="header-icon" />
+
+            <button class="nav-btn" @click="handleLogout">
+              <IconSignOut class="icon-main" />
               <span>Выйти</span>
             </button>
           </nav>
@@ -121,110 +143,87 @@ const isActive = (path: string) => route.path.startsWith(path)
 </template>
 
 <style scoped>
-/* --- Базовые стили контейнера --- */
 .header-outer {
   width: 100%;
-  height: 64px; /* Чуть увеличили высоту для солидности */
+  height: 64px;
   display: flex;
   align-items: center;
   transition:
-    background-color 0.3s ease,
-    color 0.3s ease;
+    background-color 0.2s ease,
+    color 0.2s ease;
   user-select: none;
+  z-index: 100;
 }
 
 .header-inner {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  width: 100%;
-  padding: 0 24px;
 }
-
-/* --- Темы --- */
-/* Светлая тема (Главная) */
 .theme-light {
-  background-color: #ffffff;
-  color: #1e293b; /* Темно-серый текст */
-  border-bottom: 1px solid #e2e8f0;
+  background-color: var(--background-page);
+  color: var(--dark-text);
+  border-bottom: 1px solid var(--gray-border);
 }
-
-/* Темная тема (Внутренние страницы) */
 .theme-dark {
-  background-color: #0f172a; /* Глубокий черный/синий */
-  color: #94a3b8; /* Светло-серый текст для неактивных */
+  background-color: var(--header-dark-theme);
+  color: var(--white-text);
   border-bottom: none;
 }
-
-/* --- Элементы --- */
 .left-group,
 .right-group,
 .internal-nav {
   display: flex;
   align-items: center;
-  gap: 24px;
+  gap: 4px;
 }
 
-.info-item {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  font-weight: 500;
-  font-size: 14px;
+@media (min-width: 1200px) {
+  .internal-nav {
+    gap: 12px;
+  }
 }
 
-/* Кнопки навигации */
+/* --- ЕДИНЫЙ СТИЛЬ КНОПОК --- */
 .nav-btn {
-  background: none;
+  background: transparent;
   border: none;
   cursor: pointer;
   display: flex;
   align-items: center;
   gap: 8px;
-  font-size: 14px;
-  font-weight: 500;
+
+  /* Размеры и шрифт */
   padding: 8px 12px;
   border-radius: 8px;
-  transition: all 0.2s ease;
-  color: inherit; /* Наследует цвет от темы */
+  font-size: 14px;
+  font-weight: 500;
+  white-space: nowrap;
+  color: inherit;
+  text-decoration: none;
+  transition:
+    background-color 0.2s ease,
+    opacity 0.2s ease;
 }
-
-.header-icon {
-  width: 20px;
-  height: 20px;
-  display: block;
-  /* Важно: иконки будут краситься в цвет текста */
-  fill: currentColor;
-}
-
-/* Стили для светлой темы */
 .theme-light .nav-btn:hover {
-  background-color: #f1f5f9;
-  color: #0f172a;
+  background-color: rgba(0, 0, 0, 0.05);
 }
-
-/* Стили для темной темы (Активные и Ховер) */
-.theme-dark .nav-btn:hover {
-  color: #ffffff;
-}
-
+.theme-dark .nav-btn:hover,
 .theme-dark .nav-btn.active {
-  color: #ffffff; /* Активный пункт становится ярко-белым */
-  background-color: rgba(255, 255, 255, 0.1); /* Легкая подсветка */
+  background-color: rgba(255, 255, 255, 0.15);
 }
-
-/* Кнопка выхода */
-.btn-logout {
-  opacity: 0.7;
-}
-.btn-logout:hover {
-  opacity: 1;
-  color: #f87171 !important; /* Красный оттенок при наведении */
-}
-
 .divider {
   width: 1px;
   height: 24px;
-  background-color: rgba(255, 255, 255, 0.2);
+  background-color: currentColor;
+  opacity: 0.2;
+  margin: 0 8px;
+}
+
+/* Убираем текст кнопок на планшетах для экономии места, оставляем иконки */
+@media (max-width: 992px) {
+  .btn-text {
+    display: none;
+  }
 }
 </style>

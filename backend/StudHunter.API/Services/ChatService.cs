@@ -17,8 +17,11 @@ public interface IChatService
     Task<Result<bool>> MarkMessagesAsReadAsync(Guid userId, Guid chatId);
 }
 
-public class ChatService(StudHunterDbContext context, IHubContext<ChatHub> chatHubContext, INotificationService notificationService)
-    : BaseChatService(context), IChatService
+public class ChatService(StudHunterDbContext context, 
+    IHubContext<ChatHub> chatHubContext,
+    INotificationService notificationService,
+    IRegistrationManager registrationManager)
+    : BaseChatService(context, registrationManager), IChatService
 {
     private readonly IHubContext<ChatHub> _chatHubContext = chatHubContext;
     private readonly INotificationService _notificationService = notificationService;
@@ -116,7 +119,7 @@ public class ChatService(StudHunterDbContext context, IHubContext<ChatHub> chatH
 
             await _notificationService.SendAsync(
                 userId: receiverId,
-                title: $"Новое сообщение от {GetUserDisplayName(sender!)}",
+                title: $"Новое сообщение от {UserDisplayHelper.GetUserDisplayName(sender!)}",
                 message: content.Length > 50 ? content[..50] + "..." : content,
                 type: Notification.NotificationType.ChatMessage,
                 entityId: chat.Id,

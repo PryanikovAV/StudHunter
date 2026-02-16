@@ -15,7 +15,8 @@ public interface IAdminVacancyService
     Task<Result<VacancyDto>> RestoreVacancyAsync(Guid vacancyId);
 }
 
-public class AdminVacancyService(StudHunterDbContext context) : VacancyService(context), IAdminVacancyService
+public class AdminVacancyService(StudHunterDbContext context, IRegistrationManager registrationManager)
+    : VacancyService(context, registrationManager), IAdminVacancyService
 {
     public async Task<Result<List<VacancyDto>>> GetAllVacanciesAsync(Guid employerId)
     {

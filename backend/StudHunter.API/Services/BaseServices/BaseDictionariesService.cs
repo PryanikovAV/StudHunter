@@ -4,9 +4,20 @@ using StudHunter.API.ModelsDto;
 using StudHunter.DB.Postgres;
 
 namespace StudHunter.API.Services.BaseServices;
-
-public abstract class BaseDictionariesService(StudHunterDbContext context) : BaseService(context)
+// TODO: добавить пагинацию
+public abstract class BaseDictionariesService(StudHunterDbContext context, IRegistrationManager registrationManager)
+    : BaseService(context, registrationManager)
 {
+    public async Task<Result<List<UniversityDto>>> GetUniversitiesAsync()
+    {
+        var data = await _context.Universities
+            .AsNoTracking()
+            .OrderBy(f => f.Name)
+            .Select(f => new UniversityDto(f.Id, f.Name, f.Abbreviation))
+            .ToListAsync();
+        return Result<List<UniversityDto>>.Success(data);
+    }
+
     public async Task<Result<List<LookupDto>>> GetFacultiesAsync()
     {
         var data = await _context.Faculties
@@ -17,14 +28,24 @@ public abstract class BaseDictionariesService(StudHunterDbContext context) : Bas
         return Result<List<LookupDto>>.Success(data);
     }
 
-    public async Task<Result<List<SpecialityLookupDto>>> GetSpecialitiesAsync()
+    public async Task<Result<List<DepartmentDto>>> GetDepartmentsAsync()
+    {
+        var data = await _context.Departments
+            .AsNoTracking()
+            .OrderBy(d => d.Name)
+            .Select(d => new DepartmentDto(d.Id, d.Name, d.Description))
+            .ToListAsync();
+        return Result<List<DepartmentDto>>.Success(data);
+    }
+
+    public async Task<Result<List<StudyDirectionDto>>> GetSpecialitiesAsync()
     {
         var data = await _context.StudyDirections
             .AsNoTracking()
             .OrderBy(s => s.Name)
-            .Select(s => new SpecialityLookupDto(s.Id, s.Name, s.Code))
+            .Select(s => new StudyDirectionDto(s.Id, s.Name, s.Code))
             .ToListAsync();
-        return Result<List<SpecialityLookupDto>>.Success(data);
+        return Result<List<StudyDirectionDto>>.Success(data);
     }
 
     public async Task<Result<List<LookupDto>>> GetSkillsAsync()
@@ -37,13 +58,60 @@ public abstract class BaseDictionariesService(StudHunterDbContext context) : Bas
         return Result<List<LookupDto>>.Success(data);
     }
 
-    public async Task<Result<List<CourseLookupDto>>> GetCoursesAsync()
+    public async Task<Result<List<CourseDto>>> GetAllCoursesAsync()
     {
         var data = await _context.Courses
             .AsNoTracking()
             .OrderBy(c => c.Name)
-            .Select(c => new CourseLookupDto(c.Id, c.Name, c.Description))
+            .Select(c => new CourseDto(c.Id, c.Name, c.Description))
             .ToListAsync();
-        return Result<List<CourseLookupDto>>.Success(data);
+        return Result<List<CourseDto>>.Success(data);
+    }
+
+    public async Task<Result<List<CourseDto>>> SearchCoursesAsync(string searchTerm, int limit)
+    {
+        if (string.IsNullOrWhiteSpace(searchTerm))
+            return Result<List<CourseDto>>.Success(new List<CourseDto>());
+
+        var query = $"%{searchTerm.Trim()}%";
+
+        var data = await _context.Courses
+            .AsNoTracking()
+            .Where(c => EF.Functions.ILike(c.Name, query))  // 'ILike' PostgreSQL: (А = а)
+            .OrderBy(c => c.Name)
+            .Take(limit)
+            .Select(c => new CourseDto(c.Id, c.Name, c.Description))
+            .ToListAsync();
+
+        return Result<List<CourseDto>>.Success(data);
+    }
+
+    public async Task<Result<List<LookupDto>>> SearchSkillsAsync(string searchTerm, int limit)
+    {
+        if (string.IsNullOrWhiteSpace(searchTerm))
+            return Result<List<LookupDto>>.Success(new List<LookupDto>());
+
+        var query = $"%{searchTerm.Trim()}%";
+
+        var data = await _context.AdditionalSkills
+            .AsNoTracking()
+            .Where(s => EF.Functions.ILike(s.Name, query))
+            .OrderBy(s => s.Name)
+            .Take(limit)
+            .Select(s => new LookupDto(s.Id, s.Name))
+            .ToListAsync();
+
+        return Result<List<LookupDto>>.Success(data);
+    }
+
+    public async Task<Result<List<LookupDto>>> GetCitiesAsync()
+    {
+        var data = await _context.Cities
+            .AsNoTracking()
+            .OrderBy(c => c.Name)
+            .Select(c => new LookupDto(c.Id, c.Name))
+            .ToListAsync();
+
+        return Result<List<LookupDto>>.Success(data);
     }
 }

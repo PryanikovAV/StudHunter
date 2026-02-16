@@ -3,10 +3,12 @@ using Microsoft.EntityFrameworkCore.Migrations;
 
 #nullable disable
 
+#pragma warning disable CA1814 // Prefer jagged arrays over multidimensional
+
 namespace StudHunter.DB.Postgres.Migrations
 {
     /// <inheritdoc />
-    public partial class Attempt1 : Migration
+    public partial class InitialCreateFull : Migration
     {
         /// <inheritdoc />
         protected override void Up(MigrationBuilder migrationBuilder)
@@ -567,9 +569,70 @@ namespace StudHunter.DB.Postgres.Migrations
                 });
 
             migrationBuilder.InsertData(
+                table: "AdditionalSkills",
+                columns: new[] { "Id", "Name" },
+                values: new object[,]
+                {
+                    { new Guid("cccccccc-5e11-4b2a-9e1d-3b5a1f2c4d5e"), "c#" },
+                    { new Guid("dddddddd-5e11-4b2a-9e1d-3b5a1f2c4d5e"), "postgresql" },
+                    { new Guid("eeeeeeee-5e11-4b2a-9e1d-3b5a1f2c4d5e"), "vue.js" }
+                });
+
+            migrationBuilder.InsertData(
                 table: "Cities",
                 columns: new[] { "Id", "Name" },
-                values: new object[] { new Guid("8f8e833b-8f9b-4b2a-9e1d-3b5a1f2c4d5e"), "Челябинск" });
+                values: new object[,]
+                {
+                    { new Guid("11111111-8f9b-4b2a-9e1d-3b5a1f2c4d5e"), "Екатеринбург" },
+                    { new Guid("8f8e833b-8f9b-4b2a-9e1d-3b5a1f2c4d5e"), "Челябинск" }
+                });
+
+            migrationBuilder.InsertData(
+                table: "Courses",
+                columns: new[] { "Id", "Description", "Name" },
+                values: new object[,]
+                {
+                    { new Guid("00000000-c001-4b2a-9e1d-3b5a1f2c4d5e"), null, "Базы данных" },
+                    { new Guid("ffffffff-c001-4b2a-9e1d-3b5a1f2c4d5e"), null, "Объектно-ориентированное программирование" }
+                });
+
+            migrationBuilder.InsertData(
+                table: "Departments",
+                columns: new[] { "Id", "Description", "Name" },
+                values: new object[,]
+                {
+                    { new Guid("88888888-deaf-4b2a-9e1d-3b5a1f2c4d5e"), null, "Информационно-измерительная техника" },
+                    { new Guid("99999999-deaf-4b2a-9e1d-3b5a1f2c4d5e"), null, "Прикладная математика и информатика" }
+                });
+
+            migrationBuilder.InsertData(
+                table: "Faculties",
+                columns: new[] { "Id", "Description", "Name" },
+                values: new object[,]
+                {
+                    { new Guid("55555555-face-4b2a-9e1d-3b5a1f2c4d5e"), "ВШЭКН ЮУрГУ", "Высшая школа электроники и компьютерных наук" },
+                    { new Guid("66666666-face-4b2a-9e1d-3b5a1f2c4d5e"), "ИЕТН", "Институт естественных и точных наук" },
+                    { new Guid("77777777-face-4b2a-9e1d-3b5a1f2c4d5e"), "ЧГиК", "Факультет культурологии" }
+                });
+
+            migrationBuilder.InsertData(
+                table: "StudyDirections",
+                columns: new[] { "Id", "Code", "Description", "Name" },
+                values: new object[,]
+                {
+                    { new Guid("aaaaaaaa-d1e1-4b2a-9e1d-3b5a1f2c4d5e"), "09.03.04", null, "Программная инженерия" },
+                    { new Guid("bbbbbbbb-d1e2-4b2a-9e1d-3b5a1f2c4d5e"), "10.05.03", null, "Информационная безопасность" }
+                });
+
+            migrationBuilder.InsertData(
+                table: "Universities",
+                columns: new[] { "Id", "Abbreviation", "Name" },
+                values: new object[,]
+                {
+                    { new Guid("22222222-1234-4b2a-9e1d-3b5a1f2c4d5e"), "ЮУрГУ", "Южно-Уральский государственный университет" },
+                    { new Guid("33333333-1234-4b2a-9e1d-3b5a1f2c4d5e"), "ЧелГУ", "Челябинский государственный университет" },
+                    { new Guid("44444444-1234-4b2a-9e1d-3b5a1f2c4d5e"), "ЧГиК", "Челябинский государственный институт культуры" }
+                });
 
             migrationBuilder.CreateIndex(
                 name: "IX_AdditionalSkills_Name",

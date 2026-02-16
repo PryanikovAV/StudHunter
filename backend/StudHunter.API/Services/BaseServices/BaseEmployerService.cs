@@ -1,11 +1,11 @@
 ﻿using Microsoft.EntityFrameworkCore;
-using StudHunter.API.Infrastructure;
 using StudHunter.DB.Postgres;
 using StudHunter.DB.Postgres.Models;
 
 namespace StudHunter.API.Services.BaseServices;
 
-public abstract class BaseEmployerService(StudHunterDbContext context) : BaseService(context)
+public abstract class BaseEmployerService(StudHunterDbContext context, IRegistrationManager registrationManager)
+    : BaseService(context, registrationManager)
 {
     protected async Task<Employer?> GetEmployerInternalAsync(Guid employerId, bool ignoreFilters = false)
     {
@@ -34,31 +34,6 @@ public abstract class BaseEmployerService(StudHunterDbContext context) : BaseSer
 
         await ClearUserActivityAsync(employer.Id, now);
 
-        RecalculateRegistrationStage(employer);
-    }
-
-    public static void RecalculateRegistrationStage(Employer employer)
-    {
-        if (employer.IsDeleted)
-        {
-            employer.RegistrationStage = User.AccountStatus.Anonymous;
-            return;
-        }
-
-        if (employer.RegistrationStage == User.AccountStatus.Anonymous)
-            return;
-
-        bool isDataValid =
-            employer.Name != UserDefaultNames.DefaultCompanyName &&
-            !string.IsNullOrWhiteSpace(employer.ContactPhone) &&
-            !string.IsNullOrWhiteSpace(employer.Description);
-
-        if (isDataValid && employer.RegistrationStage == User.AccountStatus.FullyActivated)
-            return;
-        else
-        {
-            employer.RegistrationStage = User.AccountStatus.ProfileFilled;
-            return;
-        }            
+        _registrationManager.RecalculateRegistrationStage(employer);
     }
 }

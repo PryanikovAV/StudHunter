@@ -14,8 +14,11 @@ public interface IEmployerService
     Task<Result<bool>> DeleteEmployerAsync(Guid employerId);
 }
 
-public class EmployerService(StudHunterDbContext context, IPasswordHasher passwordHasher)
-    : BaseEmployerService(context), IEmployerService
+public class EmployerService(
+    StudHunterDbContext context,
+    IPasswordHasher passwordHasher,
+    IRegistrationManager registrationManager)
+    : BaseEmployerService(context, registrationManager), IEmployerService
 {
     public async Task<Result<EmployerDto>> GetEmployerAsync(Guid employerId)
     {
@@ -39,7 +42,7 @@ public class EmployerService(StudHunterDbContext context, IPasswordHasher passwo
         if (!string.IsNullOrWhiteSpace(dto.Password))
             employer.PasswordHash = passwordHasher.HashPassword(dto.Password);
 
-        RecalculateRegistrationStage(employer);
+        _registrationManager.RecalculateRegistrationStage(employer);
 
         var result = await SaveChangesAsync<Employer>();
 

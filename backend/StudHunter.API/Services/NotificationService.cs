@@ -19,8 +19,10 @@ public interface INotificationService
     Task<Result<bool>> MarkMultipleAsReadAsync(Guid userId, List<Guid> notificationIds);
 }
 
-public class NotificationService(StudHunterDbContext context, IHubContext<NotificationHub> hubContext)
-    : BaseNotificationService(context), INotificationService
+public class NotificationService(StudHunterDbContext context,
+    IHubContext<NotificationHub> hubContext,
+    IRegistrationManager registrationManager)
+    : BaseNotificationService(context, registrationManager), INotificationService
 {
     private readonly IHubContext<NotificationHub> _hubContext = hubContext;
 

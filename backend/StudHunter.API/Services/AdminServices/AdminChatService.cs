@@ -1,5 +1,4 @@
 ﻿using Microsoft.AspNetCore.SignalR;
-using Microsoft.EntityFrameworkCore;
 using StudHunter.API.Hubs;
 using StudHunter.API.Infrastructure;
 using StudHunter.DB.Postgres;
@@ -12,8 +11,10 @@ public interface IAdminChatService : IChatService
     Task<Result<bool>> DeleteMessageAsync(Guid messageId);
 }
 
-public class AdminChatService(StudHunterDbContext context, IHubContext<ChatHub> chatHubContext, INotificationService notificationService)
-    : ChatService(context, chatHubContext, notificationService), IAdminChatService
+public class AdminChatService(StudHunterDbContext context, IHubContext<ChatHub> chatHubContext,
+    INotificationService notificationService,
+    IRegistrationManager registrationManager)
+    : ChatService(context, chatHubContext, notificationService, registrationManager), IAdminChatService
 {
     public async Task<Result<bool>> DeleteMessageAsync(Guid messageId)
     {

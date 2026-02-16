@@ -7,10 +7,16 @@ namespace StudHunter.API.Services;
 
 public interface IDictionariesService
 {
+    Task<Result<List<UniversityDto>>> GetUniversitiesAsync();
     Task<Result<List<LookupDto>>> GetFacultiesAsync();
-    Task<Result<List<SpecialityLookupDto>>> GetSpecialitiesAsync();
+    Task<Result<List<DepartmentDto>>> GetDepartmentsAsync();
+    Task<Result<List<StudyDirectionDto>>> GetSpecialitiesAsync();
     Task<Result<List<LookupDto>>> GetSkillsAsync();
-    Task<Result<List<CourseLookupDto>>> GetCoursesAsync();
+    Task<Result<List<CourseDto>>> GetAllCoursesAsync();
+    Task<Result<List<CourseDto>>> SearchCoursesAsync(string searchTerm, int limit);
+    Task<Result<List<LookupDto>>> SearchSkillsAsync(string searchTerm, int limit);
+    Task<Result<List<LookupDto>>> GetCitiesAsync();
 }
 
-public class DictionariesService(StudHunterDbContext context) : BaseDictionariesService(context), IDictionariesService;
+public class DictionariesService(StudHunterDbContext context, IRegistrationManager registrationManager)
+    : BaseDictionariesService(context, registrationManager), IDictionariesService;

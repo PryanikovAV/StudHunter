@@ -18,8 +18,11 @@ public interface IAuthService
     Task<Result<AuthDto>> RecoverAccountAsync(LoginDto dto);
 }
 
-public class AuthService(StudHunterDbContext context, IPasswordHasher passwordHasher, IConfiguration configuration)
-    : BaseService(context), IAuthService
+public class AuthService(StudHunterDbContext context,
+    IPasswordHasher passwordHasher,
+    IConfiguration configuration,
+    IRegistrationManager registrationManager)
+    : BaseService(context, registrationManager), IAuthService
 {
     public async Task<Result<AuthDto>> LoginAsync(LoginDto dto)
     {
@@ -131,7 +134,7 @@ public class AuthService(StudHunterDbContext context, IPasswordHasher passwordHa
             issuer: configuration["Jwt:Issuer"],
             audience: configuration["Jwt:Audience"],
             claims: claims,
-            expires: DateTime.UtcNow.AddDays(7),
+            expires: DateTime.UtcNow.AddDays(7),  // TODO: изменить период действия токена
             signingCredentials: new SigningCredentials(key, SecurityAlgorithms.HmacSha256)
         );
 

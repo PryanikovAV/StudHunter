@@ -5,7 +5,8 @@ using StudHunter.DB.Postgres.Models;
 
 namespace StudHunter.API.Services.BaseServices;
 
-public abstract class BaseChatService(StudHunterDbContext context) : BaseService(context)
+public abstract class BaseChatService(StudHunterDbContext context, IRegistrationManager registrationManager)
+    : BaseService(context, registrationManager)
 {
     protected (Guid user1, Guid user2) SortUserIds(Guid id1, Guid id2) =>
         id1.CompareTo(id2) < 0 ? (id1, id2) : (id2, id1);

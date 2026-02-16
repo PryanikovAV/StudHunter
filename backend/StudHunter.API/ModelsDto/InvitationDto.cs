@@ -1,4 +1,5 @@
-﻿using StudHunter.DB.Postgres.Models;
+﻿using StudHunter.API.Infrastructure;
+using StudHunter.DB.Postgres.Models;
 
 namespace StudHunter.API.ModelsDto;
 
@@ -24,6 +25,41 @@ public record InvitationDto(
     DateTime CreatedAt,
     DateTime ExpiredAt,
     bool IsExpired
+);
+
+public record InvitationCardDto(
+    Guid Id,
+    string Status,
+    string Type,
+    string Direction,
+    DateTime SentAt,
+    string? Message,
+
+    InvitationCandidateDto Candidate,
+    InvitationJobDto Job
+);
+
+public record InvitationCandidateDto(
+    Guid StudentId,
+    string FullName,
+    string? AvatarUrl,
+    int? Age,
+    int? CourseNumber,
+    string? UniversityAbbreviation,
+    string? SpecialtyName,
+
+    Guid? ResumeId,
+    string? ResumeTitle,
+    List<string> Skills
+);
+
+public record InvitationJobDto(
+    Guid EmployerId,
+    string CompanyName,
+    string? AvatarUrl,
+    Guid? VacancyId,
+    string? VacancyTitle,
+    decimal? Salary
 );
 
 public record InvitationSearchFilter(
@@ -58,6 +94,53 @@ public static class InvitationMapper
             invitation.CreatedAt,
             invitation.ExpiredAt,
             isExpired
+        );
+    }
+    public static InvitationCardDto ToCardDto(Invitation invitation, Guid currentUserId)
+    {
+        var direction = invitation.SenderId == currentUserId ? "Outgoing" : "Incoming";
+
+        Student? student = invitation.Resume?.Student
+                           ?? invitation.Sender as Student
+                           ?? invitation.Receiver as Student;
+
+        Employer? employer = invitation.Vacancy?.Employer
+                             ?? invitation.Sender as Employer
+                             ?? invitation.Receiver as Employer;
+
+        var candidateDto = new InvitationCandidateDto(
+            StudentId: student?.Id ?? Guid.Empty,
+            FullName: UserDisplayHelper.GetUserDisplayName(student!),
+            AvatarUrl: student?.AvatarUrl,
+            Age: UserDisplayHelper.CalculateAge(student?.BirthDate),
+            CourseNumber: student?.StudyPlan?.CourseNumber,
+            UniversityAbbreviation: student?.StudyPlan?.University?.Abbreviation,
+            SpecialtyName: student?.StudyPlan?.StudyDirection?.Name,
+            ResumeId: invitation.ResumeId,
+            ResumeTitle: invitation.Resume?.Title,
+            Skills: invitation.Resume?.AdditionalSkills
+                .Select(ras => ras.AdditionalSkill.Name)
+                .ToList() ?? new List<string>()
+        );
+
+        var jobDto = new InvitationJobDto(
+            EmployerId: employer?.Id ?? Guid.Empty,
+            CompanyName: UserDisplayHelper.GetUserDisplayName(employer!),
+            AvatarUrl: employer?.AvatarUrl,
+            VacancyId: invitation.VacancyId,
+            VacancyTitle: invitation.Vacancy?.Title ?? invitation.SnapshotVacancyTitle,
+            Salary: invitation.Vacancy?.Salary
+        );
+
+        return new InvitationCardDto(
+            invitation.Id,
+            invitation.Status.ToString(),
+            invitation.Type.ToString(),
+            direction,
+            invitation.CreatedAt,
+            invitation.Message,
+            candidateDto,
+            jobDto
         );
     }
 }
