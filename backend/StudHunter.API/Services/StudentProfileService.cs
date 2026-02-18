@@ -37,6 +37,7 @@ public class StudentProfileService(StudHunterDbContext context, IRegistrationMan
             .Include(s => s.Resume)
             .Include(s => s.StudyPlan)
                 .ThenInclude(sp => sp!.StudyPlanCourses)
+                    .ThenInclude(spc => spc.Course)
             .FirstOrDefaultAsync(s => s.Id == studentId);
 
         if (student == null)
@@ -61,6 +62,14 @@ public class StudentProfileService(StudHunterDbContext context, IRegistrationMan
         StudentProfileMapper.ApplyProfileUpdate(student, dto, student.StudyPlan);
 
         _registrationManager.RecalculateRegistrationStage(student);
+
+        student = await _context.Students
+            .AsNoTracking()
+            .Include(s => s.Resume)
+            .Include(s => s.StudyPlan)
+                .ThenInclude(sp => sp!.StudyPlanCourses)
+                    .ThenInclude(spc => spc.Course)
+            .FirstOrDefaultAsync(s => s.Id == studentId);
 
         var result = await SaveChangesAsync<Student>();
 

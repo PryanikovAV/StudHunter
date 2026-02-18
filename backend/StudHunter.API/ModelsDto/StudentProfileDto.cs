@@ -36,7 +36,7 @@ public record StudentProfileDto(
     int CourseNumber,
     string StudyForm,
     List<Guid> CourseIds,
-    List<LookupDto> Courses
+    List<LookupDto>? Courses = null
 );
 
 public static class StudentProfileMapper
