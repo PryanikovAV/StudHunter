@@ -16,6 +16,7 @@ public interface IDictionariesService
     Task<Result<List<CourseDto>>> SearchCoursesAsync(string searchTerm, int limit);
     Task<Result<List<LookupDto>>> SearchSkillsAsync(string searchTerm, int limit);
     Task<Result<List<LookupDto>>> GetCitiesAsync();
+    Task<Result<List<LookupDto>>> GetAllSpecializationsAsync();
 }
 
 public class DictionariesService(StudHunterDbContext context, IRegistrationManager registrationManager)

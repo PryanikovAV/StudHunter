@@ -23,9 +23,10 @@ public class EmployerConfiguration : IEntityTypeConfiguration<Employer>
                .HasMaxLength(255)
                .IsRequired(false);
 
-        builder.Property(e => e.Specialization)
-               .HasColumnType("VARCHAR(255)")
-               .HasMaxLength(255)
+        builder.HasOne(e => e.Specialization)
+               .WithMany()
+               .HasForeignKey(e => e.SpecializationId)
+               .OnDelete(DeleteBehavior.SetNull)
                .IsRequired(false);
 
         builder.HasMany(e => e.Vacancies)

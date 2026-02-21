@@ -12,26 +12,26 @@ namespace StudHunter.API.Controllers.v1.AdminControllers;
 public class AdminEmployerController(IAdminEmployerService adminService) : BaseController
 {
     [HttpGet]
-    public async Task<IActionResult> GetAll() =>
-        HandleResult(await adminService.GetAllEmployersAsync());
+    public async Task<IActionResult> GetAllEmployers([FromQuery] PaginationParams paging) =>
+        HandleResult(await adminService.GetAllEmployersAsync(paging));
 
     [HttpGet("{id:guid}")]
-    public async Task<IActionResult> GetById(Guid id) =>
+    public async Task<IActionResult> GetEmployerById(Guid id) =>
         HandleResult(await adminService.GetEmployerByIdAsync(id));
 
     [HttpPut("{id:guid}")]
-    public async Task<IActionResult> Update(Guid id, [FromBody] UpdateEmployerDto dto) =>
+    public async Task<IActionResult> UpdateEmployer(Guid id, [FromBody] UpdateEmployerDto dto) =>
         HandleResult(await adminService.UpdateEmployerAsync(id, dto));
 
     [HttpPatch("{id:guid}/verify")]
-    public async Task<IActionResult> Verify(Guid id, [FromQuery] bool isVerified) =>
+    public async Task<IActionResult> UpdateEmployer(Guid id, [FromQuery] bool isVerified) =>
         HandleResult(await adminService.VerifyEmployerAsync(id));
 
     [HttpPost("{id:guid}/restore")]
-    public async Task<IActionResult> Restore(Guid id) =>
-        HandleResult(await adminService.RestoreAsync(id));
+    public async Task<IActionResult> RestoreEmployer(Guid id) =>
+        HandleResult(await adminService.RestoreEmployerAsync(id));
 
     [HttpDelete("{id:guid}")]
-    public async Task<IActionResult> Delete(Guid id, [FromQuery] bool hardDelete = false) =>
+    public async Task<IActionResult> DeleteEmployer(Guid id, [FromQuery] bool hardDelete = false) =>
         HandleResult(await adminService.DeleteEmployerAsync(id, hardDelete));
 }

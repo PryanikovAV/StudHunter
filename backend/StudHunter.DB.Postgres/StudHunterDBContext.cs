@@ -27,6 +27,7 @@ public class StudHunterDbContext : DbContext
     public DbSet<OrganizationDetail> OrganizationDetails => Set<OrganizationDetail>();
     public DbSet<Resume> Resumes => Set<Resume>();
     public DbSet<ResumeAdditionalSkill> ResumeAdditionalSkills => Set<ResumeAdditionalSkill>();
+    public DbSet<Specialization> Specializations => Set<Specialization>();
     public DbSet<Student> Students => Set<Student>();
     public DbSet<StudyDirection> StudyDirections => Set<StudyDirection>();
     public DbSet<StudyPlan> StudyPlans => Set<StudyPlan>();

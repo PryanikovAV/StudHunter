@@ -7,18 +7,31 @@ namespace StudHunter.API.Services.BaseServices;
 public abstract class BaseEmployerService(StudHunterDbContext context, IRegistrationManager registrationManager)
     : BaseService(context, registrationManager)
 {
-    protected async Task<Employer?> GetEmployerInternalAsync(Guid employerId, bool ignoreFilters = false)
+    protected IQueryable<Employer> GetEmployerQuery(
+        bool asNoTracking = false,
+        bool ignoreFilters = false,
+        bool includeOrganizationDetails = false,
+        bool includeVacancies = false)
     {
         var query = _context.Employers.AsQueryable();
+
+        if (asNoTracking)
+            query = query.AsNoTracking();
 
         if (ignoreFilters)
             query = query.IgnoreQueryFilters();
 
-        return await query
-            .Include(e => e.Vacancies)
-            .Include(e => e.OrganizationDetails)
+        query = query
             .Include(e => e.City)
-            .FirstOrDefaultAsync(e => e.Id == employerId);
+            .Include(e => e.Specialization);
+
+        if (includeOrganizationDetails)
+            query = query.Include(e => e.OrganizationDetails);
+
+        if (includeVacancies)
+            query = query.Include(e => e.Vacancies);
+
+        return query;
     }
 
     protected async Task SoftDeleteEmployerAsync(Employer employer, DateTime now)

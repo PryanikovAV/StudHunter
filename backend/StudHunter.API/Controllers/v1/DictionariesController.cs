@@ -4,7 +4,6 @@ using StudHunter.API.Controllers.v1.BaseControllers;
 using StudHunter.API.Services;
 
 namespace StudHunter.API.Controllers.v1;
-
 [Authorize]
 [Route("api/v1/dictionaries")]
 public class DictionariesController(IDictionariesService dictionariesService) : BaseController
@@ -45,4 +44,8 @@ public class DictionariesController(IDictionariesService dictionariesService) : 
     [HttpGet("cities")]
     public async Task<IActionResult> GetCities() =>
         HandleResult(await dictionariesService.GetCitiesAsync());
+
+    [HttpGet("specializations")]
+    public async Task<IActionResult> GetAllSpecializations() =>
+        HandleResult(await dictionariesService.GetAllSpecializationsAsync());
 }

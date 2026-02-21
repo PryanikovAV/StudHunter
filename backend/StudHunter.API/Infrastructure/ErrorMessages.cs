@@ -30,10 +30,11 @@ public static class ErrorMessages
     public static string EntityAlreadyDeleted(string entityName) => $"{entityName} is already deleted.";
     public static string CommunicationBlocked() => "Communication is blocked by one of the users.";
     public static string CompleteProfileFirst() => "Please complete your profile to access this feature.";
+    public static string IncorrectPassword() => "Incorrect password.";
 
 
     /* Неиспользуемые мои старые */
-    
+
     public static string CannotDelete(string entityName, string field) => $"Cannot delete {entityName} associated with {field}.";
     public static string InvalidTokenUserId() => "Invalid user ID in token.";
     public static string FailedToRetrieve(string entityName) => $"Failed to retrieve {entityName} from database.";

@@ -7,17 +7,45 @@ namespace StudHunter.API.Services.BaseServices;
 public abstract class BaseStudentService(StudHunterDbContext context, IRegistrationManager registrationManager)
     : BaseService(context, registrationManager)
 {
-    protected async Task<Student?> GetStudentInternalAsync(Guid studentId, bool ignoreFilters = false)
+    protected IQueryable<Student> GetStudentQuery(
+        bool asNoTracking = false,
+        bool ignoreFilters = false,
+        bool includeCourses = false,
+        bool includeStudyPlanDictionaries = false)
     {
         var query = _context.Students.AsQueryable();
+        if (asNoTracking)
+            query = query.AsNoTracking();
 
         if (ignoreFilters)
             query = query.IgnoreQueryFilters();
 
-        return await query
-                .Include(s => s.Resume)
-                .Include(s => s.StudyPlan)
-                .FirstOrDefaultAsync(s => s.Id == studentId);
+        query = query
+            .Include(s => s.Resume)
+            .Include(s => s.StudyPlan);
+
+        if (includeStudyPlanDictionaries)
+        {
+            query = query
+                .Include(s => s.StudyPlan!)
+                    .ThenInclude(sp => sp.University)
+                .Include(s => s.StudyPlan!)
+                    .ThenInclude(sp => sp.Faculty)
+                .Include(s => s.StudyPlan!)
+                    .ThenInclude(sp => sp.Department)
+                .Include(s => s.StudyPlan!)
+                    .ThenInclude(sp => sp.StudyDirection);
+        }
+
+        if (includeCourses)
+        {
+            query = query
+                .Include(s => s.StudyPlan!)
+                    .ThenInclude(sp => sp.StudyPlanCourses)
+                        .ThenInclude(spc => spc.Course);
+        }
+
+        return query;
     }
 
     protected async Task SoftDeleteStudentAsync(Student student, DateTime now)

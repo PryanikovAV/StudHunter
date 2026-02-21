@@ -16,3 +16,7 @@ public record RegisterEmployerDto(
     [Required, EmailAddress] string Email,
     [Required, StringLength(100, MinimumLength = 8)] string Password,
     [Required, StringLength(255)] string Name);
+
+public record DeleteAccountDto(
+    [Required] string Password
+);

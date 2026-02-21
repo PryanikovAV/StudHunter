@@ -12,22 +12,22 @@ namespace StudHunter.API.Controllers.v1.AdminControllers;
 public class AdminStudentController(IAdminStudentService adminService) : BaseController
 {
     [HttpGet]
-    public async Task<IActionResult> GetAll() =>
-        HandleResult(await adminService.GetAllStudentsAsync());
+    public async Task<IActionResult> GetAllStudents([FromQuery] PaginationParams paging) =>
+        HandleResult(await adminService.GetAllStudentsAsync(paging));
 
     [HttpGet("{id:guid}")]
-    public async Task<IActionResult> GetById(Guid id) =>
+    public async Task<IActionResult> GetStudentById(Guid id) =>
         HandleResult(await adminService.GetStudentByIdAsync(id));
 
     [HttpPut("{id:guid}")]
-    public async Task<IActionResult> Update(Guid id, [FromBody] UpdateStudentDto dto) =>
+    public async Task<IActionResult> UpdateStudent(Guid id, [FromBody] UpdateStudentDto dto) =>
         HandleResult(await adminService.UpdateStudentAsync(id, dto));
 
     [HttpPost("{id:guid}/restore")]
-    public async Task<IActionResult> Restore(Guid id) =>
-        HandleResult(await adminService.RestoreAsync(id));
+    public async Task<IActionResult> RestoreStudent(Guid id) =>
+        HandleResult(await adminService.RestoreStudentAsync(id));
 
     [HttpDelete("{id:guid}")]
-    public async Task<IActionResult> Delete(Guid id, [FromQuery] bool hardDelete = false) =>
+    public async Task<IActionResult> DeleteStudent(Guid id, [FromQuery] bool hardDelete = false) =>
         HandleResult(await adminService.DeleteStudentAsync(id, hardDelete));
 }

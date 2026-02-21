@@ -2,6 +2,7 @@
 using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 using StudHunter.DB.Postgres;
@@ -11,9 +12,11 @@ using StudHunter.DB.Postgres;
 namespace StudHunter.DB.Postgres.Migrations
 {
     [DbContext(typeof(StudHunterDbContext))]
-    partial class StudHunterDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260219114553_SpecializationsAdd")]
+    partial class SpecializationsAdd
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -610,7 +613,7 @@ namespace StudHunter.DB.Postgres.Migrations
                     b.HasIndex("Name")
                         .IsUnique();
 
-                    b.ToTable("Specializations");
+                    b.ToTable("Specialization");
 
                     b.HasData(
                         new

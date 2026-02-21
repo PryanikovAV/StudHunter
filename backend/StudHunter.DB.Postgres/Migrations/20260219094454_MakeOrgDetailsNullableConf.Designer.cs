@@ -2,6 +2,7 @@
 using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 using StudHunter.DB.Postgres;
@@ -11,9 +12,11 @@ using StudHunter.DB.Postgres;
 namespace StudHunter.DB.Postgres.Migrations
 {
     [DbContext(typeof(StudHunterDbContext))]
-    partial class StudHunterDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260219094454_MakeOrgDetailsNullableConf")]
+    partial class MakeOrgDetailsNullableConf
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -593,43 +596,6 @@ namespace StudHunter.DB.Postgres.Migrations
                     b.ToTable("ResumeAdditionalSkills");
                 });
 
-            modelBuilder.Entity("StudHunter.DB.Postgres.Models.Specialization", b =>
-                {
-                    b.Property<Guid>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("uuid")
-                        .HasDefaultValueSql("gen_random_uuid()");
-
-                    b.Property<string>("Name")
-                        .IsRequired()
-                        .HasMaxLength(100)
-                        .HasColumnType("VARCHAR(100)");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("Name")
-                        .IsUnique();
-
-                    b.ToTable("Specializations");
-
-                    b.HasData(
-                        new
-                        {
-                            Id = new Guid("12345678-9abc-4b2a-9e1d-3b5a1f2c4d5e"),
-                            Name = "Розничная торговля"
-                        },
-                        new
-                        {
-                            Id = new Guid("87654321-9abc-4b2a-9e1d-3b5a1f2c4d5e"),
-                            Name = "Гостиницы, рестораны, общепит"
-                        },
-                        new
-                        {
-                            Id = new Guid("abcdefab-9abc-4b2a-9e1d-3b5a1f2c4d5e"),
-                            Name = "Медицина, фармацевтика, аптеки"
-                        });
-                });
-
             modelBuilder.Entity("StudHunter.DB.Postgres.Models.StudyDirection", b =>
                 {
                     b.Property<Guid>("Id")
@@ -971,14 +937,13 @@ namespace StudHunter.DB.Postgres.Migrations
                         .HasMaxLength(255)
                         .HasColumnType("VARCHAR(255)");
 
-                    b.Property<Guid?>("SpecializationId")
-                        .HasColumnType("uuid");
+                    b.Property<string>("Specialization")
+                        .HasMaxLength(255)
+                        .HasColumnType("VARCHAR(255)");
 
                     b.Property<string>("Website")
                         .HasMaxLength(255)
                         .HasColumnType("VARCHAR(255)");
-
-                    b.HasIndex("SpecializationId");
 
                     b.ToTable("Employers");
                 });
@@ -1320,16 +1285,6 @@ namespace StudHunter.DB.Postgres.Migrations
                     b.Navigation("Course");
 
                     b.Navigation("Vacancy");
-                });
-
-            modelBuilder.Entity("StudHunter.DB.Postgres.Models.Employer", b =>
-                {
-                    b.HasOne("StudHunter.DB.Postgres.Models.Specialization", "Specialization")
-                        .WithMany()
-                        .HasForeignKey("SpecializationId")
-                        .OnDelete(DeleteBehavior.SetNull);
-
-                    b.Navigation("Specialization");
                 });
 
             modelBuilder.Entity("StudHunter.DB.Postgres.Models.AdditionalSkill", b =>

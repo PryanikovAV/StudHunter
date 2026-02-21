@@ -9,155 +9,158 @@ namespace StudHunter.API.Services;
 
 public interface IVacancyService
 {
-    Task<Result<VacancyDto>> GetVacancyById(Guid id, Guid? currentUserId = null, bool ignoreFilters = false);
-    Task<Result<PagedResult<VacancyDto>>> GetAllVacanciesAsync(Guid employerId, PaginationParams paging, bool ignoreFilters = false);
-    Task<Result<VacancyDto>> CreateVacancyAsync(Guid employerId, UpdateVacancyDto dto);
-    Task<Result<VacancyDto>> UpdateVacancyAsync(Guid vacancyId, UpdateVacancyDto dto, Guid authorizedEmployerId);
-    Task<Result<bool>> SoftDeleteVacancyAsync(Guid vacancyId, Guid authorizedEmployerId);
-    Task<Result<VacancyDto>> RestoreVacancyAsync(Guid vacancyId, Guid authorizedEmployerId);
-    Task<Result<PagedResult<VacancyDto>>> SearchVacancyAsync(VacancySearchFilter filter, Guid? currentUserId = null);
+    Task<Result<VacancyFillDto>> GetVacancyByIdForEditAsync(Guid vacancyId, Guid employerId);
+    Task<Result<PagedResult<VacancySearchDto>>> GetMyVacanciesAsync(Guid employerId, PaginationParams paging, bool includeDeleted);
+    Task<Result<VacancySearchDto>> GetVacancyDetailsAsync(Guid vacancyId);
+    Task<Result<VacancyFillDto>> CreateVacancyAsync(Guid employerId, VacancyFillDto dto);
+    Task<Result<VacancyFillDto>> UpdateVacancyAsync(Guid vacancyId, Guid employerId, VacancyFillDto dto);
+    Task<Result<bool>> SoftDeleteVacancyAsync(Guid vacancyId, Guid employerId);
+    Task<Result<bool>> RestoreVacancyAsync(Guid vacancyId, Guid employerId);
+    Task<Result<PagedResult<VacancySearchDto>>> SearchVacanciesAsync(VacancySearchFilter filter);
 }
 
 public class VacancyService(StudHunterDbContext context, IRegistrationManager registrationManager)
     : BaseVacancyService(context, registrationManager), IVacancyService
 {
-    public async Task<Result<VacancyDto>> UpdateVacancyAsync(Guid vacancyId, UpdateVacancyDto dto, Guid authorizedEmployerId)
+    public async Task<Result<VacancyFillDto>> GetVacancyByIdForEditAsync(Guid vacancyId, Guid employerId)
     {
-        var employer = await _context.Employers
-            .FirstOrDefaultAsync(e => e.Id == authorizedEmployerId);
+        var vacancy = await GetVacancyQuery(asNoTracking: true, includeTags: true)
+            .FirstOrDefaultAsync(v => v.Id == vacancyId && v.EmployerId == employerId);
 
-        if (employer == null)
-            return Result<VacancyDto>.Failure(ErrorMessages.EntityNotFound(nameof(Employer)), StatusCodes.Status404NotFound);
+        if (vacancy == null)
+            return Result<VacancyFillDto>.Failure(ErrorMessages.EntityNotFound(nameof(Vacancy)));
 
-        if (employer.RegistrationStage != User.AccountStatus.FullyActivated)
-            return Result<VacancyDto>.Failure("Создание вакансий доступно только после аккредитации университета.", StatusCodes.Status403Forbidden);
+        return Result<VacancyFillDto>.Success(VacancyMapper.ToFillDto(vacancy));
+    }
 
-        var vacancy = await _context.Vacancies
-            .Include(v => v.AdditionalSkills)
-            .Include(v => v.Courses)
+    public async Task<Result<PagedResult<VacancySearchDto>>> GetMyVacanciesAsync(Guid employerId, PaginationParams paging, bool includeDeleted)
+    {
+        var query = GetVacancyQuery(asNoTracking: true, ignoreFilters: includeDeleted, includeEmployerData: true, includeTags: true)
+            .Where(v => v.EmployerId == employerId);
+
+        var pagedEntities = await query.OrderByDescending(v => v.CreatedAt).ToPagedResultAsync(paging);
+
+        var dtos = pagedEntities.Items.Select(VacancyMapper.ToSearchDto).ToList();
+
+        return Result<PagedResult<VacancySearchDto>>.Success(new PagedResult<VacancySearchDto>(
+            dtos, pagedEntities.TotalCount, pagedEntities.PageNumber, pagedEntities.PageSize));
+    }
+
+    public async Task<Result<VacancySearchDto>> GetVacancyDetailsAsync(Guid vacancyId)
+    {
+        var vacancy = await GetVacancyQuery(asNoTracking: true, includeEmployerData: true, includeTags: true)
             .FirstOrDefaultAsync(v => v.Id == vacancyId);
 
         if (vacancy == null)
-            return Result<VacancyDto>.Failure(ErrorMessages.EntityNotFound(nameof(Vacancy)), StatusCodes.Status404NotFound);
+            return Result<VacancySearchDto>.Failure(ErrorMessages.EntityNotFound(nameof(Vacancy)));
 
-        if (vacancy.EmployerId != authorizedEmployerId)
-            return Result<VacancyDto>.Failure(ErrorMessages.RestrictProfileActions("update", nameof(Vacancy)), StatusCodes.Status403Forbidden);
+        return Result<VacancySearchDto>.Success(VacancyMapper.ToSearchDto(vacancy));
+    }
+
+    public async Task<Result<VacancyFillDto>> CreateVacancyAsync(Guid employerId, VacancyFillDto dto)
+    {
+        var employer = await _context.Employers.Include(e => e.Vacancies).FirstOrDefaultAsync(e => e.Id == employerId);
+
+        if (employer == null)
+            return Result<VacancyFillDto>.Failure(ErrorMessages.EntityNotFound(nameof(Employer)));
+
+        var vacancy = new Vacancy { EmployerId = employerId, Title = dto.Title };
+        _context.Vacancies.Add(vacancy);
 
         VacancyMapper.ApplyUpdate(vacancy, dto);
 
-        if (dto.SkillIds != null || dto.CourseIds != null)
-            UpdateRelatedEntities(vacancy, dto.SkillIds, dto.CourseIds);
+        _registrationManager.RecalculateRegistrationStage(employer);
+        var result = await SaveChangesAsync<Vacancy>();
+
+        return result.IsSuccess
+            ? await GetVacancyByIdForEditAsync(vacancy.Id, employerId)
+            : Result<VacancyFillDto>.Failure(result.ErrorMessage!);
+    }
+
+    public async Task<Result<VacancyFillDto>> UpdateVacancyAsync(Guid vacancyId, Guid employerId, VacancyFillDto dto)
+    {
+        var vacancy = await GetVacancyQuery(includeTags: true)
+            .FirstOrDefaultAsync(v => v.Id == vacancyId && v.EmployerId == employerId);
+
+        if (vacancy == null)
+            return Result<VacancyFillDto>.Failure(ErrorMessages.EntityNotFound(nameof(Vacancy)));
+
+        VacancyMapper.ApplyUpdate(vacancy, dto);
 
         var result = await SaveChangesAsync<Vacancy>();
 
         return result.IsSuccess
-            ? await GetVacancyById(vacancyId)
-            : Result<VacancyDto>.Failure(result.ErrorMessage!, result.StatusCode);
+            ? await GetVacancyByIdForEditAsync(vacancyId, employerId)
+            : Result<VacancyFillDto>.Failure(result.ErrorMessage!);
     }
 
-    public async Task<Result<bool>> SoftDeleteVacancyAsync(Guid vacancyId, Guid authorizedEmployerId)
+    public async Task<Result<bool>> SoftDeleteVacancyAsync(Guid vacancyId, Guid employerId)
     {
-        var vacancy = await _context.Vacancies
-            .Include(v => v.Employer)
-            .ThenInclude(e => e.Vacancies)
-            .FirstOrDefaultAsync(v => v.Id == vacancyId);
+        var vacancy = await GetVacancyQuery()
+            .FirstOrDefaultAsync(v => v.Id == vacancyId && v.EmployerId == employerId);
 
         if (vacancy == null)
-            return Result<bool>.Failure(ErrorMessages.EntityNotFound(nameof(Vacancy)), StatusCodes.Status404NotFound);
-
-        if (vacancy.EmployerId != authorizedEmployerId)
-            return Result<bool>.Failure(ErrorMessages.RestrictProfileActions("delete", nameof(Vacancy)), StatusCodes.Status403Forbidden);
+            return Result<bool>.Failure(ErrorMessages.EntityNotFound(nameof(Vacancy)));
 
         vacancy.IsDeleted = true;
         vacancy.DeletedAt = DateTime.UtcNow;
 
-        _registrationManager.RecalculateRegistrationStage(vacancy.Employer);
+        var employer = await _context.Employers.FirstAsync(e => e.Id == employerId);
+        _registrationManager.RecalculateRegistrationStage(employer);
 
-        var result = await SaveChangesAsync<Vacancy>();
+        await _context.SaveChangesAsync();
 
-        return result.IsSuccess
-            ? Result<bool>.Success(true)
-            : Result<bool>.Failure(result.ErrorMessage!);
+        return Result<bool>.Success(true);
     }
 
-    public async Task<Result<VacancyDto>> RestoreVacancyAsync(Guid vacancyId, Guid authorizedEmployerId)
+    public async Task<Result<PagedResult<VacancySearchDto>>> SearchVacanciesAsync(VacancySearchFilter filter)
     {
-        var vacancy = await _context.Vacancies
-            .IgnoreQueryFilters()
-            .FirstOrDefaultAsync(v => v.Id == vacancyId);
+        var query = GetVacancyQuery(asNoTracking: true, includeEmployerData: true, includeTags: true)
+            .Where(v => !v.IsDeleted && !v.Employer.IsDeleted && v.Employer.RegistrationStage == User.AccountStatus.FullyActivated);
+
+        if (!string.IsNullOrWhiteSpace(filter.SearchTerm))
+        {
+            var term = $"%{filter.SearchTerm.Trim()}%";
+            query = query.Where(v =>
+                EF.Functions.ILike(v.Title, term) ||
+                (v.Description != null && EF.Functions.ILike(v.Description, term)) ||
+                EF.Functions.ILike(v.Employer.Name, term));
+        }
+
+        if (filter.CourseIds?.Any() == true)
+            query = query.Where(v => v.Courses.Any(c => filter.CourseIds.Contains(c.CourseId)));
+
+        if (filter.SkillIds?.Any() == true)
+            query = query.Where(v => v.AdditionalSkills.Any(s => filter.SkillIds.Contains(s.AdditionalSkillId)));
+
+        if (!string.IsNullOrWhiteSpace(filter.VacancyType) && Enum.TryParse<Vacancy.VacancyType>(filter.VacancyType, out var type))
+            query = query.Where(v => v.Type == type);
+
+        var pagedEntities = await query.OrderByDescending(v => v.UpdatedAt).ToPagedResultAsync(filter.Paging);
+        var dtos = pagedEntities.Items.Select(VacancyMapper.ToSearchDto).ToList();
+
+        return Result<PagedResult<VacancySearchDto>>.Success(new PagedResult<VacancySearchDto>(
+            dtos, pagedEntities.TotalCount, pagedEntities.PageNumber, pagedEntities.PageSize));
+    }
+
+    public async Task<Result<bool>> RestoreVacancyAsync(Guid vacancyId, Guid employerId)
+    {
+        var vacancy = await GetVacancyQuery(ignoreFilters: true)
+            .FirstOrDefaultAsync(v => v.Id == vacancyId && v.EmployerId == employerId);
 
         if (vacancy == null)
-            return Result<VacancyDto>.Failure(ErrorMessages.EntityNotFound(nameof(Vacancy)), StatusCodes.Status404NotFound);
+            return Result<bool>.Failure(ErrorMessages.EntityNotFound(nameof(Vacancy)), StatusCodes.Status404NotFound);
 
-        if (vacancy.EmployerId != authorizedEmployerId)
-            return Result<VacancyDto>.Failure(ErrorMessages.RestrictProfileActions("restore", nameof(Vacancy)), StatusCodes.Status403Forbidden);
+        if (!vacancy.IsDeleted)
+            return Result<bool>.Failure(ErrorMessages.AlreadyExists(nameof(Vacancy)), StatusCodes.Status400BadRequest);
 
         vacancy.IsDeleted = false;
         vacancy.DeletedAt = null;
 
+        var employer = await _context.Employers.FirstAsync(e => e.Id == employerId);
+        _registrationManager.RecalculateRegistrationStage(employer);
+
         await _context.SaveChangesAsync();
-        return await GetVacancyById(vacancyId);
-    }
-
-    public async Task<Result<PagedResult<VacancyDto>>> SearchVacancyAsync(VacancySearchFilter filter, Guid? currentUserId = null)
-    {
-        var query = GetFullVacancyQuery();
-
-        query = query.Where(v => v.Employer.RegistrationStage > User.AccountStatus.Anonymous);
-
-        User.AccountStatus userStatus = User.AccountStatus.Anonymous;
-
-        if (currentUserId.HasValue)
-        {
-            var currentUser = await _context.Users.AsNoTracking().FirstOrDefaultAsync(u => u.Id == currentUserId.Value);
-            userStatus = currentUser?.RegistrationStage ?? User.AccountStatus.Anonymous;
-
-            var blockedIds = await GetBlockedUserIdsAsync(currentUserId.Value);
-            if (blockedIds.Any())
-                query = query.Where(v => !blockedIds.Contains(v.EmployerId));
-        }
-
-        if (!string.IsNullOrWhiteSpace(filter.SearchTerm))
-        {
-            string term = filter.SearchTerm.Trim().ToLower();
-            query = query.Where(v => v.Title.ToLower().Contains(term)
-                || (v.Description != null && v.Description.ToLower().Contains(term)));
-        }
-
-        if (filter.Type.HasValue)
-            query = query.Where(v => v.Type == filter.Type.Value);
-
-        if (filter.MinSalary.HasValue)
-            query = query.Where(v => v.Salary >= filter.MinSalary.Value);
-
-        if (filter.SkillIds?.Any() == true)
-            query = query.Where(v => v.AdditionalSkills
-                .Any(s => filter.SkillIds.Contains(s.AdditionalSkillId)));
-
-        var pagedEntities = await query
-            .OrderByDescending(v => v.CreatedAt)
-            .ToPagedResultAsync(filter.Paging);
-        
-        var dtos = pagedEntities.Items
-            .Select(v => VacancyMapper.ToDto(v, false, userStatus))
-            .ToList();
-
-        var result = new PagedResult<VacancyDto>(
-            Items: dtos,
-            TotalCount: pagedEntities.TotalCount,
-            PageNumber: pagedEntities.PageNumber,
-            PageSize: pagedEntities.PageSize);
-
-        return Result<PagedResult<VacancyDto>>.Success(result);
+        return Result<bool>.Success(true);
     }
 }
-
-public record VacancySearchFilter(
-    string? SearchTerm = null,
-    Vacancy.VacancyType? Type = null,
-    List<Guid>? SkillIds = null,
-    decimal? MinSalary = null,
-    PaginationParams Paging = null!
-) {
-    public PaginationParams Paging { get; init; } = Paging ?? new PaginationParams();
-};

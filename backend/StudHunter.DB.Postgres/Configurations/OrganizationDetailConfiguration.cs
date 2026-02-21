@@ -14,33 +14,34 @@ public class OrganizationDetailConfiguration : IEntityTypeConfiguration<Organiza
         builder.Property(od => od.Id).HasDefaultValueSql("gen_random_uuid()");
 
         builder.Property(od => od.Inn)
-            .HasColumnType("VARCHAR(12)")
-            .HasMaxLength(12)
-            .IsRequired();
+               .HasColumnType("VARCHAR(12)")
+               .HasMaxLength(12)
+               .IsRequired(false);
 
         builder.Property(od => od.Ogrn)
-            .HasColumnType("VARCHAR(15)")
-            .HasMaxLength(15)
-            .IsRequired();
+               .HasColumnType("VARCHAR(15)")
+               .HasMaxLength(15)
+               .IsRequired(false);
 
         builder.Property(od => od.Kpp)
-            .HasColumnType("VARCHAR(9)")
-            .HasMaxLength(9)
-            .IsRequired(false);
+               .HasColumnType("VARCHAR(9)")
+               .HasMaxLength(9)
+               .IsRequired(false);
 
         builder.Property(od => od.LegalAddress)
-            .HasColumnType("TEXT")
-            .IsRequired();
+               .HasColumnType("TEXT")
+               .IsRequired(false);
 
         builder.Property(od => od.ActualAddress)
-            .HasColumnType("TEXT")
-            .IsRequired();
+               .HasColumnType("TEXT")
+               .IsRequired(false);
 
         builder.HasOne(od => od.Employer)
-            .WithOne(e => e.OrganizationDetails)
-            .HasForeignKey<OrganizationDetail>(od => od.EmployerId)
-            .OnDelete(DeleteBehavior.Cascade);
+               .WithOne(e => e.OrganizationDetails)
+               .HasForeignKey<OrganizationDetail>(od => od.EmployerId)
+               .OnDelete(DeleteBehavior.Cascade);
 
-        builder.HasIndex(od => od.Inn).IsUnique();
+        builder.HasIndex(od => od.Inn)
+               .IsUnique();
     }
 }

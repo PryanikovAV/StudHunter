@@ -123,3 +123,20 @@ public class CourseConfiguration : IEntityTypeConfiguration<Course>
         );
     }
 }
+
+public class SpecializationConfiguration : IEntityTypeConfiguration<Specialization>
+{
+    public void Configure(EntityTypeBuilder<Specialization> builder)
+    {
+        builder.HasKey(c => c.Id);
+        builder.Property(c => c.Id).HasDefaultValueSql("gen_random_uuid()");
+        builder.Property(c => c.Name).HasColumnType("VARCHAR(100)").HasMaxLength(100).IsRequired();
+        builder.HasIndex(c => c.Name).IsUnique();
+
+        builder.HasData(
+            new Specialization { Id = SeedIds.Retail, Name = "Розничная торговля" },
+            new Specialization { Id = SeedIds.HotelsRestaurantsCatering, Name = "Гостиницы, рестораны, общепит" },
+            new Specialization { Id = SeedIds.MedicinePharmaceuticalsPharmacies, Name = "Медицина, фармацевтика, аптеки" }
+        );
+    }
+}

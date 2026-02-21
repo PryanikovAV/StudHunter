@@ -6,35 +6,35 @@ using StudHunter.DB.Postgres;
 using StudHunter.DB.Postgres.Models;
 
 namespace StudHunter.API.Services.AdminServices;
-// TODO: добавить пагинацию
+
 public interface IAdminStudentService
 {
-    Task<Result<List<AdminStudentDto>>> GetAllStudentsAsync();
+    Task<Result<PagedResult<AdminStudentDto>>> GetAllStudentsAsync(PaginationParams paging);
     Task<Result<AdminStudentDto>> GetStudentByIdAsync(Guid studentId);
     Task<Result<AdminStudentDto>> UpdateStudentAsync(Guid studentId, UpdateStudentDto dto);
     Task<Result<bool>> DeleteStudentAsync(Guid studentId, bool hardDelete);
-    Task<Result<bool>> RestoreAsync(Guid studentId);
+    Task<Result<bool>> RestoreStudentAsync(Guid studentId);
 }
 
 public class AdminStudentService(StudHunterDbContext context, IRegistrationManager registrationManager)
     : BaseStudentService(context, registrationManager), IAdminStudentService
 {
-    public async Task<Result<List<AdminStudentDto>>> GetAllStudentsAsync()
+    public async Task<Result<PagedResult<AdminStudentDto>>> GetAllStudentsAsync(PaginationParams paging)
     {
-        var students = await _context.Students
-            .IgnoreQueryFilters()
-            .Include(s => s.Resume)
-            .OrderByDescending(s => s.CreatedAt)
-            .ToListAsync();
+        var query = GetStudentQuery(asNoTracking: true, ignoreFilters: true, includeStudyPlanDictionaries: true, includeCourses: true);
 
-        var dtos = students.Select(StudentMapper.ToAdminDto).ToList();
+        var pagedEntities = await query.OrderByDescending(s => s.CreatedAt).ToPagedResultAsync(paging);
 
-        return Result<List<AdminStudentDto>>.Success(dtos);
+        var dtos = pagedEntities.Items.Select(StudentMapper.ToAdminDto).ToList();
+
+        return Result<PagedResult<AdminStudentDto>>.Success(new PagedResult<AdminStudentDto>(
+            dtos, pagedEntities.TotalCount, pagedEntities.PageNumber, pagedEntities.PageSize));
     }
 
     public async Task<Result<AdminStudentDto>> GetStudentByIdAsync(Guid studentId)
     {
-        var student = await GetStudentInternalAsync(studentId, ignoreFilters: true);
+        var student = await GetStudentQuery(asNoTracking: true, ignoreFilters: true, includeStudyPlanDictionaries: true, includeCourses: true)
+            .FirstOrDefaultAsync(s => s.Id == studentId);
 
         if (student == null)
             return Result<AdminStudentDto>.Failure(ErrorMessages.EntityNotFound(nameof(Student)), StatusCodes.Status404NotFound);
@@ -44,7 +44,8 @@ public class AdminStudentService(StudHunterDbContext context, IRegistrationManag
 
     public async Task<Result<AdminStudentDto>> UpdateStudentAsync(Guid studentId, UpdateStudentDto dto)
     {
-        var student = await GetStudentInternalAsync(studentId, ignoreFilters: true);
+        var student = await GetStudentQuery(ignoreFilters: true, includeStudyPlanDictionaries: true, includeCourses: true)
+            .FirstOrDefaultAsync(s => s.Id == studentId);
 
         if (student == null)
             return Result<AdminStudentDto>.Failure(ErrorMessages.EntityNotFound(nameof(Student)), StatusCodes.Status404NotFound);
@@ -59,7 +60,8 @@ public class AdminStudentService(StudHunterDbContext context, IRegistrationManag
 
     public async Task<Result<bool>> DeleteStudentAsync(Guid studentId, bool hardDelete)
     {
-        var student = await GetStudentInternalAsync(studentId, ignoreFilters: true);
+        var student = await GetStudentQuery(ignoreFilters: true)
+            .FirstOrDefaultAsync(s => s.Id == studentId);
 
         if (student == null)
             return Result<bool>.Failure(ErrorMessages.EntityNotFound(nameof(Student)), StatusCodes.Status404NotFound);
@@ -79,9 +81,10 @@ public class AdminStudentService(StudHunterDbContext context, IRegistrationManag
         return await SaveChangesAsync<Student>();
     }
 
-    public async Task<Result<bool>> RestoreAsync(Guid studentId)
+    public async Task<Result<bool>> RestoreStudentAsync(Guid studentId)
     {
-        var student = await GetStudentInternalAsync(studentId, ignoreFilters: true);
+        var student = await GetStudentQuery(ignoreFilters: true)
+            .FirstOrDefaultAsync(s => s.Id == studentId);
 
         if (student == null)
             return Result<bool>.Failure(ErrorMessages.EntityNotFound(nameof(Student)), StatusCodes.Status404NotFound);
@@ -97,6 +100,12 @@ public class AdminStudentService(StudHunterDbContext context, IRegistrationManag
         {
             student.Resume.IsDeleted = false;
             student.Resume.DeletedAt = null;
+        }
+
+        if (student.StudyPlan != null && student.StudyPlan.DeletedAt >= deletedAt)
+        {
+            student.StudyPlan.IsDeleted = false;
+            student.StudyPlan.DeletedAt = null;
         }
 
         _registrationManager.RecalculateRegistrationStage(student);

@@ -8,7 +8,6 @@ using StudHunter.API.Services.AdminServices;
 using StudHunter.API.Services.AuthService;
 using StudHunter.API.Services.Background;
 using StudHunter.DB.Postgres;
-using System.Text.Json;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -19,7 +18,6 @@ builder.Services.AddDbContext<StudHunterDbContext>(options =>
 builder.Services.AddAuth(builder.Configuration);
 builder.Services.AddControllers();
 
-/* Настройка CORS */
 builder.Services.AddCors(options =>
 {
     options.AddPolicy("AllowFrontend", policy =>
@@ -54,20 +52,17 @@ builder.Services.AddScoped<IInvitationService, InvitationService>();
 builder.Services.AddScoped<INotificationService, NotificationService>();
 builder.Services.AddScoped<IRegistrationManager, RegistrationManager>();
 builder.Services.AddScoped<IResumeService, ResumeService>();
-builder.Services.AddScoped<IStudentProfileService, StudentProfileService>();
 builder.Services.AddScoped<IStudentService, StudentService>();
-builder.Services.AddScoped<IStudyPlanService, StudyPlanService>();
 builder.Services.AddScoped<IVacancyService, VacancyService>();
 
 /* Административные сервисы */
-//builder.Services.AddScoped<IAdminChatService, AdminChatService>();
-//builder.Services.AddScoped<IAdminDictionariesService, AdminDictionariesService>();
-//builder.Services.AddScoped<IAdminEmployerService, AdminEmployerService>();
-//builder.Services.AddScoped<IAdminInvitationService, AdminInvitationService>();
-//builder.Services.AddScoped<IAdminResumeService, AdminResumeService>();
-//builder.Services.AddScoped<IAdminStudentService, AdminStudentService>();
-//builder.Services.AddScoped<IAdminStudyPlanService, AdminStudyPlanService>();
-//builder.Services.AddScoped<IAdminVacancyService, AdminVacancyService>();
+builder.Services.AddScoped<IAdminChatService, AdminChatService>();
+builder.Services.AddScoped<IAdminDictionariesService, AdminDictionariesService>();
+builder.Services.AddScoped<IAdminEmployerService, AdminEmployerService>();
+builder.Services.AddScoped<IAdminInvitationService, AdminInvitationService>();
+builder.Services.AddScoped<IAdminResumeService, AdminResumeService>();
+builder.Services.AddScoped<IAdminStudentService, AdminStudentService>();
+builder.Services.AddScoped<IAdminVacancyService, AdminVacancyService>();
 
 builder.Services.AddScoped<DictionarySeederService>();  // <-- Заполнение словарей
 

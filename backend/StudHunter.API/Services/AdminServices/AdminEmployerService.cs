@@ -6,36 +6,41 @@ using StudHunter.DB.Postgres;
 using StudHunter.DB.Postgres.Models;
 
 namespace StudHunter.API.Services.AdminServices;
-// TODO: добавить пагинацию
+
 public interface IAdminEmployerService
 {
-    Task<Result<List<AdminEmployerDto>>> GetAllEmployersAsync();
+    Task<Result<PagedResult<AdminEmployerDto>>> GetAllEmployersAsync(PaginationParams paging);
     Task<Result<AdminEmployerDto>> GetEmployerByIdAsync(Guid employerId);
     Task<Result<bool>> UpdateEmployerAsync(Guid employerId, UpdateEmployerDto dto);
     Task<Result<bool>> VerifyEmployerAsync(Guid employerId);
     Task<Result<bool>> DeleteEmployerAsync(Guid employerId, bool hardDelete);
-    Task<Result<bool>> RestoreAsync(Guid employerId);
+    Task<Result<bool>> RestoreEmployerAsync(Guid employerId);
 }
 
 public class AdminEmployerService(StudHunterDbContext context, IRegistrationManager registrationManager)
     : BaseEmployerService(context, registrationManager), IAdminEmployerService
 {
-    public async Task<Result<List<AdminEmployerDto>>> GetAllEmployersAsync()
+    public async Task<Result<PagedResult<AdminEmployerDto>>> GetAllEmployersAsync(PaginationParams paging)
     {
-        var employers = await _context.Employers
-            .IgnoreQueryFilters()
-            .Include(e => e.Vacancies)
-            .OrderByDescending(e => e.CreatedAt)
-            .ToListAsync();
+        var query = GetEmployerQuery(
+            asNoTracking: true,
+            ignoreFilters: true,
+            includeOrganizationDetails: true,
+            includeVacancies: true
+        );
 
-        var dtos = employers.Select(e => EmployerMapper.ToAdminDto(e)).ToList();
+        var pagedEntities = await query.OrderByDescending(e => e.CreatedAt).ToPagedResultAsync(paging);
 
-        return Result<List<AdminEmployerDto>>.Success(dtos);
+        var dtos = pagedEntities.Items.Select(EmployerMapper.ToAdminDto).ToList();
+
+        return Result<PagedResult<AdminEmployerDto>>.Success(new PagedResult<AdminEmployerDto>(
+            dtos, pagedEntities.TotalCount, pagedEntities.PageNumber, pagedEntities.PageSize));
     }
 
     public async Task<Result<AdminEmployerDto>> GetEmployerByIdAsync(Guid employerId)
     {
-        var employer = await GetEmployerInternalAsync(employerId, ignoreFilters: true);
+        var employer = await GetEmployerQuery(asNoTracking: true, ignoreFilters: true, includeOrganizationDetails: true, includeVacancies: true)
+            .FirstOrDefaultAsync(e => e.Id == employerId);
 
         if (employer is null)
             return Result<AdminEmployerDto>.Failure(ErrorMessages.EntityNotFound(nameof(Employer)), StatusCodes.Status404NotFound);
@@ -45,7 +50,8 @@ public class AdminEmployerService(StudHunterDbContext context, IRegistrationMana
 
     public async Task<Result<bool>> UpdateEmployerAsync(Guid employerId, UpdateEmployerDto dto)
     {
-        var employer = await GetEmployerInternalAsync(employerId, ignoreFilters: true);
+        var employer = await GetEmployerQuery(ignoreFilters: true, includeOrganizationDetails: true)
+            .FirstOrDefaultAsync(e => e.Id == employerId);
 
         if (employer == null)
             return Result<bool>.Failure(ErrorMessages.EntityNotFound(nameof(Employer)), StatusCodes.Status404NotFound);
@@ -59,7 +65,8 @@ public class AdminEmployerService(StudHunterDbContext context, IRegistrationMana
 
     public async Task<Result<bool>> VerifyEmployerAsync(Guid employerId)
     {
-        var employer = await GetEmployerInternalAsync(employerId, ignoreFilters: true);
+        var employer = await GetEmployerQuery(ignoreFilters: true)
+            .FirstOrDefaultAsync(e => e.Id == employerId);
 
         if (employer == null)
             return Result<bool>.Failure(ErrorMessages.EntityNotFound(nameof(Employer)), StatusCodes.Status404NotFound);
@@ -73,7 +80,8 @@ public class AdminEmployerService(StudHunterDbContext context, IRegistrationMana
 
     public async Task<Result<bool>> DeleteEmployerAsync(Guid employerId, bool hardDelete)
     {
-        var employer = await GetEmployerInternalAsync(employerId, ignoreFilters: true);
+        var employer = await GetEmployerQuery(ignoreFilters: true, includeVacancies: true)
+            .FirstOrDefaultAsync(e => e.Id == employerId);
 
         if (employer == null)
             return Result<bool>.Failure(ErrorMessages.EntityNotFound(nameof(Employer)), StatusCodes.Status404NotFound);
@@ -93,9 +101,10 @@ public class AdminEmployerService(StudHunterDbContext context, IRegistrationMana
         return await SaveChangesAsync<Employer>();
     }
 
-    public async Task<Result<bool>> RestoreAsync(Guid employerId)
+    public async Task<Result<bool>> RestoreEmployerAsync(Guid employerId)
     {
-        var employer = await GetEmployerInternalAsync(employerId, ignoreFilters: true);
+        var employer = await GetEmployerQuery(ignoreFilters: true, includeVacancies: true)
+            .FirstOrDefaultAsync(e => e.Id == employerId);
 
         if (employer == null)
             return Result<bool>.Failure(ErrorMessages.EntityNotFound(nameof(Employer)), StatusCodes.Status404NotFound);

@@ -32,4 +32,9 @@ public static class SeedIds
     // Курсы (Дисциплины)
     public static readonly Guid CourseOop = Guid.Parse("ffffffff-c001-4b2a-9e1d-3b5a1f2c4d5e");
     public static readonly Guid CourseDb = Guid.Parse("00000000-c001-4b2a-9e1d-3b5a1f2c4d5e");
+
+    // Специализации
+    public static readonly Guid Retail = Guid.Parse("12345678-9abc-4b2a-9e1d-3b5a1f2c4d5e");
+    public static readonly Guid HotelsRestaurantsCatering = Guid.Parse("87654321-9abc-4b2a-9e1d-3b5a1f2c4d5e");
+    public static readonly Guid MedicinePharmaceuticalsPharmacies = Guid.Parse("abcdefab-9abc-4b2a-9e1d-3b5a1f2c4d5e");
 }

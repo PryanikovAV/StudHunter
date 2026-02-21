@@ -114,4 +114,14 @@ public abstract class BaseDictionariesService(StudHunterDbContext context, IRegi
 
         return Result<List<LookupDto>>.Success(data);
     }
+
+    public async Task<Result<List<LookupDto>>> GetAllSpecializationsAsync()
+    {
+        var data = await _context.Specializations
+            .AsNoTracking()
+            .OrderBy(c => c.Name)
+            .Select(c => new LookupDto(c.Id, c.Name))
+            .ToListAsync();
+        return Result<List<LookupDto>>.Success(data);
+    }
 }

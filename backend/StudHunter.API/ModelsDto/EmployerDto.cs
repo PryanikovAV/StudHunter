@@ -15,122 +15,124 @@ public record EmployerDto(
     string? AvatarUrl,
     string? Description,
     string? Website,
-    string? Specialization,
+    Guid? SpecializationId,
+    string? SpecializationName,
     string? Inn,
     string? Ogrn,
+    string? Kpp,
     string? LegalAddress,
     string? ActualAddress,
     DateTime CreatedAt,
-    int VacanciesCount);
+    int VacanciesCount
+);
+
+public record EmployerHeroDto(
+    Guid Id,
+    string Name,
+    string? AvatarUrl,
+    string? CityName,
+    string? SpecializationName,
+    string? Website,
+    int ActiveVacanciesCount
+); 
 
 public record AdminEmployerDto(
     Guid Id,
     string Email,
     string RegistrationStage,
-    string Name,
-    Guid? CityId,
+    string Name, Guid? CityId,
     string? CityName,
     string? ContactPhone,
     string? ContactEmail,
     string? AvatarUrl,
     string? Description,
     string? Website,
-    string? Specialization,
+    Guid? SpecializationId,
+    string? SpecializationName,
     string? Inn,
     string? Ogrn,
+    string? Kpp,
     string? LegalAddress,
     string? ActualAddress,
     DateTime CreatedAt,
     int VacanciesCount,
     bool IsDeleted)
     : EmployerDto(Id, Email, RegistrationStage, Name, CityId, CityName, ContactPhone, ContactEmail,
-        AvatarUrl, Description, Website, Specialization, Inn, Ogrn, LegalAddress, ActualAddress, CreatedAt, VacanciesCount);
+        AvatarUrl, Description, Website, SpecializationId, SpecializationName, Inn, Ogrn, Kpp, LegalAddress, ActualAddress, CreatedAt, VacanciesCount);
 
 public record UpdateEmployerDto(
-    [StringLength(255)] string? Name,
+    [Required][StringLength(255)] string Name,
     Guid? CityId,
     [StringLength(1000)] string? Description,
     [Phone] string? ContactPhone,
     [EmailAddress] string? ContactEmail,
-    [StringLength(255)] string? AvatarUrl,
     [Url] string? Website,
-    [StringLength(255)] string? Specialization,
+    Guid? SpecializationId,
     [StringLength(12)] string? Inn,
     [StringLength(15)] string? Ogrn,
+    [StringLength(9)] string? Kpp,
     string? LegalAddress,
-    string? ActualAddress,
-    [StringLength(255, MinimumLength = 8)] string? Password);
+    string? ActualAddress
+);
+
+public record ChangePasswordDto(
+    [Required] string CurrentPassword,
+    [Required][StringLength(255, MinimumLength = 8)] string NewPassword
+);
+
+public record ChangeAvatarDto(
+    [Required][Url] string AvatarUrl
+);
 
 public static class EmployerMapper
 {
     public static EmployerDto ToDto(Employer e) => new(
-        e.Id,
-        e.Email,
-        e.RegistrationStage.ToString(),
-        e.Name,
-        e.CityId,
-        e.City?.Name,
-        e.ContactPhone,
-        e.ContactEmail,
-        e.AvatarUrl,
-        e.Description,
-        e.Website,
-        e.Specialization,
-        e.OrganizationDetails?.Inn,
-        e.OrganizationDetails?.Ogrn,
-        e.OrganizationDetails?.LegalAddress,
-        e.OrganizationDetails?.ActualAddress,
-        e.CreatedAt,
-        e.Vacancies?.Count(v => !v.IsDeleted) ?? 0);
+        e.Id, e.Email, e.RegistrationStage.ToString(), e.Name, e.CityId, e.City?.Name, e.ContactPhone, e.ContactEmail,
+        e.AvatarUrl, e.Description, e.Website, e.SpecializationId, e.Specialization?.Name,
+        e.OrganizationDetails?.Inn, e.OrganizationDetails?.Ogrn, e.OrganizationDetails?.Kpp,
+        e.OrganizationDetails?.LegalAddress, e.OrganizationDetails?.ActualAddress,
+        e.CreatedAt, e.Vacancies?.Count(v => !v.IsDeleted) ?? 0);
 
-    public static AdminEmployerDto ToAdminDto(Employer e)
-    {
-        var vacanciesCount = e.Vacancies?.Count(v => !v.IsDeleted) ?? 0;
+    public static EmployerHeroDto ToHeroDto(Employer employer) => new(
+        Id: employer.Id,
+        Name: employer.Name,
+        AvatarUrl: employer.AvatarUrl,
+        CityName: employer.City?.Name,
+        SpecializationName: employer.Specialization?.Name,
+        Website: employer.Website,
+        ActiveVacanciesCount: employer.Vacancies?.Count(v => !v.IsDeleted) ?? 0
+    );
 
-        return new AdminEmployerDto(
-            e.Id,
-            e.Email,
-            e.RegistrationStage.ToString(),
-            e.Name,
-            e.CityId,
-            e.City?.Name,
-            e.ContactPhone,
-            e.ContactEmail,
-            e.AvatarUrl,
-            e.Description,
-            e.Website,
-            e.Specialization,
-            e.OrganizationDetails?.Inn,
-            e.OrganizationDetails?.Ogrn,
-            e.OrganizationDetails?.LegalAddress,
-            e.OrganizationDetails?.ActualAddress,
-            e.CreatedAt,
-            vacanciesCount,
-            e.IsDeleted);
-    }
+    public static AdminEmployerDto ToAdminDto(Employer e) => new(
+        e.Id, e.Email, e.RegistrationStage.ToString(), e.Name, e.CityId, e.City?.Name, e.ContactPhone, e.ContactEmail,
+        e.AvatarUrl, e.Description, e.Website, e.SpecializationId, e.Specialization?.Name,
+        e.OrganizationDetails?.Inn, e.OrganizationDetails?.Ogrn, e.OrganizationDetails?.Kpp,
+        e.OrganizationDetails?.LegalAddress, e.OrganizationDetails?.ActualAddress,
+        e.CreatedAt, e.Vacancies?.Count(v => !v.IsDeleted) ?? 0, e.IsDeleted);
 
     public static void ApplyUpdate(Employer employer, UpdateEmployerDto dto)
     {
-        if (!string.IsNullOrWhiteSpace(dto.Name))
-            employer.Name = dto.Name.Trim();
+        employer.Name = dto.Name.Trim();
+        employer.CityId = dto.CityId;
+        employer.Description = dto.Description?.Trim();
+        employer.ContactPhone = dto.ContactPhone?.Trim();
+        employer.ContactEmail = dto.ContactEmail?.Trim();
+        employer.Website = dto.Website?.Trim();
+        employer.SpecializationId = dto.SpecializationId;
 
-        if (dto.CityId.HasValue) employer.CityId = dto.CityId.Value;
-        if (dto.Description != null) employer.Description = dto.Description.Trim();
-        if (dto.ContactPhone != null) employer.ContactPhone = dto.ContactPhone.Trim();
-        if (dto.ContactEmail != null) employer.ContactEmail = dto.ContactEmail.Trim();
-        if (dto.AvatarUrl != null) employer.AvatarUrl = dto.AvatarUrl;
-        if (dto.Website != null) employer.Website = dto.Website.Trim();
-        if (dto.Specialization != null) employer.Specialization = dto.Specialization.Trim();
+        bool hasOrgData = !string.IsNullOrWhiteSpace(dto.Inn) ||
+                          !string.IsNullOrWhiteSpace(dto.Ogrn) ||
+                          !string.IsNullOrWhiteSpace(dto.Kpp) ||
+                          !string.IsNullOrWhiteSpace(dto.LegalAddress) ||
+                          !string.IsNullOrWhiteSpace(dto.ActualAddress);
 
-        if (dto.Inn != null || dto.Ogrn != null || dto.LegalAddress != null || dto.ActualAddress != null)
+        if (hasOrgData)
         {
-            if (employer.OrganizationDetails == null)
-            {
-                employer.OrganizationDetails = new OrganizationDetail { EmployerId = employer.Id };
-            }
+            employer.OrganizationDetails ??= new OrganizationDetail { EmployerId = employer.Id };
 
             if (dto.Inn != null) employer.OrganizationDetails.Inn = dto.Inn.Trim();
             if (dto.Ogrn != null) employer.OrganizationDetails.Ogrn = dto.Ogrn.Trim();
+            if (dto.Kpp != null) employer.OrganizationDetails.Kpp = dto.Kpp.Trim();
             if (dto.LegalAddress != null) employer.OrganizationDetails.LegalAddress = dto.LegalAddress.Trim();
             if (dto.ActualAddress != null) employer.OrganizationDetails.ActualAddress = dto.ActualAddress.Trim();
         }
