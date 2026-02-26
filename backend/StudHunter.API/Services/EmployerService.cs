@@ -11,7 +11,7 @@ namespace StudHunter.API.Services;
 public interface IEmployerService
 {
     Task<Result<EmployerDto>> GetEmployerProfileAsync(Guid employerId);
-    Task<Result<EmployerHeroDto>> GetEmployerHeroAsync(Guid employerId);
+    Task<Result<EmployerHeroDto>> GetEmployerHeroAsync(Guid employerId, Guid? currentUserId = null);
     Task<Result<EmployerDto>> UpdateEmployerProfileAsync(Guid employerId, UpdateEmployerDto dto);
     Task<Result<bool>> ChangePasswordAsync(Guid employerId, ChangePasswordDto dto);
     Task<Result<string>> UpdateAvatarAsync(Guid employerId, ChangeAvatarDto dto);
@@ -45,15 +45,21 @@ public class EmployerService(
         return Result<EmployerDto>.Success(finalDto);
     }
 
-    public async Task<Result<EmployerHeroDto>> GetEmployerHeroAsync(Guid employerId)
+    public async Task<Result<EmployerHeroDto>> GetEmployerHeroAsync(Guid employerId, Guid? currentUserId = null)
     {
         var employer = await GetEmployerQuery(asNoTracking: true, includeVacancies: true)
-            .FirstOrDefaultAsync(e => e.Id == employerId);
+            .FirstOrDefaultAsync(e => e.Id == employerId && e.RegistrationStage == User.AccountStatus.FullyActivated);
 
         if (employer == null)
             return Result<EmployerHeroDto>.Failure(ErrorMessages.EntityNotFound(nameof(Employer)), StatusCodes.Status404NotFound);
 
-        return Result<EmployerHeroDto>.Success(EmployerMapper.ToHeroDto(employer));
+        var (favoriteIds, blackListIds) = await GetEmployerUiFlagsAsync(currentUserId, new List<Employer> { employer });
+
+        return Result<EmployerHeroDto>.Success(EmployerMapper.ToHeroDto(
+            employer,
+            favoriteIds.Contains(employer.Id),
+            blackListIds.Contains(employer.Id)
+        ));
     }
 
     public async Task<Result<EmployerDto>> UpdateEmployerProfileAsync(Guid employerId, UpdateEmployerDto dto)

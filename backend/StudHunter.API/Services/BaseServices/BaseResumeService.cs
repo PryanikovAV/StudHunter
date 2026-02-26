@@ -24,6 +24,26 @@ public abstract class BaseResumeService(StudHunterDbContext context, IRegistrati
                 .ThenInclude(ras => ras.AdditionalSkill);
     }
 
+    protected async Task<(HashSet<Guid> FavoriteStudentIds, HashSet<Guid> BlockedStudentIds)> GetResumeUiFlagsAsync(Guid? currentUserId, List<Resume> resumes)
+    {
+        if (!currentUserId.HasValue || !resumes.Any())
+            return (new HashSet<Guid>(), new HashSet<Guid>());
+
+        var studentIds = resumes.Select(r => r.StudentId).ToList();
+
+        var favoriteStudentIds = await _context.Favorites
+            .Where(f => f.UserId == currentUserId.Value && f.StudentId.HasValue && studentIds.Contains(f.StudentId.Value))
+            .Select(f => f.StudentId!.Value)
+            .ToHashSetAsync();
+
+        var blockedStudentIds = await _context.BlackLists
+            .Where(b => b.UserId == currentUserId.Value && studentIds.Contains(b.BlockedUserId))
+            .Select(b => b.BlockedUserId)
+            .ToHashSetAsync();
+
+        return (favoriteStudentIds, blockedStudentIds);
+    }
+
     protected async Task<Result<bool>> SoftDeleteResumeInternalAsync(Guid studentId)
     {
         var student = await _context.Students
@@ -63,3 +83,4 @@ public abstract class BaseResumeService(StudHunterDbContext context, IRegistrati
         return Result<bool>.Success(true);
     }
 }
+

@@ -24,7 +24,8 @@ public class AdminVacancyService(StudHunterDbContext context, IRegistrationManag
         var query = GetVacancyQuery(asNoTracking: true, ignoreFilters: true, includeEmployerData: true, includeTags: true);
 
         var pagedEntities = await query.OrderByDescending(v => v.CreatedAt).ToPagedResultAsync(paging);
-        var dtos = pagedEntities.Items.Select(VacancyMapper.ToSearchDto).ToList();
+        
+        var dtos = pagedEntities.Items.Select(v => VacancyMapper.ToSearchDto(v)).ToList();
 
         return Result<PagedResult<VacancySearchDto>>.Success(new PagedResult<VacancySearchDto>(
             dtos, pagedEntities.TotalCount, pagedEntities.PageNumber, pagedEntities.PageSize));

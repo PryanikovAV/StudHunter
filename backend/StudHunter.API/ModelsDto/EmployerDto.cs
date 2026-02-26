@@ -33,7 +33,9 @@ public record EmployerHeroDto(
     string? CityName,
     string? SpecializationName,
     string? Website,
-    int ActiveVacanciesCount
+    int ActiveVacanciesCount,
+    bool IsFavorite = false,
+    bool IsBlocked = false
 ); 
 
 public record AdminEmployerDto(
@@ -93,14 +95,16 @@ public static class EmployerMapper
         e.OrganizationDetails?.LegalAddress, e.OrganizationDetails?.ActualAddress,
         e.CreatedAt, e.Vacancies?.Count(v => !v.IsDeleted) ?? 0);
 
-    public static EmployerHeroDto ToHeroDto(Employer employer) => new(
+    public static EmployerHeroDto ToHeroDto(Employer employer, bool isFavorite = false, bool isBlocked = false) => new(
         Id: employer.Id,
         Name: employer.Name,
         AvatarUrl: employer.AvatarUrl,
         CityName: employer.City?.Name,
         SpecializationName: employer.Specialization?.Name,
         Website: employer.Website,
-        ActiveVacanciesCount: employer.Vacancies?.Count(v => !v.IsDeleted) ?? 0
+        ActiveVacanciesCount: employer.Vacancies?.Count(v => !v.IsDeleted) ?? 0,
+        IsFavorite: isFavorite,
+        IsBlocked: isBlocked
     );
 
     public static AdminEmployerDto ToAdminDto(Employer e) => new(

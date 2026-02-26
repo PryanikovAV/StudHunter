@@ -283,7 +283,7 @@ namespace StudHunter.DB.Postgres.Migrations
                     b.Property<Guid?>("EmployerId")
                         .HasColumnType("UUID");
 
-                    b.Property<Guid?>("ResumeId")
+                    b.Property<Guid?>("StudentId")
                         .HasColumnType("UUID");
 
                     b.Property<Guid>("UserId")
@@ -296,7 +296,7 @@ namespace StudHunter.DB.Postgres.Migrations
 
                     b.HasIndex("EmployerId");
 
-                    b.HasIndex("ResumeId");
+                    b.HasIndex("StudentId");
 
                     b.HasIndex("UserId");
 
@@ -306,9 +306,9 @@ namespace StudHunter.DB.Postgres.Migrations
                         .IsUnique()
                         .HasFilter("\"EmployerId\" IS NOT NULL");
 
-                    b.HasIndex("UserId", "ResumeId")
+                    b.HasIndex("UserId", "StudentId")
                         .IsUnique()
-                        .HasFilter("\"ResumeId\" IS NOT NULL");
+                        .HasFilter("\"StudentId\" IS NOT NULL");
 
                     b.HasIndex("UserId", "VacancyId")
                         .IsUnique()
@@ -316,7 +316,7 @@ namespace StudHunter.DB.Postgres.Migrations
 
                     b.ToTable("Favorites", t =>
                         {
-                            t.HasCheckConstraint("CK_Favorite_AtLeastOneTarget", "\"VacancyId\" IS NOT NULL OR \"EmployerId\" IS NOT NULL OR \"ResumeId\" IS NOT NULL");
+                            t.HasCheckConstraint("CK_Favorite_AtLeastOneTarget", "\"VacancyId\" IS NOT NULL OR \"EmployerId\" IS NOT NULL OR \"StudentId\" IS NOT NULL");
                         });
                 });
 
@@ -332,6 +332,9 @@ namespace StudHunter.DB.Postgres.Migrations
                         .HasColumnType("TIMESTAMPTZ")
                         .HasDefaultValueSql("CURRENT_TIMESTAMP");
 
+                    b.Property<Guid>("EmployerId")
+                        .HasColumnType("UUID");
+
                     b.Property<DateTime>("ExpiredAt")
                         .HasColumnType("TIMESTAMPTZ");
 
@@ -339,20 +342,14 @@ namespace StudHunter.DB.Postgres.Migrations
                         .HasMaxLength(1000)
                         .HasColumnType("character varying(1000)");
 
-                    b.Property<Guid>("ReceiverId")
-                        .HasColumnType("UUID");
-
                     b.Property<Guid?>("ResumeId")
-                        .HasColumnType("UUID");
+                        .HasColumnType("uuid");
 
-                    b.Property<Guid>("SenderId")
-                        .HasColumnType("UUID");
-
-                    b.Property<string>("SnapshotReceiverName")
+                    b.Property<string>("SnapshotEmployerName")
                         .HasMaxLength(255)
                         .HasColumnType("character varying(255)");
 
-                    b.Property<string>("SnapshotSenderName")
+                    b.Property<string>("SnapshotStudentName")
                         .HasMaxLength(255)
                         .HasColumnType("character varying(255)");
 
@@ -365,6 +362,9 @@ namespace StudHunter.DB.Postgres.Migrations
                         .HasColumnType("INTEGER")
                         .HasDefaultValue(0);
 
+                    b.Property<Guid>("StudentId")
+                        .HasColumnType("UUID");
+
                     b.Property<int>("Type")
                         .HasColumnType("INTEGER");
 
@@ -374,27 +374,20 @@ namespace StudHunter.DB.Postgres.Migrations
                         .HasDefaultValueSql("CURRENT_TIMESTAMP");
 
                     b.Property<Guid?>("VacancyId")
-                        .HasColumnType("UUID");
+                        .HasColumnType("uuid");
 
                     b.HasKey("Id");
+
+                    b.HasIndex("EmployerId");
 
                     b.HasIndex("ExpiredAt")
                         .HasFilter("\"Status\" = 0");
 
-                    b.HasIndex("ReceiverId");
-
                     b.HasIndex("ResumeId");
-
-                    b.HasIndex("SenderId");
 
                     b.HasIndex("VacancyId");
 
-                    b.HasIndex("SenderId", "ReceiverId", "Status")
-                        .IsUnique()
-                        .HasDatabaseName("IX_Unique_Active_General_Offer")
-                        .HasFilter("\"Status\" = 0 AND \"VacancyId\" IS NULL");
-
-                    b.HasIndex("SenderId", "ReceiverId", "VacancyId", "Status")
+                    b.HasIndex("StudentId", "EmployerId", "VacancyId", "Type")
                         .IsUnique()
                         .HasDatabaseName("IX_Unique_Active_Invitation")
                         .HasFilter("\"Status\" = 0");
@@ -1063,9 +1056,9 @@ namespace StudHunter.DB.Postgres.Migrations
                         .HasForeignKey("EmployerId")
                         .OnDelete(DeleteBehavior.Cascade);
 
-                    b.HasOne("StudHunter.DB.Postgres.Models.Resume", "Resume")
+                    b.HasOne("StudHunter.DB.Postgres.Models.Student", "Student")
                         .WithMany()
-                        .HasForeignKey("ResumeId")
+                        .HasForeignKey("StudentId")
                         .OnDelete(DeleteBehavior.Cascade);
 
                     b.HasOne("StudHunter.DB.Postgres.Models.User", "User")
@@ -1081,7 +1074,7 @@ namespace StudHunter.DB.Postgres.Migrations
 
                     b.Navigation("Employer");
 
-                    b.Navigation("Resume");
+                    b.Navigation("Student");
 
                     b.Navigation("User");
 
@@ -1090,9 +1083,9 @@ namespace StudHunter.DB.Postgres.Migrations
 
             modelBuilder.Entity("StudHunter.DB.Postgres.Models.Invitation", b =>
                 {
-                    b.HasOne("StudHunter.DB.Postgres.Models.User", "Receiver")
-                        .WithMany("ReceivedInvitations")
-                        .HasForeignKey("ReceiverId")
+                    b.HasOne("StudHunter.DB.Postgres.Models.Employer", "Employer")
+                        .WithMany("Invitations")
+                        .HasForeignKey("EmployerId")
                         .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
 
@@ -1101,9 +1094,9 @@ namespace StudHunter.DB.Postgres.Migrations
                         .HasForeignKey("ResumeId")
                         .OnDelete(DeleteBehavior.Restrict);
 
-                    b.HasOne("StudHunter.DB.Postgres.Models.User", "Sender")
-                        .WithMany("SentInvitations")
-                        .HasForeignKey("SenderId")
+                    b.HasOne("StudHunter.DB.Postgres.Models.Student", "Student")
+                        .WithMany("Invitations")
+                        .HasForeignKey("StudentId")
                         .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
 
@@ -1112,11 +1105,11 @@ namespace StudHunter.DB.Postgres.Migrations
                         .HasForeignKey("VacancyId")
                         .OnDelete(DeleteBehavior.Restrict);
 
-                    b.Navigation("Receiver");
+                    b.Navigation("Employer");
 
                     b.Navigation("Resume");
 
-                    b.Navigation("Sender");
+                    b.Navigation("Student");
 
                     b.Navigation("Vacancy");
                 });
@@ -1387,10 +1380,6 @@ namespace StudHunter.DB.Postgres.Migrations
                     b.Navigation("ChatsAsUser2");
 
                     b.Navigation("Favorites");
-
-                    b.Navigation("ReceivedInvitations");
-
-                    b.Navigation("SentInvitations");
                 });
 
             modelBuilder.Entity("StudHunter.DB.Postgres.Models.Vacancy", b =>
@@ -1404,6 +1393,8 @@ namespace StudHunter.DB.Postgres.Migrations
 
             modelBuilder.Entity("StudHunter.DB.Postgres.Models.Employer", b =>
                 {
+                    b.Navigation("Invitations");
+
                     b.Navigation("OrganizationDetails");
 
                     b.Navigation("Vacancies");
@@ -1411,6 +1402,8 @@ namespace StudHunter.DB.Postgres.Migrations
 
             modelBuilder.Entity("StudHunter.DB.Postgres.Models.Student", b =>
                 {
+                    b.Navigation("Invitations");
+
                     b.Navigation("Resume");
 
                     b.Navigation("StudyPlan");

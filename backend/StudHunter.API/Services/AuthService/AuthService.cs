@@ -92,12 +92,12 @@ public class AuthService(StudHunterDbContext context,
 
         if (user is Student student)
         {
-            await _context.Entry(student).Reference(s => s.Resume).LoadAsync();
-            await _context.Entry(student).Reference(s => s.StudyPlan).LoadAsync();
+            await _context.Entry(student).Reference(s => s.Resume).Query().IgnoreQueryFilters().LoadAsync();
+            await _context.Entry(student).Reference(s => s.StudyPlan).Query().IgnoreQueryFilters().LoadAsync();
         }
         else if (user is Employer employer)
         {
-            await _context.Entry(employer).Collection(e => e.Vacancies).LoadAsync();
+            await _context.Entry(employer).Collection(e => e.Vacancies).Query().IgnoreQueryFilters().LoadAsync();
         }
 
         var deletedAt = user.DeletedAt;

@@ -7,6 +7,7 @@ public record ResumeFillDto(
     Guid? Id,
     [Required(ErrorMessage = "Заголовок резюме обязателен")] string Title,
     string? Description,
+    bool IsDeleted,
     List<Guid> SkillIds,
     List<LookupDto>? Skills = null
 );
@@ -23,29 +24,35 @@ public record ResumeSearchDto(
     string? FacultyName,
     string? StudyDirectionName,
     int? CourseNumber,
-    List<string> Skills
+    List<string> Skills,
+    bool IsFavorite = false,
+    bool IsBlocked = false
 );
 
 public record ResumeSearchFilter
 {
     public string? SearchTerm { get; init; }
-
     public List<Guid> SkillIds { get; init; } = new();
-
     public PaginationParams Paging { get; init; } = new PaginationParams();
 }
+
+public record CreateOfferRequest(
+    Guid? VacancyId,
+    string? Message
+    );
 
 public static class ResumeMapper
 {
     public static ResumeFillDto ToFillDto(Resume? resume)
     {
         if (resume == null)
-            return new ResumeFillDto(null, string.Empty, null, new List<Guid>(), new List<LookupDto>());
+            return new ResumeFillDto(null, string.Empty, null, false, new List<Guid>(), new List<LookupDto>());
 
         return new ResumeFillDto(
             Id: resume.Id,
             Title: resume.Title,
             Description: resume.Description,
+            IsDeleted: resume.IsDeleted,
             SkillIds: resume.AdditionalSkills?.Select(s => s.AdditionalSkillId).ToList() ?? new List<Guid>(),
             Skills: resume.AdditionalSkills?.Select(s => new LookupDto(s.AdditionalSkill.Id, s.AdditionalSkill.Name)).ToList() ?? new List<LookupDto>()
         );
@@ -81,7 +88,7 @@ public static class ResumeMapper
         }
     }
 
-    public static ResumeSearchDto ToSearchDto(Resume r, bool maskContacts)
+    public static ResumeSearchDto ToSearchDto(Resume r, bool maskContacts, bool isFavorite = false, bool isBlocked = false)
     {
         var fullName = $"{r.Student.LastName} {r.Student.FirstName}".Trim();
 
@@ -105,7 +112,9 @@ public static class ResumeMapper
             Skills: r.AdditionalSkills?
                         .Select(ras => ras.AdditionalSkill.Name)
                         .OrderBy(n => n)
-                        .ToList() ?? new List<string>()
+                        .ToList() ?? new List<string>(),
+            IsFavorite: isFavorite,
+            IsBlocked: isBlocked
         );
     }
 }

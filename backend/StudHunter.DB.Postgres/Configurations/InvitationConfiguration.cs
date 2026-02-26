@@ -10,55 +10,31 @@ public class InvitationConfiguration : IEntityTypeConfiguration<Invitation>
     {
         builder.HasKey(i => i.Id);
 
-        builder.HasIndex(i => i.ExpiredAt)
-               .HasFilter("\"Status\" = 0");  // Index only for active invitations
-
-        builder.HasIndex(i => new { i.SenderId, i.ReceiverId, i.VacancyId, i.Status })
-               .HasFilter("\"Status\" = 0")
-               .IsUnique()
-               .HasDatabaseName("IX_Unique_Active_Invitation");
-
-        builder.HasIndex(i => new { i.SenderId, i.ReceiverId, i.Status })
-               .HasFilter("\"Status\" = 0 AND \"VacancyId\" IS NULL")
-               .IsUnique()
-               .HasDatabaseName("IX_Unique_Active_General_Offer");
+        builder.Property(i => i.Id)
+               .HasDefaultValueSql("gen_random_uuid()");
 
         builder.Property(i => i.Message)
                .HasMaxLength(1000);
 
-        builder.Property(i => i.SnapshotReceiverName)
+        builder.HasIndex(i => i.ExpiredAt)
+               .HasFilter("\"Status\" = 0");
+
+        builder.Property(i => i.SnapshotVacancyTitle)
                .HasMaxLength(255);
 
-        builder.Property(i => i.Id)
-               .HasDefaultValueSql("gen_random_uuid()");
+        builder.Property(i => i.SnapshotEmployerName)
+               .HasMaxLength(255);
 
-        builder.Property(i => i.SenderId)
-               .HasColumnType("UUID")
-               .IsRequired();
-
-        builder.Property(i => i.ReceiverId)
-               .HasColumnType("UUID")
-               .IsRequired();
-
-        builder.Property(i => i.VacancyId)
-               .HasColumnType("UUID");
-
-        builder.Property(i => i.ResumeId)
-               .HasColumnType("UUID");
+        builder.Property(i => i.SnapshotStudentName)
+               .HasMaxLength(255);
 
         builder.Property(i => i.Status)
                .HasColumnType("INTEGER")
                .HasDefaultValue(Invitation.InvitationStatus.Sent);
 
         builder.Property(i => i.Type)
-                .HasColumnType("INTEGER")
-                .IsRequired();
-
-        builder.Property(i => i.SnapshotVacancyTitle)
-               .HasMaxLength(255);
-
-        builder.Property(i => i.SnapshotSenderName)
-               .HasMaxLength(255);
+               .HasColumnType("INTEGER")
+               .IsRequired();
 
         builder.Property(i => i.CreatedAt)
                .HasColumnType("TIMESTAMPTZ")
@@ -71,14 +47,22 @@ public class InvitationConfiguration : IEntityTypeConfiguration<Invitation>
         builder.Property(i => i.ExpiredAt)
                .HasColumnType("TIMESTAMPTZ");
 
-        builder.HasOne(i => i.Sender)
-               .WithMany(u => u.SentInvitations)
-               .HasForeignKey(i => i.SenderId)
+        builder.HasIndex(i => i.ExpiredAt)
+               .HasFilter("\"Status\" = 0");
+
+        builder.HasIndex(i => new { i.StudentId, i.EmployerId, i.VacancyId, i.Type })
+               .HasFilter("\"Status\" = 0")
+               .IsUnique()
+               .HasDatabaseName("IX_Unique_Active_Invitation");
+
+        builder.HasOne(i => i.Student)
+               .WithMany(s => s.Invitations)
+               .HasForeignKey(i => i.StudentId)
                .OnDelete(DeleteBehavior.Restrict);
 
-        builder.HasOne(i => i.Receiver)
-               .WithMany(u => u.ReceivedInvitations)
-               .HasForeignKey(i => i.ReceiverId)
+        builder.HasOne(i => i.Employer)
+               .WithMany(e => e.Invitations)
+               .HasForeignKey(i => i.EmployerId)
                .OnDelete(DeleteBehavior.Restrict);
 
         builder.HasOne(i => i.Vacancy)
@@ -90,10 +74,5 @@ public class InvitationConfiguration : IEntityTypeConfiguration<Invitation>
                .WithMany(r => r.Invitations)
                .HasForeignKey(i => i.ResumeId)
                .OnDelete(DeleteBehavior.SetNull);
-
-        builder.HasIndex(i => i.SenderId);
-        builder.HasIndex(i => i.ReceiverId);
-        builder.HasIndex(i => i.VacancyId);
-        builder.HasIndex(i => i.ResumeId);
     }
 }

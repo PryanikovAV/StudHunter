@@ -2,9 +2,10 @@
   "profiles": {
     "http": {
       "commandName": "Project",
-      "launchBrowser": true,
+      "launchBrowser": false,
       "environmentVariables": {
-        "ASPNETCORE_ENVIRONMENT": "Development"
+        "ASPNETCORE_ENVIRONMENT": "Development",
+        "DOTNET_WATCH_RESTART_ON_RUDE_EDIT": "true"
       },
       "dotnetRunMessages": true,
       "applicationUrl": "http://localhost:5000"
@@ -12,13 +13,13 @@
     "Container": {
       "commandName": "Docker",
       "launchBrowser": false,
-      "launchUrl": "{Scheme}://{ServiceHost}:{ServicePort}",
+      //"launchUrl": "{Scheme}://{ServiceHost}:{ServicePort}",
       "environmentVariables": {
         "ASPNETCORE_ENVIRONMENT": "Development",
         "ASPNETCORE_HTTP_PORTS": "8080"
       },
       "httpPort": 5010,
-      "useSSL": false
+      //"useSSL": false
     }
   },
   "$schema": "http://json.schemastore.org/launchsettings.json"

@@ -42,7 +42,6 @@ const handleLogout = () => {
   router.push('/login')
 }
 
-// Проверка активности ссылки
 const isActive = (path: string) => route.path === path || route.path.startsWith(path + '/')
 </script>
 
@@ -67,7 +66,7 @@ const isActive = (path: string) => route.path === path || route.path.startsWith(
 
       <div class="right-group">
         <template v-if="isHomePage">
-          <button class="nav-btn" @click="router.push(isAuth ? '/student/profile' : '/login')">
+          <button class="nav-btn" @click="router.push(isAuth ? `/${userRole}/profile` : '/login')">
             <IconUser class="icon-main" />
             <span>{{ isAuth ? 'Профиль' : 'Войти' }}</span>
           </button>
@@ -123,9 +122,49 @@ const isActive = (path: string) => route.path === path || route.path.startsWith(
             </template>
 
             <template v-else-if="userRole === 'employer'">
-              <button class="nav-btn" @click="router.push('/vacancies')">
+              <button
+                class="nav-btn"
+                :class="{ active: isActive('/employer/favorites') }"
+                @click="router.push('/employer/favorites')"
+              >
+                <IconFavorites class="icon-main" />
+                <span class="btn-text">Избранное</span>
+              </button>
+
+              <button
+                class="nav-btn"
+                :class="{ active: isActive('/employer/messages') }"
+                @click="router.push('/employer/messages')"
+              >
+                <IconChat class="icon-main" />
+                <span class="btn-text">Сообщения</span>
+              </button>
+
+              <button
+                class="nav-btn"
+                :class="{ active: isActive('/employer/invitations') }"
+                @click="router.push('/employer/invitations')"
+              >
+                <IconInvitations class="icon-main" />
+                <span class="btn-text">Отклики</span>
+              </button>
+
+              <button
+                class="nav-btn"
+                :class="{ active: isActive('/employer/vacancies') }"
+                @click="router.push('/employer/vacancies')"
+              >
                 <IconVacancies class="icon-main" />
-                <span>Вакансии</span>
+                <span class="btn-text">Вакансии</span>
+              </button>
+
+              <button
+                class="nav-btn"
+                :class="{ active: isActive('/employer/profile') }"
+                @click="router.push('/employer/profile')"
+              >
+                <IconUser class="icon-main" />
+                <span class="btn-text">Профиль</span>
               </button>
             </template>
 
@@ -133,7 +172,7 @@ const isActive = (path: string) => route.path === path || route.path.startsWith(
 
             <button class="nav-btn" @click="handleLogout">
               <IconSignOut class="icon-main" />
-              <span>Выйти</span>
+              <span class="btn-text">Выйти</span>
             </button>
           </nav>
         </template>
@@ -220,7 +259,6 @@ const isActive = (path: string) => route.path === path || route.path.startsWith(
   margin: 0 8px;
 }
 
-/* Убираем текст кнопок на планшетах для экономии места, оставляем иконки */
 @media (max-width: 992px) {
   .btn-text {
     display: none;

@@ -49,7 +49,5 @@ public abstract class User
     public virtual ICollection<Chat> ChatsAsUser1 { get; set; } = new HashSet<Chat>();
     public virtual ICollection<Chat> ChatsAsUser2 { get; set; } = new HashSet<Chat>();
     public virtual ICollection<Favorite> Favorites { get; set; } = new HashSet<Favorite>();
-    public virtual ICollection<Invitation> ReceivedInvitations { get; set; } = new HashSet<Invitation>();
-    public virtual ICollection<Invitation> SentInvitations { get; set; } = new HashSet<Invitation>();
     protected User() { }
 }

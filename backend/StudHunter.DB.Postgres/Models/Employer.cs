@@ -8,5 +8,6 @@ public class Employer : User
     public Guid? SpecializationId { get; set; }
     public virtual Specialization? Specialization { get; set; }
     public virtual ICollection<Vacancy> Vacancies { get; set; } = new HashSet<Vacancy>();
+    public virtual ICollection<Invitation> Invitations { get; set; } = new HashSet<Invitation>();
     public virtual OrganizationDetail? OrganizationDetails { get; set; }
 }

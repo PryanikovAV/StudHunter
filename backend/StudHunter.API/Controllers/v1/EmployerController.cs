@@ -13,7 +13,7 @@ public class EmployerController(IEmployerService employerService) : BaseControll
     [Authorize]
     [HttpGet("{employerId:guid}/hero")]
     public async Task<IActionResult> GetEmployerHero(Guid employerId) =>
-        HandleResult(await employerService.GetEmployerHeroAsync(employerId));
+        HandleResult(await employerService.GetEmployerHeroAsync(employerId, AuthorizedUserId));
 
     [Authorize(Roles = UserRoles.Employer)]
     [HttpGet("me/hero")]

@@ -4,7 +4,6 @@ import HomeView from '@/views/HomeView.vue'
 const router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),
   routes: [
-    // --- ПУБЛИЧНЫЕ СТРАНИЦЫ ---
     {
       path: '/',
       name: 'home',
@@ -18,13 +17,32 @@ const router = createRouter({
       meta: { hideLayout: true },
     },
     {
+      path: '/recover',
+      name: 'recover',
+      component: () => import('@/views/RecoverView.vue'),
+      meta: { hideLayout: true },
+    },
+    {
       path: '/register',
       name: 'register',
-      // Исправил путь с '../' на '@/' для единообразия
       component: () => import('@/views/RegistrationView.vue'),
       meta: { hideLayout: true },
     },
-
+    {
+      path: '/vacancies/:id',
+      name: 'vacancy-public',
+      component: () => import('@/views/public/VacancyPublicView.vue'),
+    },
+    {
+      path: '/students/:id',
+      name: 'student-public',
+      component: () => import('@/views/public/StudentPublicView.vue'),
+    },
+    {
+      path: '/employers/:id',
+      name: 'employer-public',
+      component: () => import('@/views/public/EmployerPublicView.vue'),
+    },
     // --- ЛИЧНЫЙ КАБИНЕТ СТУДЕНТА ---
     {
       path: '/student',
@@ -35,20 +53,17 @@ const router = createRouter({
         {
           path: 'invitations',
           name: 'student-invitations',
-          // ИСПОЛЬЗУЕМ ОБЩИЙ КОМПОНЕНТ
           component: () => import('@/views/InvitationsView.vue'),
         },
         {
           path: 'messages',
           name: 'student-messages',
-          // Если сообщения тоже унифицированы, ссылаемся на общий файл
-          // Если пока нет - оставь заглушку или старый путь
           component: () => import('@/views/student/MessagesView.vue'),
         },
         {
           path: 'favorites',
           name: 'student-favorites',
-          component: () => import('@/views/student/FavoritesView.vue'),
+          component: () => import('@/views/FavoritesView.vue'),
         },
         {
           path: 'profile',
@@ -57,47 +72,59 @@ const router = createRouter({
         },
         {
           path: 'resume',
-          name: 'student-resume', // Уникальная страница студента
+          name: 'student-resume',
           component: () => import('@/views/student/ResumeView.vue'),
         },
       ],
     },
 
-    // --- ЛИЧНЫЙ КАБИНЕТ РАБОТОДАТЕЛЯ (НОВОЕ) ---
+    // --- ЛИЧНЫЙ КАБИНЕТ РАБОТОДАТЕЛЯ ---
     {
       path: '/employer',
-      component: () => import('@/layouts/EmployerLayout.vue'), // Убедись, что файл создан
+      component: () => import('@/layouts/EmployerLayout.vue'),
       redirect: '/employer/invitations',
       meta: { requiresAuth: true, role: 'employer' },
       children: [
         {
           path: 'invitations',
           name: 'employer-invitations',
-          // ИСПОЛЬЗУЕМ ТОТ ЖЕ ОБЩИЙ КОМПОНЕНТ!
           component: () => import('@/views/InvitationsView.vue'),
         },
         {
           path: 'messages',
           name: 'employer-messages',
-          // Тоже можно использовать общий компонент
           component: () => import('@/views/student/MessagesView.vue'),
         },
+        {
+          path: 'favorites',
+          name: 'employer-favorites',
+          component: () => import('@/views/FavoritesView.vue'),
+        },
+        {
+          path: 'profile',
+          name: 'employer-profile',
+          component: () => import('@/views/employer/ProfileSettingsView.vue'),
+        },
+        {
+          path: 'vacancies',
+          name: 'employer-vacancies',
+          component: () => import('@/views/employer/MyVacanciesView.vue'),
+        },
+        {
+          path: 'vacancies/create',
+          name: 'employer-vacancy-create',
+          component: () => import('@/views/employer/VacancyEditView.vue'),
+        },
+        {
+          path: 'vacancies/:id/edit',
+          name: 'employer-vacancy-edit',
+          component: () => import('@/views/employer/VacancyEditView.vue'),
+        },
         // {
-        //   path: 'favorites',
-        //   name: 'employer-favorites',
-        //   // Скорее всего будет EmployerFavoritesView.vue
-        //   component: () => import('@/views/employer/FavoritesView.vue'),
-        // },
-        // {
-        //   path: 'profile',
-        //   name: 'employer-profile',
-        //   // Специфичный профиль компании
-        //   component: () => import('@/views/employer/CompanyProfileView.vue'),
-        // },
-        // {
-        //   path: 'vacancies',
-        //   name: 'employer-vacancies', // Аналог "Резюме" у студента
-        //   component: () => import('@/views/employer/MyVacanciesView.vue'),
+        //   // Маршрут для результатов поиска (который вызываем из SearchBar)
+        //   path: 'search',
+        //   name: 'employer-resume-search',
+        //   component: () => import('@/views/employer/ResumeSearchView.vue'),
         // },
       ],
     },

@@ -1,7 +1,9 @@
 <script setup lang="ts">
 import { ref } from 'vue'
 import { useRouter } from 'vue-router'
-import axios, { isAxiosError } from 'axios'
+import { isAxiosError } from 'axios'
+import apiClient from '@/api'
+
 import IconBackButton from '@/components/icons/IconBackButton.vue'
 import IconLogo from '@/components/icons/IconLogo.vue'
 
@@ -35,7 +37,7 @@ const handleLogin = async () => {
   isLoading.value = true
 
   try {
-    const response = await axios.post('http://localhost:5010/api/v1/auth/login', {
+    const response = await apiClient.post('/auth/login', {
       email: email.value,
       password: password.value,
     })
@@ -126,6 +128,15 @@ const handleLogin = async () => {
           >
             Зарегистрироваться
           </button>
+
+          <button
+            type="button"
+            class="btn-main btn-outline w-full"
+            @click="router.push('/recover')"
+          >
+            Восстановить аккаунт
+          </button>
+
           <a :href="recoveryLink" target="_blank" class="btn-main btn-secondary btn-fix">
             Восстановить пароль
           </a>
@@ -136,7 +147,6 @@ const handleLogin = async () => {
 </template>
 
 <style scoped>
-/* Центрирование (Глобальный фон) */
 .auth-wrapper {
   min-height: 100vh;
   display: flex;
@@ -145,22 +155,18 @@ const handleLogin = async () => {
   padding: 20px;
   background-color: var(--background-page);
 }
-
 .auth-card {
   width: 100%;
-  max-width: 320px; /* Фикс ширины */
+  max-width: 320px;
   display: flex;
   flex-direction: column;
 }
-
-/* Шапка */
 .auth-header {
   display: flex;
   align-items: center;
   justify-content: space-between;
   margin-bottom: 24px;
 }
-
 .btn-icon-back {
   background: none;
   border: none;
@@ -170,53 +176,42 @@ const handleLogin = async () => {
   display: flex;
   margin-left: -8px;
 }
-
 .logo-center {
   flex: 1;
   display: flex;
   justify-content: center;
 }
-
 .auth-logo {
   width: 48px;
   height: 48px;
 }
-
 .spacer {
   width: 40px;
 }
-
 .text-center {
   text-align: center;
   margin-bottom: 32px;
 }
-
-/* Форма */
 .auth-form {
   display: flex;
   flex-direction: column;
 }
-
 .inputs-stack {
   display: flex;
   flex-direction: column;
   gap: 16px;
 }
-
-/* Группа (Лейбл + Инпут) */
 .input-group {
   display: flex;
   flex-direction: column;
   gap: 6px;
 }
-
 .input-label {
   font-size: 13px;
   font-weight: 600;
   color: var(--dark-text);
   padding-left: 12px;
 }
-
 .error-container {
   min-height: 32px;
   margin-top: 12px;
@@ -228,29 +223,23 @@ const handleLogin = async () => {
   transition: opacity 0.2s ease;
   word-wrap: break-word;
 }
-
 .error-container.visible {
   opacity: 1;
 }
-
 .input-error {
   border-color: var(--red-text-error) !important;
 }
-
 .actions-stack {
   display: flex;
   flex-direction: column;
   gap: 12px;
 }
-
 .w-full {
   width: 100%;
 }
-
 .btn-fix {
   justify-content: flex-start;
 }
-
 button:disabled {
   opacity: 0.7;
   cursor: wait;

@@ -1,30 +1,19 @@
-﻿using StudHunter.API.Infrastructure;
+﻿using System.ComponentModel.DataAnnotations;
+using StudHunter.API.Infrastructure;
 using StudHunter.DB.Postgres.Models;
 
 namespace StudHunter.API.ModelsDto;
 
-public record CreateInvitationDto(
-    Guid ReceiverId,
-    Guid? VacancyId,
-    Guid? ResumeId,
-    string? Message
+public record CreateResponseDto(
+    [Required] Guid VacancyId,
+    [Required] Guid ResumeId,
+    [StringLength(1000)] string? Message
 );
 
-public record InvitationDto(
-    Guid Id,
-    Guid SenderId,
-    string SenderName,
-    Guid ReceiverId,
-    string ReceiverName,
+public record CreateOfferDto(
+    [Required] Guid StudentId,
     Guid? VacancyId,
-    string? VacancyTitle,
-    Guid? ResumeId,
-    string Status,
-    string Type,
-    string? Message,
-    DateTime CreatedAt,
-    DateTime ExpiredAt,
-    bool IsExpired
+    [StringLength(1000)] string? Message
 );
 
 public record InvitationCardDto(
@@ -66,81 +55,65 @@ public record InvitationSearchFilter(
     Invitation.InvitationStatus? Status = null,
     Invitation.InvitationType? Type = null,
     bool Incoming = true,
-    PaginationParams Paging = null!
-);
+    PaginationParams? Paging = null
+)
+{
+    public PaginationParams SafePaging => Paging ?? new PaginationParams();
+};
+
+public record ApplyToVacancyRequest(Guid ResumeId, string? Message);
 
 public static class InvitationMapper
 {
-    public static InvitationDto ToDto(Invitation invitation)
-    {
-        bool isExpired = invitation.Status == Invitation.InvitationStatus.Sent
-                         && DateTime.UtcNow > invitation.ExpiredAt;
-
-        return new InvitationDto(
-            invitation.Id,
-            invitation.SenderId,
-            invitation.SnapshotSenderName ?? "Удаленный пользователь",
-            invitation.ReceiverId,
-            invitation.SnapshotReceiverName ?? "Удаленный пользователь",
-
-            invitation.VacancyId,
-            invitation.Vacancy?.Title ?? invitation.SnapshotVacancyTitle ?? "Вакансия удалена",
-
-            invitation.ResumeId,
-
-            invitation.Status.ToString(),
-            invitation.Type.ToString(),
-            invitation.Message,
-            invitation.CreatedAt,
-            invitation.ExpiredAt,
-            isExpired
-        );
-    }
     public static InvitationCardDto ToCardDto(Invitation invitation, Guid currentUserId)
     {
-        var direction = invitation.SenderId == currentUserId ? "Outgoing" : "Incoming";
-
-        Student? student = invitation.Resume?.Student
-                           ?? invitation.Sender as Student
-                           ?? invitation.Receiver as Student;
-
-        Employer? employer = invitation.Vacancy?.Employer
-                             ?? invitation.Sender as Employer
-                             ?? invitation.Receiver as Employer;
+        string direction = "Unknown";
+        if (invitation.StudentId == currentUserId)
+        {
+            direction = invitation.Type == Invitation.InvitationType.Response ? "Outgoing" : "Incoming";
+        }
+        else if (invitation.EmployerId == currentUserId)
+        {
+            direction = invitation.Type == Invitation.InvitationType.Offer ? "Outgoing" : "Incoming";
+        }
 
         var candidateDto = new InvitationCandidateDto(
-            StudentId: student?.Id ?? Guid.Empty,
-            FullName: UserDisplayHelper.GetUserDisplayName(student!),
-            AvatarUrl: student?.AvatarUrl,
-            Age: UserDisplayHelper.CalculateAge(student?.BirthDate),
-            CourseNumber: student?.StudyPlan?.CourseNumber,
-            UniversityAbbreviation: student?.StudyPlan?.University?.Abbreviation,
-            SpecialtyName: student?.StudyPlan?.StudyDirection?.Name,
+            StudentId: invitation.StudentId,
+            FullName: invitation.Student != null
+                ? UserDisplayHelper.GetUserDisplayName(invitation.Student)
+                : invitation.SnapshotStudentName ?? "Неизвестный кандидат",
+            AvatarUrl: invitation.Student?.AvatarUrl,
+            Age: UserDisplayHelper.CalculateAge(invitation.Student?.BirthDate),
+            CourseNumber: invitation.Student?.StudyPlan?.CourseNumber,
+            UniversityAbbreviation: invitation.Student?.StudyPlan?.University?.Abbreviation,
+            SpecialtyName: invitation.Student?.StudyPlan?.StudyDirection?.Name,
             ResumeId: invitation.ResumeId,
             ResumeTitle: invitation.Resume?.Title,
             Skills: invitation.Resume?.AdditionalSkills
-                .Select(ras => ras.AdditionalSkill.Name)
+                ?.Select(ras => ras.AdditionalSkill.Name)
                 .ToList() ?? new List<string>()
         );
 
         var jobDto = new InvitationJobDto(
-            EmployerId: employer?.Id ?? Guid.Empty,
-            CompanyName: UserDisplayHelper.GetUserDisplayName(employer!),
-            AvatarUrl: employer?.AvatarUrl,
+            EmployerId: invitation.EmployerId,
+            CompanyName: invitation.Employer != null
+                ? UserDisplayHelper.GetUserDisplayName(invitation.Employer)
+                : invitation.SnapshotEmployerName ?? "Неизвестная компания",
+            AvatarUrl: invitation.Employer?.AvatarUrl,
             VacancyId: invitation.VacancyId,
             VacancyTitle: invitation.Vacancy?.Title ?? invitation.SnapshotVacancyTitle,
             Salary: invitation.Vacancy?.Salary
         );
 
         return new InvitationCardDto(
-            invitation.Id,
-            invitation.Status.ToString(),
-            invitation.Type.ToString(),
-            direction,
-            invitation.CreatedAt,
-            invitation.Message,
-            candidateDto,
-            jobDto
+            Id: invitation.Id,
+            Status: invitation.Status.ToString(),
+            Type: invitation.Type.ToString(),
+            Direction: direction,
+            SentAt: invitation.CreatedAt,
+            Message: invitation.Message,
+            Candidate: candidateDto,
+            Job: jobDto
         );
     }
 }

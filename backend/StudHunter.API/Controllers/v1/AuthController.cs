@@ -22,6 +22,6 @@ public class AuthController(IAuthService authService) : BaseController
         HandleResult(await authService.RegisterEmployerAsync(dto));
 
     [HttpPost("recover")]
-    public async Task<IActionResult> Recover([FromBody] LoginDto dto) =>
+    public async Task<IActionResult> RecoverAccount([FromBody] LoginDto dto) =>
         HandleResult(await authService.RecoverAccountAsync(dto));
 }

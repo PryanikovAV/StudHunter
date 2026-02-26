@@ -13,6 +13,7 @@ public interface IResumeService
     Task<Result<ResumeSearchDto>> GetResumeForEmployerAsync(Guid studentId, Guid currentUserId);
     Task<Result<ResumeFillDto>> UpsertResumeAsync(Guid studentId, ResumeFillDto dto);
     Task<Result<bool>> SoftDeleteResumeAsync(Guid studentId);
+    Task<Result<bool>> RestoreResumeAsync(Guid studentId);
     Task<Result<PagedResult<ResumeSearchDto>>> SearchResumesAsync(ResumeSearchFilter filter, Guid? currentUserId = null);
 }
 
@@ -22,10 +23,11 @@ public class ResumeService(StudHunterDbContext context, IRegistrationManager reg
     public async Task<Result<ResumeFillDto>> GetMyResumeAsync(Guid studentId)
     {
         var resume = await _context.Resumes
+            .IgnoreQueryFilters()
             .AsNoTracking()
             .Include(r => r.AdditionalSkills)
             .ThenInclude(ras => ras.AdditionalSkill)
-            .FirstOrDefaultAsync(r => r.StudentId == studentId && !r.IsDeleted);
+            .FirstOrDefaultAsync(r => r.StudentId == studentId);
 
         return Result<ResumeFillDto>.Success(ResumeMapper.ToFillDto(resume));
     }
@@ -41,12 +43,20 @@ public class ResumeService(StudHunterDbContext context, IRegistrationManager reg
         var user = await _context.Users.AsNoTracking().FirstOrDefaultAsync(u => u.Id == currentUserId);
         bool maskContacts = user == null || !UserPermissions.IsAllowed(UserRoles.GetRole(user), user.RegistrationStage, UserAction.ViewContacts);
 
-        return Result<ResumeSearchDto>.Success(ResumeMapper.ToSearchDto(resume, maskContacts));
+        var (favoriteIds, blackListIds) = await GetResumeUiFlagsAsync(currentUserId, new List<Resume> { resume });
+
+        return Result<ResumeSearchDto>.Success(ResumeMapper.ToSearchDto(
+            resume,
+            maskContacts,
+            favoriteIds.Contains(resume.StudentId),
+            blackListIds.Contains(resume.StudentId)
+        ));
     }
 
     public async Task<Result<ResumeFillDto>> UpsertResumeAsync(Guid studentId, ResumeFillDto dto)
     {
         var student = await _context.Students
+            .IgnoreQueryFilters()
             .Include(s => s.StudyPlan)
             .Include(s => s.Resume).ThenInclude(r => r!.AdditionalSkills)
             .FirstOrDefaultAsync(s => s.Id == studentId);
@@ -76,6 +86,7 @@ public class ResumeService(StudHunterDbContext context, IRegistrationManager reg
     }
 
     public Task<Result<bool>> SoftDeleteResumeAsync(Guid studentId) => SoftDeleteResumeInternalAsync(studentId);
+    public Task<Result<bool>> RestoreResumeAsync(Guid studentId) => RestoreResumeInternalAsync(studentId);
 
     public async Task<Result<PagedResult<ResumeSearchDto>>> SearchResumesAsync(ResumeSearchFilter filter, Guid? currentUserId = null)
     {
@@ -103,7 +114,14 @@ public class ResumeService(StudHunterDbContext context, IRegistrationManager reg
                 maskContacts = !UserPermissions.IsAllowed(UserRoles.GetRole(user), user.RegistrationStage, UserAction.ViewContacts);
         }
 
-        var dtos = pagedEntities.Items.Select(r => ResumeMapper.ToSearchDto(r, maskContacts)).ToList();
+        var (favoriteIds, blackListIds) = await GetResumeUiFlagsAsync(currentUserId, pagedEntities.Items);
+
+        var dtos = pagedEntities.Items.Select(r => ResumeMapper.ToSearchDto(
+            r,
+            maskContacts,
+            favoriteIds.Contains(r.StudentId),
+            blackListIds.Contains(r.StudentId)
+        )).ToList();
 
         return Result<PagedResult<ResumeSearchDto>>.Success(new PagedResult<ResumeSearchDto>(
             dtos, pagedEntities.TotalCount, pagedEntities.PageNumber, pagedEntities.PageSize));

@@ -1,7 +1,6 @@
 ﻿using Microsoft.EntityFrameworkCore;
 using StudHunter.API.Infrastructure;
 using StudHunter.API.ModelsDto;
-using StudHunter.API.Services.BaseServices;
 using StudHunter.DB.Postgres;
 using StudHunter.DB.Postgres.Models;
 
@@ -14,13 +13,18 @@ public interface IBlackListService
 }
 
 public class BlackListService(StudHunterDbContext context, IRegistrationManager registrationManager)
-    : BaseBlackListService(context, registrationManager), IBlackListService
+    : BaseService(context, registrationManager), IBlackListService
 {
     public async Task<Result<PagedResult<BlackListDto>>> GetMyBlackListAsync(Guid userId, PaginationParams paging)
     {
-        var pagedBlacklist = await GetBaseBlackListQuery(userId)
+        var query = _context.BlackLists
+            .AsNoTracking()
+            .Include(b => b.BlockedUser)
+            .Where(b => b.UserId == userId);
+
+        var pagedBlacklist = await query
             .OrderByDescending(b => b.BlockedAt)
-            .ToPagedResultAsync(paging);
+            .ToPagedResultAsync(paging ?? new PaginationParams());
 
         var dtos = pagedBlacklist.Items.Select(BlackListMapper.ToDto).ToList();
 
@@ -50,8 +54,7 @@ public class BlackListService(StudHunterDbContext context, IRegistrationManager 
 
         if (shouldBlock)
         {
-            if (existing != null)
-                return Result<bool>.Success(true);
+            if (existing != null) return Result<bool>.Success(true);
 
             _context.BlackLists.Add(new BlackList { UserId = userId, BlockedUserId = blockedUserId });
 
@@ -59,8 +62,7 @@ public class BlackListService(StudHunterDbContext context, IRegistrationManager 
         }
         else
         {
-            if (existing == null)
-                return Result<bool>.Success(true);
+            if (existing == null) return Result<bool>.Success(true);
 
             _context.BlackLists.Remove(existing);
         }
@@ -72,17 +74,48 @@ public class BlackListService(StudHunterDbContext context, IRegistrationManager 
             : Result<bool>.Failure(result.ErrorMessage!);
     }
 
-    protected Result<bool> ValidateBlockAction(User me, User target)
+    private Result<bool> ValidateBlockAction(User me, User target)
     {
         if (me.Id == target.Id)
             return Result<bool>.Failure("Нельзя заблокировать самого себя.");
 
-        if (GetRole(target) == UserRoles.Administrator)
+        string myRole = UserRoles.GetRole(me);
+        string targetRole = UserRoles.GetRole(target);
+
+        if (targetRole == UserRoles.Administrator)
             return Result<bool>.Failure("Нельзя заблокировать администратора.", StatusCodes.Status403Forbidden);
 
-        if (GetRole(me) == GetRole(target))
-            return Result<bool>.Failure($"Вы можете блокировать только пользователей противоположной роли ({GetRole(target)}).");
+        if (myRole == targetRole)
+            return Result<bool>.Failure($"Вы можете блокировать только пользователей противоположной роли ({targetRole}).");
 
         return Result<bool>.Success(true);
+    }
+
+    private async Task ClearCommunicationBetweenUsersAsync(Guid user1Id, Guid user2Id)
+    {
+        var now = DateTime.UtcNow;
+
+        var favoritesToRemove = await _context.Favorites
+            .Include(f => f.Vacancy)
+            .Where(f =>
+                (f.UserId == user1Id && (f.EmployerId == user2Id || (f.Vacancy != null && f.Vacancy.EmployerId == user2Id) || f.StudentId == user2Id))
+                ||
+                (f.UserId == user2Id && (f.EmployerId == user1Id || (f.Vacancy != null && f.Vacancy.EmployerId == user1Id) || f.StudentId == user1Id))
+            )
+            .ToListAsync();
+
+        if (favoritesToRemove.Any()) _context.Favorites.RemoveRange(favoritesToRemove);
+
+        var invitations = await _context.Invitations
+            .Where(i => ((i.StudentId == user1Id && i.EmployerId == user2Id) ||
+                         (i.StudentId == user2Id && i.EmployerId == user1Id))
+                     && (i.Status == Invitation.InvitationStatus.Sent || i.Status == Invitation.InvitationStatus.Accepted))
+            .ToListAsync();
+
+        foreach (var inv in invitations)
+        {
+            inv.Status = Invitation.InvitationStatus.Rejected;
+            inv.UpdatedAt = now;
+        }
     }
 }

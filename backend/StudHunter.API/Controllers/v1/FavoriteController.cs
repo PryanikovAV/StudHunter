@@ -15,6 +15,6 @@ public class FavoriteController(IFavoriteService favoriteService) : BaseControll
         HandleResult(await favoriteService.GetMyFavoritesAsync(AuthorizedUserId, paging));
 
     [HttpPost("toggle")]
-    public async Task<IActionResult> Toggle([FromBody] FavoriteRequest request) =>
+    public async Task<IActionResult> ToggleFavorite([FromBody] FavoriteRequest request) =>
         HandleResult(await favoriteService.ToggleFavoriteAsync(AuthorizedUserId, request));
 }

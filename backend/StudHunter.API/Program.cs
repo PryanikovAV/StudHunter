@@ -8,6 +8,7 @@ using StudHunter.API.Services.AdminServices;
 using StudHunter.API.Services.AuthService;
 using StudHunter.API.Services.Background;
 using StudHunter.DB.Postgres;
+using StudHunter.DB.Postgres.Models;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -56,9 +57,11 @@ builder.Services.AddScoped<IStudentService, StudentService>();
 builder.Services.AddScoped<IVacancyService, VacancyService>();
 
 /* Административные сервисы */
+builder.Services.AddScoped<IAdminBlackListService, AdminBlackListService>();
 builder.Services.AddScoped<IAdminChatService, AdminChatService>();
 builder.Services.AddScoped<IAdminDictionariesService, AdminDictionariesService>();
 builder.Services.AddScoped<IAdminEmployerService, AdminEmployerService>();
+builder.Services.AddScoped<IAdminFavoriteService, AdminFavoriteService>();
 builder.Services.AddScoped<IAdminInvitationService, AdminInvitationService>();
 builder.Services.AddScoped<IAdminResumeService, AdminResumeService>();
 builder.Services.AddScoped<IAdminStudentService, AdminStudentService>();
@@ -85,6 +88,26 @@ using (var scope = app.Services.CreateScope())   // <-- Заполнение словарей
     {
         var logger = services.GetRequiredService<ILogger<Program>>();
         logger.LogError(ex, "Ошибка при инициализации базы данных");
+    }
+}
+
+using (var scope = app.Services.CreateScope())
+{
+    var context = scope.ServiceProvider.GetRequiredService<StudHunterDbContext>();
+    var hasher = scope.ServiceProvider.GetRequiredService<IPasswordHasher>();
+
+    if (!context.Administrators.Any())
+    {
+        var admin = new Administrator
+        {
+            Email = "admin@example.com",
+            PasswordHash = hasher.HashPassword("password123"),
+            FirstName = "Главный",
+            LastName = "Администратор",
+            RegistrationStage = User.AccountStatus.FullyActivated
+        };
+        context.Administrators.Add(admin);
+        context.SaveChanges();
     }
 }
 

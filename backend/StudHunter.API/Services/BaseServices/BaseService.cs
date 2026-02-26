@@ -49,7 +49,7 @@ public abstract class BaseService(StudHunterDbContext context, IRegistrationMana
         _context.Favorites.RemoveRange(favorites);
 
         var invitations = await _context.Invitations
-            .Where(i => (i.SenderId == userId || i.ReceiverId == userId)
+            .Where(i => (i.StudentId == userId || i.EmployerId == userId)
                      && (i.Status == Invitation.InvitationStatus.Sent || i.Status == Invitation.InvitationStatus.Accepted))
             .ToListAsync();
 

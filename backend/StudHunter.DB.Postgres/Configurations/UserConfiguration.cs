@@ -95,16 +95,6 @@ public class UserConfiguration : IEntityTypeConfiguration<User>
                .HasForeignKey(c => c.User2Id)
                .OnDelete(DeleteBehavior.Cascade);
 
-        builder.HasMany(u => u.SentInvitations)
-               .WithOne(i => i.Sender)
-               .HasForeignKey(i => i.SenderId)
-               .OnDelete(DeleteBehavior.Restrict);
-
-        builder.HasMany(u => u.ReceivedInvitations)
-               .WithOne(i => i.Receiver)
-               .HasForeignKey(i => i.ReceiverId)
-               .OnDelete(DeleteBehavior.Restrict);
-
         builder.HasMany(u => u.Favorites)
                .WithOne(f => f.User)
                .HasForeignKey(f => f.UserId)

@@ -23,22 +23,22 @@ public record VacancySearchDto(
     decimal? Salary,
     string Type,
     DateTime UpdatedAt,
-
     string EmployerName,
     string? SpecializationName,
     string? CityName,
     string? ActualAddress,
     string? ContactPhone,
     string? ContactEmail,
-
     bool IsDeleted,
-
     List<string> Courses,
-    List<string> Skills
+    List<string> Skills,
+    bool IsFavorite = false,
+    bool IsBlocked = false
 );
 
 public record VacancySearchFilter
 {
+    public Guid? EmployerId { get; init; }
     public string? SearchTerm { get; init; }
     public List<Guid> CourseIds { get; init; } = new();
     public List<Guid> SkillIds { get; init; } = new();
@@ -60,7 +60,7 @@ public static class VacancyMapper
         Skills: v.AdditionalSkills?.Select(s => new LookupDto(s.AdditionalSkill.Id, s.AdditionalSkill.Name)).ToList()
     );
 
-    public static VacancySearchDto ToSearchDto(Vacancy v)
+    public static VacancySearchDto ToSearchDto(Vacancy v, bool isFavorite = false, bool isBlocked = false)
     {
         var e = v.Employer;
         return new VacancySearchDto(
@@ -79,7 +79,9 @@ public static class VacancyMapper
             ContactEmail: e.ContactEmail ?? e.Email,
             IsDeleted: v.IsDeleted,
             Courses: v.Courses?.Select(c => c.Course.Name).OrderBy(n => n).ToList() ?? new List<string>(),
-            Skills: v.AdditionalSkills?.Select(s => s.AdditionalSkill.Name).OrderBy(n => n).ToList() ?? new List<string>()
+            Skills: v.AdditionalSkills?.Select(s => s.AdditionalSkill.Name).OrderBy(n => n).ToList() ?? new List<string>(),
+            IsFavorite: isFavorite,
+            IsBlocked: isBlocked
         );
     }
 

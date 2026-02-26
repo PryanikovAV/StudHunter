@@ -1,7 +1,9 @@
 <script setup lang="ts">
 import { ref, computed } from 'vue'
 import { useRouter } from 'vue-router'
-import axios, { isAxiosError } from 'axios'
+import { isAxiosError } from 'axios'
+import apiClient from '@/api'
+
 import IconBackButton from '@/components/icons/IconBackButton.vue'
 import IconLogo from '@/components/icons/IconLogo.vue'
 
@@ -15,7 +17,6 @@ const confirmPassword = ref('')
 const isLoading = ref(false)
 const errorText = ref('')
 
-// Динамический заголовок
 const titleText = computed(() =>
   role.value === 'student' ? 'Регистрация студента' : 'Регистрация компании',
 )
@@ -29,7 +30,6 @@ interface RegisterPayload {
 const handleRegister = async () => {
   errorText.value = ''
 
-  // 1. Простые проверки на клиенте
   if (!email.value.trim()) {
     errorText.value = 'Укажите email'
     return
@@ -59,7 +59,7 @@ const handleRegister = async () => {
 
   try {
     const isStudent = role.value === 'student'
-    const endpoint = isStudent ? 'register/student' : 'register/employer'
+    const endpoint = isStudent ? '/auth/register/student' : '/auth/register/employer'
 
     const payload: RegisterPayload = {
       email: email.value,
@@ -69,7 +69,7 @@ const handleRegister = async () => {
       payload.name = companyName.value
     }
 
-    const response = await axios.post(`http://localhost:5010/api/v1/auth/${endpoint}`, payload)
+    const response = await apiClient.post(endpoint, payload)
 
     const { token, role: userRole } = response.data
     localStorage.setItem('token', token)

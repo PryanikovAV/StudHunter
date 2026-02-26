@@ -1,0 +1,27 @@
+# Зависимости и сборка фронтенда
+node_modules/
+dist/
+build/
+
+# Артефакты компиляции .NET
+bin/
+obj/
+
+# Настройки IDE (Visual Studio / JetBrains)
+.vs/
+.idea/
+.vscode/
+*.user
+*.suo
+
+# Служебные папки гита
+.git/
+
+# Локи и логи (занимают много места, не несут смысла для ИИ)
+*.lock
+package-lock.json
+yarn.lock
+*.log
+
+# Исключаем сам выходной файл репомикса, чтобы он не зациклился
+repomix-output.txt

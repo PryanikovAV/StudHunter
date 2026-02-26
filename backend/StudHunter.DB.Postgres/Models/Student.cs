@@ -37,6 +37,7 @@ public class Student : User
 
     public virtual StudyPlan? StudyPlan { get; set; }
     public virtual Resume? Resume { get; set; }
+    public virtual ICollection<Invitation> Invitations { get; set; } = new HashSet<Invitation>();
 
     public enum StudentGender
     {

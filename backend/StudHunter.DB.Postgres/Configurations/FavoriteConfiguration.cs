@@ -23,7 +23,7 @@ public class FavoriteConfiguration : IEntityTypeConfiguration<Favorite>
         builder.Property(f => f.EmployerId)
                .HasColumnType("UUID");
 
-        builder.Property(f => f.ResumeId)
+        builder.Property(f => f.StudentId)
                .HasColumnType("UUID");
 
         builder.Property(f => f.AddedAt)
@@ -33,7 +33,7 @@ public class FavoriteConfiguration : IEntityTypeConfiguration<Favorite>
 
         builder.ToTable(t => t.HasCheckConstraint(
                 "CK_Favorite_AtLeastOneTarget", 
-                "\"VacancyId\" IS NOT NULL OR \"EmployerId\" IS NOT NULL OR \"ResumeId\" IS NOT NULL"));
+                "\"VacancyId\" IS NOT NULL OR \"EmployerId\" IS NOT NULL OR \"StudentId\" IS NOT NULL"));
 
         builder.HasOne(f => f.User)
                .WithMany(u => u.Favorites)
@@ -50,9 +50,9 @@ public class FavoriteConfiguration : IEntityTypeConfiguration<Favorite>
                .HasForeignKey(f => f.EmployerId)
                .OnDelete(DeleteBehavior.Cascade);
 
-        builder.HasOne(f => f.Resume)
+        builder.HasOne(f => f.Student)
                .WithMany()
-               .HasForeignKey(f => f.ResumeId)
+               .HasForeignKey(f => f.StudentId)
                .OnDelete(DeleteBehavior.Cascade);
 
         builder.HasIndex(f => f.UserId);
@@ -65,8 +65,8 @@ public class FavoriteConfiguration : IEntityTypeConfiguration<Favorite>
                .IsUnique()
                .HasFilter("\"EmployerId\" IS NOT NULL");
 
-        builder.HasIndex(f => new { f.UserId, f.ResumeId })
+        builder.HasIndex(f => new { f.UserId, f.StudentId })
                .IsUnique()
-               .HasFilter("\"ResumeId\" IS NOT NULL");
+               .HasFilter("\"StudentId\" IS NOT NULL");
     }
 }

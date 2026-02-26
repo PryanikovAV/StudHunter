@@ -4,7 +4,6 @@ using StudHunter.API.Controllers.v1.BaseControllers;
 using StudHunter.API.Infrastructure;
 using StudHunter.API.ModelsDto;
 using StudHunter.API.Services;
-using StudHunter.DB.Postgres.Models;
 
 namespace StudHunter.API.Controllers.v1;
 
@@ -43,26 +42,25 @@ public class VacancyController(IVacancyService vacancyService, IInvitationServic
 {
     [HttpGet]
     public async Task<IActionResult> SearchVacancies([FromQuery] VacancySearchFilter filter) =>
-        HandleResult(await vacancyService.SearchVacanciesAsync(filter));
+        HandleResult(await vacancyService.SearchVacanciesAsync(filter, AuthorizedUserId));
 
     [HttpGet("{vacancyId:guid}")]
     public async Task<IActionResult> GetVacancyDetails(Guid vacancyId) =>
-        HandleResult(await vacancyService.GetVacancyDetailsAsync(vacancyId));
+        HandleResult(await vacancyService.GetVacancyDetailsAsync(vacancyId, AuthorizedUserId));
 
     [HttpPost("{vacancyId:guid}/apply")]
-    public async Task<IActionResult> ApplyToVacancy(Guid vacancyId, [FromBody] string? message)
+    public async Task<IActionResult> ApplyToVacancy(Guid vacancyId, [FromBody] ApplyToVacancyRequest request)
     {
-        var vacancyResult = await vacancyService.GetVacancyDetailsAsync(vacancyId);
+        var vacancyResult = await vacancyService.GetVacancyDetailsAsync(vacancyId, AuthorizedUserId);
         if (!vacancyResult.IsSuccess)
             return HandleResult(vacancyResult);
 
-        var dto = new CreateInvitationDto(
-            ReceiverId: vacancyResult.Value!.EmployerId,
+        var dto = new CreateResponseDto(
             VacancyId: vacancyId,
-            ResumeId: null,
-            Message: message
+            ResumeId: request.ResumeId,
+            Message: request.Message
         );
 
-        return HandleResult(await invitationService.CreateInvitationAsync(AuthorizedUserId, dto, Invitation.InvitationType.Response));
+        return HandleResult(await invitationService.CreateResponseAsync(AuthorizedUserId, dto));
     }
 }

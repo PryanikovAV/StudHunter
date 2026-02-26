@@ -17,7 +17,7 @@ public abstract class BaseEmployerService(StudHunterDbContext context, IRegistra
 
         if (asNoTracking)
             query = query.AsNoTracking();
-
+        
         if (ignoreFilters)
             query = query.IgnoreQueryFilters();
 
@@ -32,6 +32,26 @@ public abstract class BaseEmployerService(StudHunterDbContext context, IRegistra
             query = query.Include(e => e.Vacancies);
 
         return query;
+    }
+
+    protected async Task<(HashSet<Guid> FavoriteEmployerIds, HashSet<Guid> BlockedEmployerIds)> GetEmployerUiFlagsAsync(Guid? currentUserId, List<Employer> employers)
+    {
+        if (!currentUserId.HasValue || !employers.Any())
+            return (new HashSet<Guid>(), new HashSet<Guid>());
+
+        var employerIds = employers.Select(e => e.Id).ToList();
+
+        var favoriteEmployerIds = await _context.Favorites
+            .Where(f => f.UserId == currentUserId.Value && f.EmployerId.HasValue && employerIds.Contains(f.EmployerId.Value))
+            .Select(f => f.EmployerId!.Value)
+            .ToHashSetAsync();
+
+        var blockedEmployerIds = await _context.BlackLists
+            .Where(b => b.UserId == currentUserId.Value && employerIds.Contains(b.BlockedUserId))
+            .Select(b => b.BlockedUserId)
+            .ToHashSetAsync();
+
+        return (favoriteEmployerIds, blockedEmployerIds);
     }
 
     protected async Task SoftDeleteEmployerAsync(Employer employer, DateTime now)

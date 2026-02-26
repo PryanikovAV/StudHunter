@@ -4,7 +4,6 @@ using StudHunter.API.Controllers.v1.BaseControllers;
 using StudHunter.API.Infrastructure;
 using StudHunter.API.ModelsDto;
 using StudHunter.API.Services;
-using StudHunter.DB.Postgres.Models;
 
 namespace StudHunter.API.Controllers.v1;
 
@@ -23,6 +22,10 @@ public class ResumeController(IResumeService resumeService) : BaseController
     [HttpDelete]
     public async Task<IActionResult> Delete() =>
         HandleResult(await resumeService.SoftDeleteResumeAsync(AuthorizedUserId));
+
+    [HttpPost("restore")]
+    public async Task<IActionResult> Restore() =>
+        HandleResult(await resumeService.RestoreResumeAsync(AuthorizedUserId));
 }
 
 [Authorize(Roles = UserRoles.Employer)]
@@ -44,15 +47,12 @@ public class EmployerResumeController(IResumeService resumeService, IInvitationS
         if (!resumeResult.IsSuccess)
             return HandleResult(resumeResult);
 
-        var dto = new CreateInvitationDto(
-            ReceiverId: studentId,
+        var dto = new CreateOfferDto(
+            StudentId: studentId,
             VacancyId: request.VacancyId,
-            ResumeId: resumeResult.Value!.Id,
             Message: request.Message
         );
 
-        return HandleResult(await invitationService.CreateInvitationAsync(AuthorizedUserId, dto, Invitation.InvitationType.Offer));
+        return HandleResult(await invitationService.CreateOfferAsync(AuthorizedUserId, dto));
     }
 }
-
-public record CreateOfferRequest(Guid? VacancyId, string? Message);

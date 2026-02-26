@@ -11,12 +11,12 @@ public interface IVacancyService
 {
     Task<Result<VacancyFillDto>> GetVacancyByIdForEditAsync(Guid vacancyId, Guid employerId);
     Task<Result<PagedResult<VacancySearchDto>>> GetMyVacanciesAsync(Guid employerId, PaginationParams paging, bool includeDeleted);
-    Task<Result<VacancySearchDto>> GetVacancyDetailsAsync(Guid vacancyId);
+    Task<Result<VacancySearchDto>> GetVacancyDetailsAsync(Guid vacancyId, Guid? currentUserId = null);
     Task<Result<VacancyFillDto>> CreateVacancyAsync(Guid employerId, VacancyFillDto dto);
     Task<Result<VacancyFillDto>> UpdateVacancyAsync(Guid vacancyId, Guid employerId, VacancyFillDto dto);
     Task<Result<bool>> SoftDeleteVacancyAsync(Guid vacancyId, Guid employerId);
     Task<Result<bool>> RestoreVacancyAsync(Guid vacancyId, Guid employerId);
-    Task<Result<PagedResult<VacancySearchDto>>> SearchVacanciesAsync(VacancySearchFilter filter);
+    Task<Result<PagedResult<VacancySearchDto>>> SearchVacanciesAsync(VacancySearchFilter filter, Guid? currentUserId = null);
 }
 
 public class VacancyService(StudHunterDbContext context, IRegistrationManager registrationManager)
@@ -40,21 +40,26 @@ public class VacancyService(StudHunterDbContext context, IRegistrationManager re
 
         var pagedEntities = await query.OrderByDescending(v => v.CreatedAt).ToPagedResultAsync(paging);
 
-        var dtos = pagedEntities.Items.Select(VacancyMapper.ToSearchDto).ToList();
+        var dtos = pagedEntities.Items.Select(v => VacancyMapper.ToSearchDto(v)).ToList();
 
         return Result<PagedResult<VacancySearchDto>>.Success(new PagedResult<VacancySearchDto>(
             dtos, pagedEntities.TotalCount, pagedEntities.PageNumber, pagedEntities.PageSize));
     }
 
-    public async Task<Result<VacancySearchDto>> GetVacancyDetailsAsync(Guid vacancyId)
+    public async Task<Result<VacancySearchDto>> GetVacancyDetailsAsync(Guid vacancyId, Guid? currentUserId = null)
     {
         var vacancy = await GetVacancyQuery(asNoTracking: true, includeEmployerData: true, includeTags: true)
             .FirstOrDefaultAsync(v => v.Id == vacancyId);
 
-        if (vacancy == null)
-            return Result<VacancySearchDto>.Failure(ErrorMessages.EntityNotFound(nameof(Vacancy)));
+        if (vacancy == null) return Result<VacancySearchDto>.Failure(ErrorMessages.EntityNotFound(nameof(Vacancy)));
 
-        return Result<VacancySearchDto>.Success(VacancyMapper.ToSearchDto(vacancy));
+        var (favIds, blkIds) = await GetVacancyUiFlagsAsync(currentUserId, new List<Vacancy> { vacancy });
+
+        return Result<VacancySearchDto>.Success(VacancyMapper.ToSearchDto(
+            vacancy,
+            favIds.Contains(vacancy.Id),
+            blkIds.Contains(vacancy.EmployerId)
+        ));
     }
 
     public async Task<Result<VacancyFillDto>> CreateVacancyAsync(Guid employerId, VacancyFillDto dto)
@@ -113,10 +118,15 @@ public class VacancyService(StudHunterDbContext context, IRegistrationManager re
         return Result<bool>.Success(true);
     }
 
-    public async Task<Result<PagedResult<VacancySearchDto>>> SearchVacanciesAsync(VacancySearchFilter filter)
+    public async Task<Result<PagedResult<VacancySearchDto>>> SearchVacanciesAsync(VacancySearchFilter filter, Guid? currentUserId = null)
     {
         var query = GetVacancyQuery(asNoTracking: true, includeEmployerData: true, includeTags: true)
             .Where(v => !v.IsDeleted && !v.Employer.IsDeleted && v.Employer.RegistrationStage == User.AccountStatus.FullyActivated);
+
+        if (filter.EmployerId.HasValue)
+        {
+            query = query.Where(v => v.EmployerId == filter.EmployerId.Value);
+        }
 
         if (!string.IsNullOrWhiteSpace(filter.SearchTerm))
         {
@@ -137,7 +147,14 @@ public class VacancyService(StudHunterDbContext context, IRegistrationManager re
             query = query.Where(v => v.Type == type);
 
         var pagedEntities = await query.OrderByDescending(v => v.UpdatedAt).ToPagedResultAsync(filter.Paging);
-        var dtos = pagedEntities.Items.Select(VacancyMapper.ToSearchDto).ToList();
+
+        var (favIds, blkIds) = await GetVacancyUiFlagsAsync(currentUserId, pagedEntities.Items);
+
+        var dtos = pagedEntities.Items.Select(v => VacancyMapper.ToSearchDto(
+            v,
+            favIds.Contains(v.Id),
+            blkIds.Contains(v.EmployerId)
+        )).ToList();
 
         return Result<PagedResult<VacancySearchDto>>.Success(new PagedResult<VacancySearchDto>(
             dtos, pagedEntities.TotalCount, pagedEntities.PageNumber, pagedEntities.PageSize));

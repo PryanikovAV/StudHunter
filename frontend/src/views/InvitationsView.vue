@@ -1,92 +1,92 @@
 <script setup lang="ts">
-import { ref, onMounted } from 'vue'
-import axios from 'axios'
-import { useRouter } from 'vue-router'
-import InvitationCard from '@/components/invitation/InvitationCard.vue'
+import { ref, computed, onMounted } from 'vue'
+import apiClient from '@/api'
+import InvitationCard from '@/components/InvitationCard.vue'
 
 interface InvitationCandidateDto {
   studentId: string
   fullName: string
-  avatarUrl: string | null
-  universityAbbreviation?: string | null
-  specialtyName?: string | null
-  courseNumber?: number | null
-  age?: number | null
-  resumeTitle?: string | null
-  resumeId?: string | null
-  skills?: string[]
+  courseNumber: number | null
+  universityAbbreviation: string | null
+  skills: string[]
+  resumeId: string | null
 }
 
 interface InvitationJobDto {
   employerId: string
   companyName: string
-  avatarUrl: string | null
-  vacancyId?: string | null
-  vacancyTitle?: string | null
-  salary?: number | null
+  vacancyTitle: string | null
+  salary: number | null
+  vacancyId: string | null
 }
 
 interface InvitationCardDto {
   id: string
-  status: 'Sent' | 'Accepted' | 'Rejected' | 'Expired' | 'Cancelled'
+  status: string
   type: string
-  direction: 'Incoming' | 'Outgoing'
-  sentAt: string | Date
-  message?: string | null
+  direction: string
+  sentAt: string
+  message: string | null
   candidate: InvitationCandidateDto
   job: InvitationJobDto
 }
 
-const router = useRouter()
 const invitations = ref<InvitationCardDto[]>([])
 const isLoading = ref(true)
-const error = ref(false)
-const userRole = ref<'student' | 'employer'>('student')
-
-const getApiEndpoint = () => {
-  const storedRole = localStorage.getItem('role')?.toLowerCase()
-
-  if (storedRole === 'employer') {
-    userRole.value = 'employer'
-    return 'http://localhost:5010/api/v1/employer/invitations'
-  } else {
-    userRole.value = 'student'
-    return 'http://localhost:5010/api/v1/student/invitations'
-  }
-}
+const activeTab = ref<'incoming' | 'outgoing' | 'archive'>('incoming')
 
 const fetchInvitations = async () => {
   isLoading.value = true
-  error.value = false
-
   try {
-    const url = getApiEndpoint()
-    const response = await axios.get<InvitationCardDto[]>(url, {
-      headers: { Authorization: `Bearer ${localStorage.getItem('token')}` },
-    })
-    invitations.value = response.data
-  } catch {
-    error.value = true
+    const role = (localStorage.getItem('userRole') || 'student').toLowerCase()
+    const endpoint = role === 'student' ? '/invitations/student' : '/invitations/employer'
+
+    const [incomingRes, outgoingRes] = await Promise.all([
+      apiClient.get(`${endpoint}?incoming=true`),
+      apiClient.get(`${endpoint}?incoming=false`),
+    ])
+
+    const incomingData = incomingRes.data.items || incomingRes.data || []
+    const outgoingData = outgoingRes.data.items || outgoingRes.data || []
+
+    const combined = [...incomingData, ...outgoingData]
+    invitations.value = combined.sort(
+      (a, b) => new Date(b.sentAt).getTime() - new Date(a.sentAt).getTime(),
+    )
+  } catch (error) {
+    console.error('Ошибка загрузки откликов:', error)
   } finally {
     isLoading.value = false
   }
 }
 
-const handleStatusChange = async (id: string, action: 'accept' | 'reject' | 'cancel') => {
+const filteredInvitations = computed(() => {
+  if (activeTab.value === 'incoming') {
+    return invitations.value.filter((i) => i.direction === 'Incoming' && i.status === 'Sent')
+  }
+  if (activeTab.value === 'outgoing') {
+    return invitations.value.filter((i) => i.direction === 'Outgoing' && i.status === 'Sent')
+  }
+  return invitations.value.filter((i) => i.status !== 'Sent')
+})
+
+const changeStatus = async (id: string, action: 'accept' | 'reject' | 'cancel') => {
   try {
-    await axios.post(
-      `http://localhost:5010/api/v1/invitations/${id}/${action}`,
-      {},
-      { headers: { Authorization: `Bearer ${localStorage.getItem('token')}` } },
-    )
-    await fetchInvitations()
-  } catch {
-    alert('Ошибка при выполнении действия')
+    await apiClient.patch(`/invitations/${id}/${action}`)
+    const item = invitations.value.find((i) => i.id === id)
+    if (item) {
+      if (action === 'accept') item.status = 'Accepted'
+      if (action === 'reject') item.status = 'Rejected'
+      if (action === 'cancel') item.status = 'Cancelled'
+    }
+  } catch (error) {
+    console.error(`Ошибка при ${action}:`, error)
+    alert('Не удалось изменить статус')
   }
 }
 
 const handleChat = (id: string) => {
-  router.push(`/messages/${id}`)
+  alert(`Переход в чат для отклика ${id}`)
 }
 
 onMounted(fetchInvitations)
@@ -94,42 +94,89 @@ onMounted(fetchInvitations)
 
 <template>
   <div class="invitations-page">
-    <div class="container">
-      <h1 class="page-title">
-        {{ userRole === 'student' ? 'Мои отклики и приглашения' : 'Отклики на вакансии' }}
-      </h1>
+    <div class="page-header">
+      <h1 class="page-title">Отклики и приглашения</h1>
+    </div>
 
-      <div v-if="isLoading" class="state-block">Загрузка данных...</div>
+    <div class="tabs">
+      <button
+        :class="['tab-btn', { active: activeTab === 'incoming' }]"
+        @click="activeTab = 'incoming'"
+      >
+        Входящие
+      </button>
+      <button
+        :class="['tab-btn', { active: activeTab === 'outgoing' }]"
+        @click="activeTab = 'outgoing'"
+      >
+        Отправленные
+      </button>
+      <button
+        :class="['tab-btn', { active: activeTab === 'archive' }]"
+        @click="activeTab = 'archive'"
+      >
+        Архив
+      </button>
+    </div>
 
-      <div v-else-if="error" class="state-block error">
-        Не удалось загрузить список. Попробуйте обновить страницу.
-      </div>
+    <div v-if="isLoading" class="loading">Загрузка данных...</div>
 
-      <div v-else-if="invitations.length === 0" class="state-block">
-        Список пуст. Активных откликов нет.
-      </div>
+    <div v-else-if="filteredInvitations.length === 0" class="empty-state">
+      <p class="text-muted">В этой вкладке пока пусто.</p>
+    </div>
 
-      <div v-else class="invitations-list">
-        <InvitationCard
-          v-for="item in invitations"
-          :key="item.id"
-          :invitation="item"
-          :role="userRole"
-          @accept="handleStatusChange(item.id, 'accept')"
-          @reject="handleStatusChange(item.id, 'reject')"
-          @cancel="handleStatusChange(item.id, 'cancel')"
-          @chat="handleChat(item.id)"
-        />
-      </div>
+    <div v-else class="invitations-list">
+      <InvitationCard
+        v-for="inv in filteredInvitations"
+        :key="inv.id"
+        :invitation="inv"
+        @accept="changeStatus($event, 'accept')"
+        @reject="changeStatus($event, 'reject')"
+        @cancel="changeStatus($event, 'cancel')"
+        @chat="handleChat($event)"
+      />
     </div>
   </div>
 </template>
 
 <style scoped>
 .invitations-page {
-  padding-top: 24px;
-  padding-bottom: 64px;
-  min-height: 80vh;
+  max-width: 900px;
+  margin: 0 auto;
+}
+.page-header {
+  margin-bottom: 24px;
+}
+.page-title {
+  margin: 0;
+  font-size: 24px;
+  color: var(--dark-text);
+}
+
+.tabs {
+  display: flex;
+  gap: 16px;
+  margin-bottom: 24px;
+  border-bottom: 1px solid var(--gray-border);
+}
+.tab-btn {
+  background: none;
+  border: none;
+  font-size: 16px;
+  font-weight: 500;
+  color: var(--gray-text);
+  padding: 8px 16px;
+  cursor: pointer;
+  border-bottom: 2px solid transparent;
+  margin-bottom: -1px;
+  transition: all 0.2s;
+}
+.tab-btn:hover {
+  color: var(--dark-text);
+}
+.tab-btn.active {
+  color: var(--susu-blue, #005aaa);
+  border-bottom-color: var(--susu-blue, #005aaa);
 }
 
 .invitations-list {
@@ -137,19 +184,8 @@ onMounted(fetchInvitations)
   flex-direction: column;
   gap: 16px;
 }
-
-.state-block {
-  padding: 40px;
+.empty-state {
   text-align: center;
-  background-color: var(--background-field);
-  border: 1px solid var(--gray-border);
-  border-radius: 16px;
-  color: var(--gray-text);
-  font-size: 14px;
-}
-
-.state-block.error {
-  color: var(--red-text-error);
-  border-color: var(--red-text-error);
+  padding: 40px 0;
 }
 </style>

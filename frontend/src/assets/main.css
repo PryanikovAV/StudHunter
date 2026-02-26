@@ -85,6 +85,8 @@ body {
 /* Второстепенные кнопки */
 .btn-secondary {
   height: 32px;
+  display: inline-flex;
+  align-items: center;
   background-color: transparent;
   border: 1px solid transparent;
   color: var(--gray-text);
