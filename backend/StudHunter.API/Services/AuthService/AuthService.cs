@@ -143,14 +143,18 @@ public class AuthService(StudHunterDbContext context,
 
     private void RestoreRelatedEntities(User user, DateTime? accountDeletedAt)
     {
+        if (!accountDeletedAt.HasValue) return;
+
+        var threshold = accountDeletedAt.Value.AddSeconds(-10);  // окно допуска в 10 сек
+
         if (user is Student student)
         {
-            if (student.Resume != null && student.Resume.DeletedAt >= accountDeletedAt)
+            if (student.Resume != null && student.Resume.IsDeleted && student.Resume.DeletedAt >= threshold)
             {
                 student.Resume.IsDeleted = false;
                 student.Resume.DeletedAt = null;
             }
-            if (student.StudyPlan != null && student.StudyPlan.DeletedAt >= accountDeletedAt)
+            if (student.StudyPlan != null && student.StudyPlan.IsDeleted && student.StudyPlan.DeletedAt >= threshold)
             {
                 student.StudyPlan.IsDeleted = false;
                 student.StudyPlan.DeletedAt = null;
@@ -158,7 +162,7 @@ public class AuthService(StudHunterDbContext context,
         }
         else if (user is Employer employer)
         {
-            foreach (var v in employer.Vacancies.Where(v => v.DeletedAt >= accountDeletedAt))
+            foreach (var v in employer.Vacancies.Where(v => v.IsDeleted && v.DeletedAt >= threshold))
             {
                 v.IsDeleted = false;
                 v.DeletedAt = null;

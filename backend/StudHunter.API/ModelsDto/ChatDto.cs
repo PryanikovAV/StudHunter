@@ -5,8 +5,8 @@ namespace StudHunter.API.ModelsDto;
 
 public record ChatParticipantDto(
     Guid Id,
-    string DisplayName, // Результат GetUserDisplayName
-    string Role         // Результат GetRole (Student, Employer или Admin)
+    string DisplayName,
+    string Role
 );
 
 public record ChatDto(
@@ -14,7 +14,8 @@ public record ChatDto(
     ChatParticipantDto Interlocutor,
     string LastMessage,
     DateTime? LastMessageAt,
-    bool IsBlocked
+    bool IsBlockedByMe,
+    bool IsBlockedByInterlocutor
 );
 
 public record MessageDto(
@@ -24,6 +25,12 @@ public record MessageDto(
     DateTime SentAt,
     Guid? InvitationId,
     bool IsRead
+);
+
+public record SendMessageRequest(
+    Guid ReceiverId, 
+    string Content, 
+    Guid? InvitationId = null
 );
 
 public static class ChatMapper
@@ -56,7 +63,7 @@ public static class ChatMapper
         );
     }
 
-    public static ChatDto ToDto(Chat chat, Guid currentUserId, bool isBlocked = false)
+    public static ChatDto ToDto(Chat chat, Guid currentUserId, bool isBlockedByMe = false, bool isBlockedByInterlocutor = false)
     {
         var interlocutor = chat.User1Id == currentUserId ? chat.User2 : chat.User1;
 
@@ -65,7 +72,8 @@ public static class ChatMapper
             ToParticipantDto(interlocutor),
             chat.Messages.OrderByDescending(m => m.SentAt).FirstOrDefault()?.Content ?? "Нет сообщений",
             chat.LastMessageAt,
-            isBlocked
+            isBlockedByMe,
+            isBlockedByInterlocutor
         );
     }
 

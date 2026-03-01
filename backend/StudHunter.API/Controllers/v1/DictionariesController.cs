@@ -21,8 +21,8 @@ public class DictionariesController(IDictionariesService dictionariesService) : 
         HandleResult(await dictionariesService.GetDepartmentsAsync());
 
     [HttpGet("specialities")]
-    public async Task<IActionResult> GetSpecialities() =>
-        HandleResult(await dictionariesService.GetSpecialitiesAsync());
+    public async Task<IActionResult> GetStudyDirection() =>
+        HandleResult(await dictionariesService.GetStudyDirectionAsync());
 
     [HttpGet("skills")]
     public async Task<IActionResult> GetSkills() =>

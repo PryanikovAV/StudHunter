@@ -20,7 +20,6 @@ public abstract class BaseChatService(StudHunterDbContext context, IRegistration
 
     protected async Task<Result<bool>> CanUsersChatAsync(Guid senderId, Guid receiverId)
     {
-        /* TODO: читать чат с IsDeleted пользователм можно, добавить логику "писать нельзя" */
         var sender = await _context.Users.IgnoreQueryFilters().FirstOrDefaultAsync(u => u.Id == senderId);
         var receiver = await _context.Users.IgnoreQueryFilters().FirstOrDefaultAsync(u => u.Id == receiverId);
 

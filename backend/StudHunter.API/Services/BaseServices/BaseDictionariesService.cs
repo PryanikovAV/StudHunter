@@ -38,7 +38,7 @@ public abstract class BaseDictionariesService(StudHunterDbContext context, IRegi
         return Result<List<DepartmentDto>>.Success(data);
     }
 
-    public async Task<Result<List<StudyDirectionDto>>> GetSpecialitiesAsync()
+    public async Task<Result<List<StudyDirectionDto>>> GetStudyDirectionAsync()
     {
         var data = await _context.StudyDirections
             .AsNoTracking()

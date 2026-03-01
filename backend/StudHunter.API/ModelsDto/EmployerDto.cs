@@ -89,11 +89,26 @@ public record ChangeAvatarDto(
 public static class EmployerMapper
 {
     public static EmployerDto ToDto(Employer e) => new(
-        e.Id, e.Email, e.RegistrationStage.ToString(), e.Name, e.CityId, e.City?.Name, e.ContactPhone, e.ContactEmail,
-        e.AvatarUrl, e.Description, e.Website, e.SpecializationId, e.Specialization?.Name,
-        e.OrganizationDetails?.Inn, e.OrganizationDetails?.Ogrn, e.OrganizationDetails?.Kpp,
-        e.OrganizationDetails?.LegalAddress, e.OrganizationDetails?.ActualAddress,
-        e.CreatedAt, e.Vacancies?.Count(v => !v.IsDeleted) ?? 0);
+        e.Id,
+        e.Email,
+        e.RegistrationStage.ToString(),
+        e.Name, 
+        e.CityId,
+        e.City?.Name,
+        e.ContactPhone,
+        e.ContactEmail,
+        e.AvatarUrl,
+        e.Description,
+        e.Website, 
+        e.SpecializationId,
+        e.Specialization?.Name,
+        e.OrganizationDetails?.Inn,
+        e.OrganizationDetails?.Ogrn,
+        e.OrganizationDetails?.Kpp,
+        e.OrganizationDetails?.LegalAddress, 
+        e.OrganizationDetails?.ActualAddress,
+        e.CreatedAt,
+        e.Vacancies?.Count(v => !v.IsDeleted) ?? 0);
 
     public static EmployerHeroDto ToHeroDto(Employer employer, bool isFavorite = false, bool isBlocked = false) => new(
         Id: employer.Id,
@@ -108,11 +123,27 @@ public static class EmployerMapper
     );
 
     public static AdminEmployerDto ToAdminDto(Employer e) => new(
-        e.Id, e.Email, e.RegistrationStage.ToString(), e.Name, e.CityId, e.City?.Name, e.ContactPhone, e.ContactEmail,
-        e.AvatarUrl, e.Description, e.Website, e.SpecializationId, e.Specialization?.Name,
-        e.OrganizationDetails?.Inn, e.OrganizationDetails?.Ogrn, e.OrganizationDetails?.Kpp,
-        e.OrganizationDetails?.LegalAddress, e.OrganizationDetails?.ActualAddress,
-        e.CreatedAt, e.Vacancies?.Count(v => !v.IsDeleted) ?? 0, e.IsDeleted);
+        e.Id, 
+        e.Email,
+        e.RegistrationStage.ToString(),
+        e.Name,
+        e.CityId, 
+        e.City?.Name, 
+        e.ContactPhone, 
+        e.ContactEmail,
+        e.AvatarUrl, 
+        e.Description, 
+        e.Website,
+        e.SpecializationId,
+        e.Specialization?.Name,
+        e.OrganizationDetails?.Inn,
+        e.OrganizationDetails?.Ogrn,
+        e.OrganizationDetails?.Kpp,
+        e.OrganizationDetails?.LegalAddress,
+        e.OrganizationDetails?.ActualAddress,
+        e.CreatedAt, 
+        e.Vacancies?.Count(v => !v.IsDeleted) ?? 0, 
+        e.IsDeleted);
 
     public static void ApplyUpdate(Employer employer, UpdateEmployerDto dto)
     {

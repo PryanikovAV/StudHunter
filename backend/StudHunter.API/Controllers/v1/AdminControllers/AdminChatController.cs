@@ -11,11 +11,15 @@ namespace StudHunter.API.Controllers.v1.AdminControllers;
 [Route("api/v1/admin/chats")]
 public class AdminChatController(IAdminChatService adminChatService) : BaseController
 {
+    [HttpGet("user/{targetUserId:guid}")]
+    public async Task<IActionResult> GetUserChats(Guid targetUserId, [FromQuery] PaginationParams paging) =>
+        HandleResult(await adminChatService.GetUserChatsAsync(targetUserId, paging));
+
+    [HttpGet("{chatId:guid}/inspect")]
+    public async Task<IActionResult> InspectChat(Guid chatId, [FromQuery] PaginationParams paging) =>
+        HandleResult(await adminChatService.InspectChatMessagesAsync(chatId, paging));
+
     [HttpDelete("messages/{messageId:guid}")]
     public async Task<IActionResult> DeleteMessage(Guid messageId) =>
         HandleResult(await adminChatService.DeleteMessageAsync(messageId));
-
-    [HttpGet("{chatId:guid}/inspect")]
-    public async Task<IActionResult> InspectChat(Guid chatId, [FromQuery] PaginationParams paging, [FromQuery] Guid userId) =>
-        HandleResult(await adminChatService.GetChatMessagesAsync(userId, chatId, paging));
 }

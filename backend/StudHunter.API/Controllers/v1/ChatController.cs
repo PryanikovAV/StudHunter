@@ -26,9 +26,11 @@ public class ChatController(IChatService chatService) : BaseController
             request.Content,
             request.InvitationId));
 
+    [HttpGet("interlocutor/{userId:guid}")]
+    public async Task<IActionResult> GetChatParticipant(Guid userId) =>
+        HandleResult(await chatService.GetChatParticipantAsync(userId));
+
     [HttpPatch("{chatId:guid}/read")]
     public async Task<IActionResult> MarkChatAsRead(Guid chatId) =>
         HandleResult(await chatService.MarkMessagesAsReadAsync(AuthorizedUserId, chatId));
 }
-
-public record SendMessageRequest(Guid ReceiverId, string Content, Guid? InvitationId = null);

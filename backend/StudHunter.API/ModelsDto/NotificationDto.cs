@@ -12,6 +12,11 @@ public record NotificationDto(
     Guid? EntityId,
     string TimeAgo
 );
+public record SendMassNotificationRequest(
+    string Title,
+    string Message,
+    string? TargetRole = null
+);
 
 public record MarkAsReadRequest(List<Guid> NotificationIds);
 

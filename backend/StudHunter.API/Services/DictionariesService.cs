@@ -10,7 +10,7 @@ public interface IDictionariesService
     Task<Result<List<UniversityDto>>> GetUniversitiesAsync();
     Task<Result<List<LookupDto>>> GetFacultiesAsync();
     Task<Result<List<DepartmentDto>>> GetDepartmentsAsync();
-    Task<Result<List<StudyDirectionDto>>> GetSpecialitiesAsync();
+    Task<Result<List<StudyDirectionDto>>> GetStudyDirectionAsync();
     Task<Result<List<LookupDto>>> GetSkillsAsync();
     Task<Result<List<CourseDto>>> GetAllCoursesAsync();
     Task<Result<List<CourseDto>>> SearchCoursesAsync(string searchTerm, int limit);

@@ -15,6 +15,7 @@ public interface IChatService
     Task<Result<PagedResult<MessageDto>>> GetChatMessagesAsync(Guid userId, Guid chatId, PaginationParams paging);
     Task<Result<MessageDto>> SendMessageAsync(Guid senderId, Guid receiverId, string content, Guid? invitationId = null);
     Task<Result<bool>> MarkMessagesAsReadAsync(Guid userId, Guid chatId);
+    Task<Result<ChatParticipantDto>> GetChatParticipantAsync(Guid interlocutorId);
 }
 
 public class ChatService(StudHunterDbContext context, 
@@ -28,21 +29,28 @@ public class ChatService(StudHunterDbContext context,
 
     public async Task<Result<PagedResult<ChatDto>>> GetMyChatsAsync(Guid userId, PaginationParams paging)
     {
-        var blockedByUser = await _context.BlackLists
+        var blockedByMe = await _context.BlackLists
             .Where(b => b.UserId == userId)
             .Select(b => b.BlockedUserId)
+            .ToListAsync();
+
+        var blockedByOthers = await _context.BlackLists
+            .Where(b => b.BlockedUserId == userId)
+            .Select(b => b.UserId)
             .ToListAsync();
 
         var pagedChats = await GetFullChatQuery()
             .Where(c => c.User1Id == userId || c.User2Id == userId)
             .OrderByDescending(c => c.LastMessageAt)
-            .ToPagedResultAsync(paging);
+            .ToPagedResultAsync(paging ?? new PaginationParams());
 
         var dtos = pagedChats.Items.Select(c =>
         {
             var interlocutorId = c.User1Id == userId ? c.User2Id : c.User1Id;
-            bool isBlocked = blockedByUser.Contains(interlocutorId);
-            return ChatMapper.ToDto(c, userId, isBlocked);
+            bool isBlockedByMe = blockedByMe.Contains(interlocutorId);
+            bool isBlockedByInterlocutor = blockedByOthers.Contains(interlocutorId);
+
+            return ChatMapper.ToDto(c, userId, isBlockedByMe, isBlockedByInterlocutor);
         }).ToList();
 
         var pageResult = new PagedResult<ChatDto>(dtos, pagedChats.TotalCount, pagedChats.PageNumber, pagedChats.PageSize);
@@ -61,7 +69,7 @@ public class ChatService(StudHunterDbContext context,
         var pagedMessages = await _context.Messages
             .Where(m => m.ChatId == chatId)
             .OrderByDescending(m => m.SentAt)
-            .ToPagedResultAsync(paging);
+            .ToPagedResultAsync(paging ?? new PaginationParams());
 
         var dtos = pagedMessages.Items.Select(m => ChatMapper.ToDto(m)).ToList();
 
@@ -130,6 +138,16 @@ public class ChatService(StudHunterDbContext context,
         return result.IsSuccess
             ? Result<MessageDto>.Success(ChatMapper.ToDto(message))
             : Result<MessageDto>.Failure(result.ErrorMessage!);
+    }
+
+    public async Task<Result<ChatParticipantDto>> GetChatParticipantAsync(Guid interlocutorId)
+    {
+        var user = await _context.Users.FindAsync(interlocutorId);
+
+        if (user == null)
+            return Result<ChatParticipantDto>.Failure(ErrorMessages.EntityNotFound(nameof(User)), StatusCodes.Status404NotFound);
+
+        return Result<ChatParticipantDto>.Success(ChatMapper.ToParticipantDto(user));
     }
 
     public async Task<Result<bool>> MarkMessagesAsReadAsync(Guid userId, Guid chatId)
