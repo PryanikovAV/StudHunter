@@ -56,11 +56,6 @@ const router = createRouter({
           component: () => import('@/views/InvitationsView.vue'),
         },
         {
-          path: 'messages',
-          name: 'student-messages',
-          component: () => import('@/views/student/MessagesView.vue'),
-        },
-        {
           path: 'favorites',
           name: 'student-favorites',
           component: () => import('@/views/FavoritesView.vue'),
@@ -74,6 +69,11 @@ const router = createRouter({
           path: 'resume',
           name: 'student-resume',
           component: () => import('@/views/student/ResumeView.vue'),
+        },
+        {
+          path: 'messages',
+          name: 'student-messages',
+          component: () => import('@/views/ChatView.vue'),
         },
       ],
     },
@@ -89,11 +89,6 @@ const router = createRouter({
           path: 'invitations',
           name: 'employer-invitations',
           component: () => import('@/views/InvitationsView.vue'),
-        },
-        {
-          path: 'messages',
-          name: 'employer-messages',
-          component: () => import('@/views/student/MessagesView.vue'),
         },
         {
           path: 'favorites',
@@ -119,6 +114,11 @@ const router = createRouter({
           path: 'vacancies/:id/edit',
           name: 'employer-vacancy-edit',
           component: () => import('@/views/employer/VacancyEditView.vue'),
+        },
+        {
+          path: 'messages',
+          name: 'employer-messages',
+          component: () => import('@/views/ChatView.vue'),
         },
         // {
         //   // Маршрут для результатов поиска (который вызываем из SearchBar)

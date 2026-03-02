@@ -28,7 +28,7 @@ public class AdminChatService(StudHunterDbContext context,
             .OrderByDescending(c => c.LastMessageAt)
             .ToPagedResultAsync(paging ?? new PaginationParams());
 
-        var dtos = pagedChats.Items.Select(c => ChatMapper.ToDto(c, targetUserId, false, false)).ToList();
+        var dtos = pagedChats.Items.Select(c => ChatMapper.ToDto(c, targetUserId, false, false, 0)).ToList();
 
         return Result<PagedResult<ChatDto>>.Success(new PagedResult<ChatDto>(
             dtos, pagedChats.TotalCount, pagedChats.PageNumber, pagedChats.PageSize));

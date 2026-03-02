@@ -5,30 +5,7 @@ import apiClient from '@/api'
 import AppCard from '@/components/AppCard.vue'
 import AppTagAutocomplete from '@/components/AppTagAutocomplete.vue'
 import SecuritySettingsCard from '@/components/SecuritySettingsCard.vue'
-
-interface StudentProfileDto {
-  id: string
-  email: string
-  firstName: string
-  lastName: string
-  patronymic: string | null
-  contactPhone: string | null
-  contactEmail: string | null
-  cityId: string | null
-  gender: 'Male' | 'Female' | null
-  birthDate: string | null
-  avatarUrl: string | null
-  isForeign: boolean
-  status: 'Studying' | 'SeekingJob' | 'SeekingInternship' | 'Interning' | 'Working'
-  universityId: string | null
-  facultyId: string | null
-  departmentId: string | null
-  studyDirectionId: string | null
-  courseNumber: number
-  studyForm: 'FullTime' | 'PartTime' | 'Correspondence'
-  courseIds: string[]
-  courses: { id: string; name: string }[]
-}
+import type { StudentProfileDto } from '@/types/student'
 
 const profile = ref<StudentProfileDto | null>(null)
 const isLoading = ref(true)
@@ -44,11 +21,11 @@ const handleUpdatePassword = async (payload: { currentPassword: string; newPassw
   isSavingPassword.value = true
   try {
     await apiClient.put('/student/me/password', payload)
-    alert('Пароль успешно изменен!')
+    window.alert('Пароль успешно изменен!')
     if (securityCardRef.value) securityCardRef.value.resetPasswordForm()
   } catch (error) {
     console.error('Ошибка изменения пароля', error)
-    alert('Не удалось изменить пароль. Проверьте текущий пароль.')
+    window.alert('Не удалось изменить пароль. Проверьте текущий пароль.')
   } finally {
     isSavingPassword.value = false
   }
@@ -64,7 +41,7 @@ const handleDeleteAccount = async (password: string) => {
     router.push('/login')
   } catch (error) {
     console.error('Ошибка удаления аккаунта', error)
-    alert('Не удалось удалить аккаунт. Проверьте пароль.')
+    window.alert('Не удалось удалить аккаунт. Проверьте пароль.')
   } finally {
     isDeleting.value = false
   }
@@ -167,10 +144,10 @@ const saveProfile = async () => {
       courseIds: profile.value.courses.map((c) => c.id),
     }
     await apiClient.put('/students/me/profile', payload)
-    alert('Профиль успешно обновлен')
+    window.alert('Профиль успешно обновлен')
   } catch (error) {
     console.error('Ошибка сохранения', error)
-    alert('Не удалось сохранить изменения')
+    window.alert('Не удалось сохранить изменения')
   } finally {
     isSaving.value = false
   }
@@ -180,7 +157,7 @@ onMounted(fetchProfile)
 </script>
 
 <template>
-  <div class="profile-page">
+  <div class="page-narrow">
     <h1 class="page-title">Настройки профиля</h1>
 
     <div v-if="isLoading" class="loading">Загрузка...</div>
@@ -371,14 +348,6 @@ onMounted(fetchProfile)
 </template>
 
 <style scoped>
-.profile-page {
-  max-width: 800px;
-  margin: 0 auto;
-}
-.page-title {
-  margin-bottom: 24px;
-  color: var(--dark-text);
-}
 .settings-layout {
   display: flex;
   flex-direction: column;

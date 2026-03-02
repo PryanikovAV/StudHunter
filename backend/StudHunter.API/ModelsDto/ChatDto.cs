@@ -15,7 +15,8 @@ public record ChatDto(
     string LastMessage,
     DateTime? LastMessageAt,
     bool IsBlockedByMe,
-    bool IsBlockedByInterlocutor
+    bool IsBlockedByInterlocutor,
+    int UnreadCount
 );
 
 public record MessageDto(
@@ -63,7 +64,7 @@ public static class ChatMapper
         );
     }
 
-    public static ChatDto ToDto(Chat chat, Guid currentUserId, bool isBlockedByMe = false, bool isBlockedByInterlocutor = false)
+    public static ChatDto ToDto(Chat chat, Guid currentUserId, bool isBlockedByMe = false, bool isBlockedByInterlocutor = false, int unreadCount = 0)
     {
         var interlocutor = chat.User1Id == currentUserId ? chat.User2 : chat.User1;
 
@@ -73,7 +74,8 @@ public static class ChatMapper
             chat.Messages.OrderByDescending(m => m.SentAt).FirstOrDefault()?.Content ?? "Нет сообщений",
             chat.LastMessageAt,
             isBlockedByMe,
-            isBlockedByInterlocutor
+            isBlockedByInterlocutor,
+            unreadCount
         );
     }
 

@@ -4,25 +4,7 @@ import { useRouter } from 'vue-router'
 import apiClient from '@/api'
 import AppCard from '@/components/AppCard.vue'
 import SecuritySettingsCard from '@/components/SecuritySettingsCard.vue'
-
-interface EmployerDto {
-  id: string
-  email: string
-  name: string
-  cityId: string | null
-  cityName: string | null
-  contactPhone: string | null
-  contactEmail: string | null
-  avatarUrl: string | null
-  description: string | null
-  website: string | null
-  specializationId: string | null
-  inn: string | null
-  ogrn: string | null
-  kpp: string | null
-  legalAddress: string | null
-  actualAddress: string | null
-}
+import type { EmployerDto } from '@/types/employer'
 
 const profile = ref<EmployerDto | null>(null)
 const isLoading = ref(true)
@@ -38,11 +20,11 @@ const handleUpdatePassword = async (payload: { currentPassword: string; newPassw
   isSavingPassword.value = true
   try {
     await apiClient.put('/employers/me/password', payload)
-    alert('Пароль успешно изменен!')
+    window.alert('Пароль успешно изменен!')
     if (securityCardRef.value) securityCardRef.value.resetPasswordForm()
   } catch (error) {
     console.error('Ошибка изменения пароля', error)
-    alert('Не удалось изменить пароль. Проверьте текущий пароль.')
+    window.alert('Не удалось изменить пароль. Проверьте текущий пароль.')
   } finally {
     isSavingPassword.value = false
   }
@@ -58,7 +40,7 @@ const handleDeleteAccount = async (password: string) => {
     router.push('/login')
   } catch (error) {
     console.error('Ошибка удаления', error)
-    alert('Не удалось удалить аккаунт. Возможно, неверный пароль.')
+    window.alert('Не удалось удалить аккаунт. Возможно, неверный пароль.')
   } finally {
     isDeleting.value = false
   }
@@ -72,10 +54,17 @@ const dictionaries = ref({
 const fetchProfile = async () => {
   try {
     isLoading.value = true
-    const response = await apiClient.get<EmployerDto>('/employers/me/profile')
-    profile.value = response.data
+    const [profileRes, citiesRes, specsRes] = await Promise.all([
+      apiClient.get<EmployerDto>('/employers/me/profile'),
+      apiClient.get('/dictionaries/cities'),
+      apiClient.get('/dictionaries/specializations'),
+    ])
+
+    profile.value = profileRes.data
+    dictionaries.value.cities = citiesRes.data
+    dictionaries.value.specializations = specsRes.data
   } catch (error) {
-    console.error('Ошибка загрузки профиля компании', error)
+    console.error('Ошибка загрузки профиля или словарей', error)
   } finally {
     isLoading.value = false
   }
@@ -100,10 +89,10 @@ const saveProfileData = async () => {
       actualAddress: profile.value.actualAddress,
     }
     await apiClient.put('/employers/me/profile', payload)
-    alert('Профиль компании успешно обновлен!')
+    window.alert('Профиль компании успешно обновлен!')
   } catch (error) {
     console.error('Ошибка сохранения профиля', error)
-    alert('Не удалось сохранить изменения.')
+    window.alert('Не удалось сохранить изменения.')
   } finally {
     isSavingProfile.value = false
   }
@@ -113,7 +102,7 @@ onMounted(fetchProfile)
 </script>
 
 <template>
-  <div class="profile-page">
+  <div class="page-narrow">
     <h1 class="page-title">Настройки профиля</h1>
 
     <div v-if="isLoading" class="loading">Загрузка данных...</div>
@@ -241,14 +230,6 @@ onMounted(fetchProfile)
 </template>
 
 <style scoped>
-.profile-page {
-  max-width: 800px;
-  margin: 0 auto;
-}
-.page-title {
-  margin-bottom: 24px;
-  color: var(--dark-text);
-}
 .settings-layout {
   display: flex;
   flex-direction: column;

@@ -44,13 +44,23 @@ public class ChatService(StudHunterDbContext context,
             .OrderByDescending(c => c.LastMessageAt)
             .ToPagedResultAsync(paging ?? new PaginationParams());
 
+        var chatIds = pagedChats.Items.Select(c => c.Id).ToList();
+
+        var unreadCounts = await _context.Messages
+            .Where(m => chatIds.Contains(m.ChatId) && m.ReceiverId == userId && !m.IsRead)
+            .GroupBy(m => m.ChatId)
+            .Select(g => new { ChatId = g.Key, Count = g.Count() })
+            .ToDictionaryAsync(x => x.ChatId, x => x.Count);
+
         var dtos = pagedChats.Items.Select(c =>
         {
             var interlocutorId = c.User1Id == userId ? c.User2Id : c.User1Id;
             bool isBlockedByMe = blockedByMe.Contains(interlocutorId);
             bool isBlockedByInterlocutor = blockedByOthers.Contains(interlocutorId);
 
-            return ChatMapper.ToDto(c, userId, isBlockedByMe, isBlockedByInterlocutor);
+            int unread = unreadCounts.GetValueOrDefault(c.Id, 0);
+
+            return ChatMapper.ToDto(c, userId, isBlockedByMe, isBlockedByInterlocutor, unread);
         }).ToList();
 
         var pageResult = new PagedResult<ChatDto>(dtos, pagedChats.TotalCount, pagedChats.PageNumber, pagedChats.PageSize);

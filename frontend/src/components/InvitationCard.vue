@@ -36,6 +36,12 @@ const currentUserRole = computed(() => (localStorage.getItem('userRole') || '').
 const isStudent = computed(() => currentUserRole.value === 'student')
 const isEmployer = computed(() => currentUserRole.value === 'employer')
 
+const targetUserId = computed(() => {
+  if (isStudent.value) return props.invitation.job.employerId
+  if (isEmployer.value) return props.invitation.candidate.studentId
+  return null
+})
+
 const formattedDate = computed(() => {
   return new Date(props.invitation.sentAt).toLocaleDateString('ru-RU', {
     day: 'numeric',
@@ -171,7 +177,10 @@ const titleText = computed(() => {
       </template>
 
       <template v-if="invitation.status === 'Accepted'">
-        <button class="btn-main btn-outline" @click="$emit('chat', invitation.id)">
+        <button
+          class="btn-main btn-outline"
+          @click="$emit('chat', { invitationId: invitation.id, receiverId: targetUserId })"
+        >
           Написать в чат
         </button>
       </template>

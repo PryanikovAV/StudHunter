@@ -3,28 +3,8 @@ import { ref, onMounted, watch } from 'vue'
 import apiClient from '@/api'
 import AppCard from '@/components/AppCard.vue'
 import IconBuilding from '@/components/icons/IconBuilding.vue'
+import type { FavoriteCardDto, BlackListDto } from '@/types/favorite'
 
-// --- ИНТЕРФЕЙСЫ ---
-interface FavoriteCardDto {
-  id: string
-  targetId: string
-  type: 'Vacancy' | 'Student' | 'Employer'
-  title: string
-  subtitle: string | null
-  avatarUrl: string | null
-  addedAt: string
-}
-
-interface BlackListDto {
-  id: string
-  blockedUserId: string
-  displayName: string
-  avatarUrl: string | null
-  role: string
-  blockedAt: string
-}
-
-// --- СОСТОЯНИЕ ---
 const activeTab = ref<'favorites' | 'blacklist'>('favorites')
 
 const favorites = ref<FavoriteCardDto[]>([])
@@ -34,7 +14,6 @@ const isLoading = ref(true)
 
 const enumTypeMap: Record<string, number> = { Vacancy: 0, Student: 1, Employer: 2 }
 
-// --- ЗАГРУЗКА ДАННЫХ ---
 const fetchData = async () => {
   isLoading.value = true
   try {
@@ -52,10 +31,8 @@ const fetchData = async () => {
   }
 }
 
-// Перезагружаем данные при переключении вкладки
 watch(activeTab, fetchData)
 
-// --- ДЕЙСТВИЯ: ИЗБРАННОЕ ---
 const removeFavorite = async (fav: FavoriteCardDto) => {
   const index = favorites.value.findIndex((f) => f.id === fav.id)
   if (index === -1) return
@@ -72,11 +49,10 @@ const removeFavorite = async (fav: FavoriteCardDto) => {
   } catch (error) {
     console.error('Ошибка удаления из закладок:', error)
     favorites.value.splice(index, 0, removedItem)
-    alert('Не удалось удалить из закладок.')
+    window.alert('Не удалось удалить из закладок.')
   }
 }
 
-// --- ДЕЙСТВИЯ: ЧЕРНЫЙ СПИСОК ---
 const unblockUser = async (user: BlackListDto) => {
   const index = blacklist.value.findIndex((b) => b.id === user.id)
   if (index === -1) return
@@ -85,12 +61,11 @@ const unblockUser = async (user: BlackListDto) => {
   blacklist.value.splice(index, 1)
 
   try {
-    // В контроллере: POST api/v1/blacklist/toggle/{blockedUserId}?shouldBlock=false
     await apiClient.post(`/blacklist/toggle/${user.blockedUserId}?shouldBlock=false`)
   } catch (error) {
     console.error('Ошибка разблокировки:', error)
     blacklist.value.splice(index, 0, removedItem)
-    alert('Не удалось разблокировать пользователя.')
+    window.alert('Не удалось разблокировать пользователя.')
   }
 }
 
@@ -119,26 +94,24 @@ onMounted(fetchData)
 </script>
 
 <template>
-  <div class="favorites-page">
-    <div class="page-header">
-      <h1 class="page-title">Связи и предпочтения</h1>
+  <div class="page-narrow">
+    <h1 class="page-title">Связи и предпочтения</h1>
 
-      <div class="tabs-container">
-        <button
-          class="tab-btn"
-          :class="{ active: activeTab === 'favorites' }"
-          @click="activeTab = 'favorites'"
-        >
-          Избранное
-        </button>
-        <button
-          class="tab-btn"
-          :class="{ active: activeTab === 'blacklist' }"
-          @click="activeTab = 'blacklist'"
-        >
-          Черный список
-        </button>
-      </div>
+    <div class="tabs-container">
+      <button
+        class="tab-btn"
+        :class="{ active: activeTab === 'favorites' }"
+        @click="activeTab = 'favorites'"
+      >
+        Избранное
+      </button>
+      <button
+        class="tab-btn"
+        :class="{ active: activeTab === 'blacklist' }"
+        @click="activeTab = 'blacklist'"
+      >
+        Черный список
+      </button>
     </div>
 
     <div v-if="isLoading" class="loading">Загрузка...</div>
@@ -220,26 +193,12 @@ onMounted(fetchData)
 </template>
 
 <style scoped>
-.favorites-page {
-  max-width: 850px;
-  margin: 0 auto;
-  padding-bottom: 40px;
-}
-.page-header {
-  margin-bottom: 24px;
-}
-.page-title {
-  font-size: 28px;
-  color: var(--dark-text);
-  margin-bottom: 16px;
-}
-
-/* Стили для вкладок */
 .tabs-container {
   display: flex;
   gap: 8px;
   border-bottom: 2px solid var(--gray-border);
   padding-bottom: 0;
+  margin-bottom: 24px;
 }
 .tab-btn {
   background: none;
@@ -260,7 +219,7 @@ onMounted(fetchData)
 .tab-btn.active {
   color: var(--susu-blue);
 }
-/* Анимированная полоска под активной вкладкой */
+
 .tab-btn.active::after {
   content: '';
   position: absolute;
@@ -288,7 +247,6 @@ onMounted(fetchData)
   gap: 16px;
 }
 
-/* Карточка */
 .fav-card {
   padding: 20px 24px;
   display: flex !important;
@@ -309,7 +267,6 @@ onMounted(fetchData)
   min-width: 0;
 }
 
-/* Аватар */
 .avatar-block {
   width: 64px;
   height: 64px;
@@ -346,7 +303,6 @@ onMounted(fetchData)
   opacity: 0.7;
 }
 
-/* Информация */
 .info-block {
   display: flex;
   flex-direction: column;
@@ -401,7 +357,7 @@ onMounted(fetchData)
   width: 140px;
   flex-shrink: 0;
 }
-/* Если кнопка только одна (в Черном списке), можно отцентрировать её по вертикали */
+
 .single-action {
   justify-content: center;
 }
@@ -413,7 +369,6 @@ onMounted(fetchData)
   font-size: 14px;
 }
 
-/* Адаптив */
 @media (max-width: 640px) {
   .fav-card {
     flex-direction: column !important;

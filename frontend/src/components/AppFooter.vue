@@ -43,27 +43,22 @@ import IconTranslate from '@/components/icons/IconTranslate.vue'
 .app-footer {
   padding: 40px 0 60px;
 }
-
 .footer-actions {
   display: flex;
   flex-direction: column;
-  align-items: flex-start; /* Выравнивание по левому краю */
-  gap: 4px; /* Расстояние между кнопками */
+  align-items: flex-start;
+  gap: 4px;
 }
-
-/* Сетка для правового текста */
 .footer-legal {
   display: grid;
   grid-template-columns: 1fr 1fr;
   gap: 40px;
 }
-
 .legal-column {
   font-size: 12px;
-  color: var(--gray-text); /* Серый цвет текста */
+  color: var(--gray-text);
   line-height: 1.6;
 }
-
 @media (max-width: 768px) {
   .footer-legal {
     grid-template-columns: 1fr;

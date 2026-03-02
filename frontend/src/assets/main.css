@@ -14,6 +14,11 @@
   --background-field: #ffffff;
   --header-dark-theme: #0f172a;
 }
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
 
 body {
   font-family:
@@ -130,7 +135,28 @@ body {
   flex-shrink: 0;
   display: block;
 }
-/* Если нужно скрыть на мобильном или десктопе */
+
 .hidden {
   display: none !important;
+}
+
+.layout-wrapper {
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
+}
+
+.layout-content {
+  padding: 24px 0 60px 0;
+  flex-grow: 1;
+}
+
+.search-bar-wrapper {
+  padding: 16px 0;
+}
+
+.page-narrow {
+  max-width: 900px;
+  width: 100%;
+  margin: 0 auto;
 }

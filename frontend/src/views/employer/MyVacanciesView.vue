@@ -3,15 +3,7 @@ import { ref, computed, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import apiClient from '@/api'
 import AppCard from '@/components/AppCard.vue'
-
-interface VacancyListDto {
-  id: string
-  title: string
-  salary: number | null
-  type: string
-  updatedAt: string
-  isDeleted: boolean
-}
+import type { VacancyListDto } from '@/types/vacancy' // Импортируем тип
 
 const router = useRouter()
 const vacancies = ref<VacancyListDto[]>([])
@@ -75,10 +67,13 @@ onMounted(fetchVacancies)
 </script>
 
 <template>
-  <div class="vacancies-page">
-    <div class="page-header">
-      <h1 class="page-title" style="margin: 0">Мои вакансии</h1>
-      <button class="btn-main btn-dark" @click="router.push('/employer/vacancies/create')">
+  <div class="page-narrow">
+    <div class="header-row">
+      <h1 class="page-title" style="margin-bottom: 0">Мои вакансии</h1>
+      <button
+        class="btn-main btn-dark compact-btn"
+        @click="router.push('/employer/vacancies/create')"
+      >
         + Создать вакансию
       </button>
     </div>
@@ -149,16 +144,20 @@ onMounted(fetchVacancies)
 </template>
 
 <style scoped>
-.vacancies-page {
-  max-width: 900px;
-  margin: 0 auto;
-}
+/* Удалили .vacancies-page */
 
-.page-header {
+.header-row {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-bottom: 24px;
+  margin-bottom: 24px; /* Стандартный отступ после заголовка */
+}
+
+/* Переопределяем стили кнопки, чтобы она была компактной и не ломала высоту */
+.compact-btn {
+  height: 36px !important;
+  padding: 0 16px !important;
+  font-size: 14px !important;
 }
 
 .tabs {

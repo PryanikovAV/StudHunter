@@ -49,20 +49,22 @@ const handleSearch = () => {
   gap: 12px;
   width: 100%;
   align-items: center;
+  margin: 0;
 }
 
 .input-wrapper {
   position: relative;
-  width: 100%;
-  flex-grow: 1;
+  flex: 1 1 auto;
   display: flex;
   align-items: center;
+  min-width: 0;
 }
 
 .search-input {
-  border-radius: 100px;
-  padding-left: 48px;
-  padding-right: 48px;
+  width: 100% !important;
+  border-radius: 100px !important;
+  padding-left: 48px !important;
+  padding-right: 48px !important;
 }
 
 :deep(.search-input::placeholder) {
@@ -100,6 +102,8 @@ const handleSearch = () => {
 .search-submit-btn {
   min-width: 120px;
   font-weight: 600;
+  margin: 0 !important;
+  flex-shrink: 0;
 }
 
 @media (max-width: 640px) {

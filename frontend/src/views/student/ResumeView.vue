@@ -5,38 +5,7 @@ import AppCard from '@/components/AppCard.vue'
 import AppInput from '@/components/AppInput.vue'
 import AppTagAutocomplete from '@/components/AppTagAutocomplete.vue'
 import { calculateAge } from '@/utils/dateUtils'
-
-interface StudentProfileDto {
-  firstName: string
-  lastName: string
-  patronymic: string | null
-  contactPhone: string | null
-  contactEmail: string | null
-  cityId: string | null
-  gender: 'Male' | 'Female' | null
-  birthDate: string | null
-  universityId: string | null
-  facultyId: string | null
-  departmentId: string | null
-  studyDirectionId: string | null
-  courseNumber: number
-  studyForm: 'FullTime' | 'PartTime' | 'Correspondence'
-  courses: { id: string; name: string }[]
-}
-
-interface ResumeFillDto {
-  id?: string | null
-  title: string
-  description: string | null
-  isDeleted: boolean // Добавлено поле из обновленного DTO
-  skillIds: string[]
-  skills: { id: string; name: string }[]
-}
-
-interface DictionaryItem {
-  id: string
-  name: string
-}
+import type { StudentProfileDto, ResumeFillDto, DictionaryItem } from '@/types/student' // Импортируем типы
 
 const profile = ref<StudentProfileDto | null>(null)
 const resume = ref<ResumeFillDto>({
@@ -57,7 +26,7 @@ const dictionaries = ref({
 
 const isLoading = ref(true)
 const isSaving = ref(false)
-const isActionLoading = ref(false) // Отдельный флаг для скрытия/восстановления
+const isActionLoading = ref(false)
 
 const getDictName = (dict: DictionaryItem[], id: string | null | undefined): string | null => {
   if (!id) return null
@@ -125,19 +94,18 @@ const saveResume = async () => {
     }
 
     await apiClient.put('/my-resume', payload)
-    alert('Резюме успешно сохранено!')
+    window.alert('Резюме успешно сохранено!')
   } catch (error) {
     console.error('Ошибка сохранения', error)
-    alert('Не удалось сохранить резюме.')
+    window.alert('Не удалось сохранить резюме.')
   } finally {
     isSaving.value = false
   }
 }
 
-// Новая логика: Скрытие резюме (Delete)
 const hideResume = async () => {
   if (
-    !confirm(
+    !window.confirm(
       'Вы уверены, что хотите скрыть резюме? Оно больше не будет доступно для поиска работодателями.',
     )
   )
@@ -149,13 +117,12 @@ const hideResume = async () => {
     resume.value.isDeleted = true
   } catch (error) {
     console.error('Ошибка скрытия', error)
-    alert('Не удалось скрыть резюме.')
+    window.alert('Не удалось скрыть резюме.')
   } finally {
     isActionLoading.value = false
   }
 }
 
-// Новая логика: Восстановление резюме (Restore)
 const restoreResume = async () => {
   isActionLoading.value = true
   try {
@@ -163,7 +130,7 @@ const restoreResume = async () => {
     resume.value.isDeleted = false
   } catch (error) {
     console.error('Ошибка восстановления', error)
-    alert('Не удалось восстановить резюме.')
+    window.alert('Не удалось восстановить резюме.')
   } finally {
     isActionLoading.value = false
   }
@@ -173,7 +140,7 @@ onMounted(fetchData)
 </script>
 
 <template>
-  <div class="resume-page">
+  <div class="page-narrow">
     <h1 class="page-title">Моё резюме</h1>
 
     <div v-if="isLoading" class="loading">Загрузка данных...</div>
@@ -346,17 +313,11 @@ onMounted(fetchData)
 </template>
 
 <style scoped>
-.resume-page {
-  max-width: 850px;
-  margin: 0 auto;
-  padding-bottom: 40px;
-}
 .page-title {
   margin-bottom: 24px;
   color: var(--dark-text);
 }
 
-/* Баннер удаления */
 .deleted-banner {
   background-color: #f8fafc;
   border: 1px solid var(--gray-border);
@@ -371,7 +332,6 @@ onMounted(fetchData)
   color: var(--gray-text-focus);
 }
 
-/* Карточка А4 */
 .resume-sheet {
   padding: 40px;
   transition: all 0.3s ease;

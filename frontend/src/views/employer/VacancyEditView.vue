@@ -5,18 +5,7 @@ import apiClient from '@/api'
 import AppCard from '@/components/AppCard.vue'
 import AppInput from '@/components/AppInput.vue'
 import AppTagAutocomplete from '@/components/AppTagAutocomplete.vue'
-
-interface VacancyFillDto {
-  id?: string | null
-  title: string
-  description: string | null
-  salary: number | null
-  type: string
-  skillIds: string[]
-  courseIds: string[]
-  skills: { id: string; name: string }[]
-  courses: { id: string; name: string }[]
-}
+import type { VacancyFillDto } from '@/types/vacancy'
 
 const route = useRoute()
 const router = useRouter()
@@ -55,7 +44,7 @@ const loadVacancy = async () => {
     if (!vacancy.value.courses) vacancy.value.courses = []
   } catch (error) {
     console.error('Ошибка загрузки вакансии:', error)
-    alert('Не удалось загрузить вакансию')
+    window.alert('Не удалось загрузить вакансию')
     router.push('/employer/vacancies')
   } finally {
     isLoading.value = false
@@ -82,7 +71,7 @@ const saveVacancy = async () => {
     router.push('/employer/vacancies')
   } catch (error) {
     console.error('Ошибка сохранения:', error)
-    alert('Не удалось сохранить вакансию. Проверьте правильность полей.')
+    window.alert('Не удалось сохранить вакансию. Проверьте правильность полей.')
   } finally {
     isSaving.value = false
   }
@@ -92,10 +81,13 @@ onMounted(loadVacancy)
 </script>
 
 <template>
-  <div class="vacancy-edit-page">
+  <div class="page-narrow">
     <div class="page-header">
-      <button class="btn-main btn-secondary" @click="router.push('/employer/vacancies')">
-        ← К списку вакансий
+      <button
+        class="btn-main btn-secondary compact-btn"
+        @click="router.push('/employer/vacancies')"
+      >
+        ← К списку
       </button>
       <h1 class="page-title" style="margin: 0">
         {{ isEditMode ? 'Редактирование вакансии' : 'Новая вакансия' }}
@@ -179,16 +171,17 @@ onMounted(loadVacancy)
 </template>
 
 <style scoped>
-.vacancy-edit-page {
-  max-width: 800px;
-  margin: 0 auto;
-}
-
 .page-header {
   display: flex;
   align-items: center;
-  gap: 24px;
+  gap: 16px;
   margin-bottom: 24px;
+}
+
+.compact-btn {
+  height: 36px !important;
+  padding: 0 16px !important;
+  font-size: 14px !important;
 }
 
 .form-card {

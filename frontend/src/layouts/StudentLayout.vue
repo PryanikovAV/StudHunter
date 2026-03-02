@@ -16,36 +16,17 @@ const handleStudentSearch = (query: string) => {
 </script>
 
 <template>
-  <div class="student-layout-wrapper">
+  <div class="layout-wrapper">
     <StudentHero />
 
-    <div class="student-search-bar">
-      <div class="container" style="margin-top: 16px">
+    <div class="search-bar-wrapper">
+      <div class="container">
         <SearchBar placeholder="Профессия, должность или компания" @search="handleStudentSearch" />
       </div>
     </div>
 
-    <main class="student-content">
-      <div class="container">
-        <router-view />
-      </div>
+    <main class="layout-content">
+      <router-view />
     </main>
   </div>
 </template>
-
-<style scoped>
-.student-layout-wrapper {
-  display: flex;
-  flex-direction: column;
-  min-height: 100vh;
-}
-
-.student-content {
-  padding: 24px 0 60px 0;
-  flex-grow: 1;
-}
-
-.student-search-bar {
-  padding: 16px 0;
-}
-</style>

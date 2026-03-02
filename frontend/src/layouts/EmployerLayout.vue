@@ -24,10 +24,10 @@ const refreshHero = () => {
 </script>
 
 <template>
-  <div class="employer-layout-wrapper">
+  <div class="layout-wrapper">
     <EmployerHero ref="heroRef" />
 
-    <div class="employer-search-bar">
+    <div class="search-bar-wrapper">
       <div class="container" style="margin-top: 16px">
         <SearchBar
           placeholder="Навык, профессия, ВУЗ или имя студента"
@@ -36,27 +36,8 @@ const refreshHero = () => {
       </div>
     </div>
 
-    <main class="employer-content">
-      <div class="container">
-        <router-view @update-hero="refreshHero" />
-      </div>
+    <main class="layout-content">
+      <router-view @update-hero="refreshHero" />
     </main>
   </div>
 </template>
-
-<style scoped>
-.employer-layout-wrapper {
-  display: flex;
-  flex-direction: column;
-  min-height: 100vh;
-}
-
-.employer-content {
-  padding: 24px 0 60px 0;
-  flex-grow: 1;
-}
-
-.employer-search-bar {
-  padding: 16px 0;
-}
-</style>

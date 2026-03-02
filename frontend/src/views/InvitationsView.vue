@@ -1,36 +1,11 @@
 <script setup lang="ts">
 import { ref, computed, onMounted } from 'vue'
+import { useRouter } from 'vue-router'
 import apiClient from '@/api'
 import InvitationCard from '@/components/InvitationCard.vue'
+import type { InvitationCardDto } from '@/types/invitation'
 
-interface InvitationCandidateDto {
-  studentId: string
-  fullName: string
-  courseNumber: number | null
-  universityAbbreviation: string | null
-  skills: string[]
-  resumeId: string | null
-}
-
-interface InvitationJobDto {
-  employerId: string
-  companyName: string
-  vacancyTitle: string | null
-  salary: number | null
-  vacancyId: string | null
-}
-
-interface InvitationCardDto {
-  id: string
-  status: string
-  type: string
-  direction: string
-  sentAt: string
-  message: string | null
-  candidate: InvitationCandidateDto
-  job: InvitationJobDto
-}
-
+const router = useRouter()
 const invitations = ref<InvitationCardDto[]>([])
 const isLoading = ref(true)
 const activeTab = ref<'incoming' | 'outgoing' | 'archive'>('incoming')
@@ -81,22 +56,28 @@ const changeStatus = async (id: string, action: 'accept' | 'reject' | 'cancel') 
     }
   } catch (error) {
     console.error(`Ошибка при ${action}:`, error)
-    alert('Не удалось изменить статус')
+    window.alert('Не удалось изменить статус') // Добавили window.
   }
 }
 
-const handleChat = (id: string) => {
-  alert(`Переход в чат для отклика ${id}`)
+const handleChat = (payload: { invitationId: string; receiverId: string }) => {
+  const role = (localStorage.getItem('userRole') || 'student').toLowerCase()
+
+  router.push({
+    name: `${role}-messages`,
+    query: {
+      receiverId: payload.receiverId,
+      invitationId: payload.invitationId,
+    },
+  })
 }
 
 onMounted(fetchInvitations)
 </script>
 
 <template>
-  <div class="invitations-page">
-    <div class="page-header">
-      <h1 class="page-title">Отклики и приглашения</h1>
-    </div>
+  <div class="page-narrow">
+    <h1 class="page-title">Отклики и приглашения</h1>
 
     <div class="tabs">
       <button
@@ -140,19 +121,6 @@ onMounted(fetchInvitations)
 </template>
 
 <style scoped>
-.invitations-page {
-  max-width: 900px;
-  margin: 0 auto;
-}
-.page-header {
-  margin-bottom: 24px;
-}
-.page-title {
-  margin: 0;
-  font-size: 24px;
-  color: var(--dark-text);
-}
-
 .tabs {
   display: flex;
   gap: 16px;

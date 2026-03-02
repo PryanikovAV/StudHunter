@@ -26,3 +26,15 @@ export function calculateAge(birthDate: string | Date | null | undefined): strin
 
   return `${age} лет`
 }
+
+export const formatChatTime = (dateString: string | null): string => {
+  if (!dateString) return ''
+  const date = new Date(dateString)
+  const now = new Date()
+
+  if (date.toDateString() === now.toDateString()) {
+    return date.toLocaleTimeString('ru-RU', { hour: '2-digit', minute: '2-digit' })
+  }
+
+  return date.toLocaleDateString('ru-RU', { day: 'numeric', month: 'short' })
+}
