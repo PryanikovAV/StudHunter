@@ -3,31 +3,25 @@ import { ref, onMounted, computed } from 'vue'
 import { calculateAge } from '@/utils/dateUtils'
 import apiClient from '@/api'
 import AppCard from '@/components/AppCard.vue'
-
-interface StudentHeroDto {
-  fullName: string
-  birthDate: string | null
-  avatarUrl: string | null
-  status: string
-  universityName: string | null
-  facultyName: string | null
-  departmentName: string | null
-  studyDirectionName: string | null
-  courseNumber: number | null
-}
+import type { StudentHeroDto } from '@/types/student'
 
 const heroData = ref<StudentHeroDto | null>(null)
 const isLoading = ref(true)
+const fileInput = ref<HTMLInputElement | null>(null)
+const isUploading = ref(false)
 
-onMounted(async () => {
+const fetchHeroData = async () => {
   try {
     const response = await apiClient.get<StudentHeroDto>('/students/me/hero')
     heroData.value = response.data
   } catch (err) {
     console.error('Hero load error:', err)
-  } finally {
-    isLoading.value = false
   }
+}
+
+onMounted(async () => {
+  await fetchHeroData()
+  isLoading.value = false
 })
 
 const ageDisplay = computed(() => calculateAge(heroData.value?.birthDate))
@@ -48,11 +42,16 @@ const statusMap: Record<string, string> = {
   SeekingJob: 'Ищу работу',
   Interning: 'На стажировке',
   Working: 'Работаю',
+  '1': 'Учусь',
+  '2': 'Ищу стажировку',
+  '3': 'Ищу работу',
+  '4': 'На стажировке',
+  '5': 'Работаю',
 }
 
 const statusText = computed(() => {
   if (!heroData.value?.status) return 'Статус не указан'
-  return statusMap[heroData.value.status] || heroData.value.status
+  return statusMap[heroData.value.status.toString()] || heroData.value.status
 })
 
 const formattedName = computed(() => {
@@ -63,11 +62,58 @@ const formattedName = computed(() => {
   }
   return heroData.value.fullName
 })
+
+const handleAvatarClick = () => {
+  if (!isUploading.value) fileInput.value?.click()
+}
+
+const handleFileSelect = async (event: Event) => {
+  const target = event.target as HTMLInputElement
+
+  const file = target.files?.[0]
+
+  if (!file) return
+
+  if (file.size > 5 * 1024 * 1024) {
+    window.alert('Размер файла не должен превышать 5 Мб')
+    return
+  }
+
+  isUploading.value = true
+  try {
+    const formData = new FormData()
+    formData.append('file', file)
+
+    const uploadRes = await apiClient.post('/files/images?type=avatars', formData, {
+      headers: { 'Content-Type': 'multipart/form-data' },
+    })
+
+    await apiClient.put('/students/me/avatar', {
+      avatarUrl: uploadRes.data.url,
+    })
+
+    await fetchHeroData()
+  } catch (error) {
+    console.error('Ошибка при обновлении аватара:', error)
+    window.alert('Не удалось обновить фотографию.')
+  } finally {
+    isUploading.value = false
+    if (fileInput.value) fileInput.value.value = ''
+  }
+}
 </script>
 
 <template>
   <div class="container" style="margin-top: 24px">
     <AppCard>
+      <input
+        type="file"
+        ref="fileInput"
+        accept="image/jpeg, image/png, image/webp"
+        style="display: none"
+        @change="handleFileSelect"
+      />
+
       <div class="hero-grid">
         <div v-if="isLoading" class="hero-message">Загрузка профиля...</div>
         <div v-else-if="!heroData" class="hero-message error">Данные не загружены</div>
@@ -95,9 +141,13 @@ const formattedName = computed(() => {
           </div>
 
           <div class="col-visual">
-            <div class="avatar">
+            <div class="avatar" @click="handleAvatarClick" :class="{ 'is-loading': isUploading }">
               <img v-if="heroData.avatarUrl" :src="heroData.avatarUrl" alt="Avatar" />
               <div v-else class="avatar-placeholder">{{ initials }}</div>
+
+              <div class="avatar-overlay">
+                <span class="overlay-text">{{ isUploading ? 'Загрузка...' : 'Изменить' }}</span>
+              </div>
             </div>
             <p class="status-text">{{ statusText }}</p>
           </div>
@@ -181,11 +231,13 @@ const formattedName = computed(() => {
 }
 
 .avatar {
+  position: relative;
   width: 80px;
   height: 80px;
   border-radius: 50%;
   overflow: hidden;
   background-color: var(--background-page);
+  cursor: pointer;
 }
 
 .avatar img {
@@ -200,10 +252,37 @@ const formattedName = computed(() => {
   display: flex;
   align-items: center;
   justify-content: center;
-  background-color: var(--gray-border);
-  color: var(--gray-text-focus);
+  background: linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%);
+  color: #fff;
   font-size: 24px;
   font-weight: 600;
+}
+
+.avatar-overlay {
+  position: absolute;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.6);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  opacity: 0;
+  transition: opacity 0.2s ease;
+}
+
+.avatar:hover .avatar-overlay {
+  opacity: 1;
+}
+
+.avatar.is-loading .avatar-overlay {
+  opacity: 1;
+  background: rgba(0, 0, 0, 0.8);
+}
+
+.overlay-text {
+  color: #fff;
+  font-size: 12px;
+  font-weight: 500;
+  text-align: center;
 }
 
 .status-text {

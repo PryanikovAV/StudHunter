@@ -13,6 +13,7 @@ public interface IAdminEmployerService
     Task<Result<AdminEmployerDto>> GetEmployerByIdAsync(Guid employerId);
     Task<Result<bool>> UpdateEmployerAsync(Guid employerId, UpdateEmployerDto dto);
     Task<Result<bool>> VerifyEmployerAsync(Guid employerId);
+    Task<Result<bool>> SetRegistrationStageAsync(Guid employerId, User.AccountStatus newStage);
     Task<Result<bool>> DeleteEmployerAsync(Guid employerId, bool hardDelete);
     Task<Result<bool>> RestoreEmployerAsync(Guid employerId);
 }
@@ -74,6 +75,22 @@ public class AdminEmployerService(StudHunterDbContext context, IRegistrationMana
         employer.RegistrationStage = User.AccountStatus.FullyActivated;
 
         _registrationManager.RecalculateRegistrationStage(employer);
+
+        return await SaveChangesAsync<Employer>();
+    }
+
+    // TODO: убрать на релизе, создан только для тестирования
+    public async Task<Result<bool>> SetRegistrationStageAsync(Guid employerId, User.AccountStatus newStage)
+    {
+        var employer = await GetEmployerQuery(ignoreFilters: true)
+            .FirstOrDefaultAsync(e => e.Id == employerId);
+
+        if (employer == null)
+            return Result<bool>.Failure(ErrorMessages.EntityNotFound(nameof(Employer)), StatusCodes.Status404NotFound);
+
+        employer.RegistrationStage = newStage;
+
+        // _registrationManager.RecalculateRegistrationStage(employer); 
 
         return await SaveChangesAsync<Employer>();
     }

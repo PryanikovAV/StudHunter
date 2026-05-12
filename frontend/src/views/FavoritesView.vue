@@ -49,7 +49,6 @@ const removeFavorite = async (fav: FavoriteCardDto) => {
   } catch (error) {
     console.error('Ошибка удаления из закладок:', error)
     favorites.value.splice(index, 0, removedItem)
-    window.alert('Не удалось удалить из закладок.')
   }
 }
 
@@ -65,11 +64,9 @@ const unblockUser = async (user: BlackListDto) => {
   } catch (error) {
     console.error('Ошибка разблокировки:', error)
     blacklist.value.splice(index, 0, removedItem)
-    window.alert('Не удалось разблокировать пользователя.')
   }
 }
 
-// --- ХЕЛПЕРЫ ДЛЯ ОТОБРАЖЕНИЯ ---
 const getRoute = (fav: FavoriteCardDto) => {
   if (fav.type === 'Vacancy') return `/vacancies/${fav.targetId}`
   if (fav.type === 'Student') return `/students/${fav.targetId}`

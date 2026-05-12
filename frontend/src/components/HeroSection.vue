@@ -91,7 +91,7 @@ const createResumeLink = isAuthenticated ? '/student/resume' : '/login'
   width: 100%;
   padding-bottom: 20px;
 }
-/* 3. Левая колонка */
+
 .hero-left {
   display: flex;
   flex-direction: column;
@@ -121,21 +121,18 @@ const createResumeLink = isAuthenticated ? '/student/resume' : '/login'
   color: var(--dark-text);
 }
 
-/* 4. Правая колонка */
 .hero-right {
   display: flex;
   flex-direction: column;
   align-items: flex-end;
 }
 
-/* Кнопки */
 .hero-actions {
   display: flex;
   gap: 15px;
   margin-bottom: 48px;
 }
 
-/* Статистика */
 .hero-stats {
   display: flex;
   gap: 40px;
@@ -163,7 +160,6 @@ const createResumeLink = isAuthenticated ? '/student/resume' : '/login'
   color: var(--dark-text);
 }
 
-/* Фоны */
 .hero-bg,
 .hero-overlay {
   position: absolute;
@@ -177,11 +173,7 @@ const createResumeLink = isAuthenticated ? '/student/resume' : '/login'
   opacity: 0.2;
   z-index: 1;
 }
-/* .hero-overlay {
-  background-color: var(--susu-blue);
-  opacity: 0.2;
-  z-index: 2;
-} */
+
 .hero-overlay {
   background: linear-gradient(90deg, rgba(255, 255, 255, 1) 0%, rgba(39, 88, 134, 0.7) 100%);
   opacity: 0.55;

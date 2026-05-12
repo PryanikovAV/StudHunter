@@ -6,7 +6,8 @@ namespace StudHunter.API.ModelsDto;
 public record ChatParticipantDto(
     Guid Id,
     string DisplayName,
-    string Role
+    string Role,
+    string? AvatarUrl
 );
 
 public record ChatDto(
@@ -43,7 +44,8 @@ public static class ChatMapper
             return new ChatParticipantDto(
                 Guid.Empty,
                 UserDefaultNames.DefaultDeletedAccountName,
-                "None"
+                "None",
+                null
             );
         }
 
@@ -60,7 +62,8 @@ public static class ChatMapper
         return new ChatParticipantDto(
             user.Id,
             displayedName,
-            role
+            role,
+            user.AvatarUrl
         );
     }
 

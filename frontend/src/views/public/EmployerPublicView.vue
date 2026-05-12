@@ -3,82 +3,49 @@ import { ref, onMounted, computed } from 'vue'
 import { useRoute } from 'vue-router'
 import apiClient from '@/api'
 import AppCard from '@/components/AppCard.vue'
-import IconBuilding from '@/components/icons/IconBuilding.vue'
 import BackButton from '@/components/BackButton.vue'
+import EmployerHero from '@/components/EmployerHero.vue'
 import InteractionButtons from '@/components/InteractionButtons.vue'
-
-interface EmployerHeroDto {
-  id: string
-  name: string
-  avatarUrl: string | null
-  cityName: string | null
-  specializationName: string | null
-  website: string | null
-  activeVacanciesCount: number
-  isFavorite?: boolean
-  isBlocked?: boolean
-}
-
-interface VacancySearchDto {
-  id: string
-  employerId: string
-  title: string
-  description: string | null
-  salary: number | null
-  type: string
-  updatedAt: string
-  employerName: string
-  specializationName: string | null
-  cityName: string | null
-  actualAddress: string | null
-  contactPhone: string | null
-  contactEmail: string | null
-  isDeleted: boolean
-  courses: string[]
-  skills: string[]
-  isFavorite?: boolean // Добавили для кнопок
-}
+import type { VacancySearchDto } from '@/types/employer'
 
 const route = useRoute()
 const employerId = computed(() => route.params.id as string)
 
-const employer = ref<EmployerHeroDto | null>(null)
 const vacancies = ref<VacancySearchDto[]>([])
 const isLoading = ref(true)
+const favoriteVacancyIds = ref<string[]>([])
 
 const role = computed(() => (localStorage.getItem('userRole') || '').toLowerCase())
+const isStudent = computed(() => role.value === 'student')
 
-const fetchEmployerData = async () => {
+const fetchFavorites = async () => {
+  if (!isStudent.value) return
   try {
-    const heroResponse = await apiClient.get<EmployerHeroDto>(`/employers/${employerId.value}/hero`)
-    employer.value = heroResponse.data
+    const favRes = await apiClient.get('/favorites')
+    const favItems = favRes.data.items || favRes.data
+    favoriteVacancyIds.value = favItems.map((f: { targetId: string }) => f.targetId)
+  } catch (error) {
+    console.error('Ошибка загрузки избранного:', error)
+  }
+}
 
+const fetchVacancies = async () => {
+  try {
     const vacResponse = await apiClient.get('/vacancies', {
-      params: {
-        EmployerId: employerId.value,
-      },
+      params: { EmployerId: employerId.value },
     })
 
-    vacancies.value = vacResponse.data.items || vacResponse.data
+    const rawVacancies = vacResponse.data.items || vacResponse.data
+    vacancies.value = rawVacancies.map((vac: VacancySearchDto) => ({
+      ...vac,
+      isFavorite: favoriteVacancyIds.value.includes(vac.id),
+    }))
   } catch (error) {
-    console.error('Ошибка загрузки данных компании:', error)
+    console.error('Ошибка загрузки вакансий:', error)
   } finally {
     isLoading.value = false
   }
 }
-
-const vacanciesText = computed(() => {
-  const count = employer.value?.activeVacanciesCount || 0
-  if (count === 0) return 'Нет активных вакансий'
-
-  const lastDigit = count % 10
-  const lastTwoDigits = count % 100
-
-  if (lastTwoDigits >= 11 && lastTwoDigits <= 14) return `${count} вакансий`
-  if (lastDigit === 1) return `${count} вакансия`
-  if (lastDigit >= 2 && lastDigit <= 4) return `${count} вакансии`
-  return `${count} вакансий`
-})
 
 const formatType = (type: string) => (type === 'Internship' ? 'Стажировка' : 'Работа')
 const formatDate = (dateString: string) =>
@@ -86,55 +53,24 @@ const formatDate = (dateString: string) =>
 const truncateText = (text: string | null, length: number = 180) =>
   text && text.length > length ? text.substring(0, length) + '...' : text
 
-onMounted(fetchEmployerData)
+onMounted(async () => {
+  await fetchFavorites()
+  await fetchVacancies()
+})
 </script>
 
 <template>
   <div class="public-view-page">
-    <BackButton />
-    <div v-if="isLoading" class="loading">Загрузка информации...</div>
+    <div class="container">
+      <BackButton />
+    </div>
 
-    <template v-else-if="employer">
-      <AppCard class="hero-compact-card">
-        <div class="hero-grid">
-          <div class="col-personal">
-            <h1 class="page-title">{{ employer.name }}</h1>
-            <div class="text-muted" v-if="employer.cityName">{{ employer.cityName }}</div>
+    <EmployerHero :employer-id="employerId" :readonly-mode="true" :show-interactions="isStudent" />
 
-            <div class="employer-actions" v-if="role === 'student'">
-              <InteractionButtons
-                :target-id="employer.id"
-                favorite-type="Employer"
-                :initial-is-favorite="employer.isFavorite"
-                :initial-is-blocked="employer.isBlocked"
-              />
-            </div>
-          </div>
+    <div class="vacancies-wrapper">
+      <div v-if="isLoading" class="loading mt-4">Загрузка вакансий...</div>
 
-          <div class="col-study">
-            <h2 class="uni-name" v-if="employer.specializationName">
-              {{ employer.specializationName }}
-            </h2>
-            <div class="study-info" v-if="employer.website">
-              <a :href="employer.website" target="_blank" class="website-link">
-                {{ employer.website.replace(/^https?:\/\//, '') }}
-              </a>
-            </div>
-          </div>
-
-          <div class="col-visual">
-            <div class="avatar">
-              <img v-if="employer.avatarUrl" :src="employer.avatarUrl" alt="Company Logo" />
-              <div v-else class="avatar-placeholder">
-                <IconBuilding class="icon-large" />
-              </div>
-            </div>
-            <p class="status-text">{{ vacanciesText }}</p>
-          </div>
-        </div>
-      </AppCard>
-
-      <div class="vacancies-section">
+      <div class="vacancies-section" v-else>
         <h2 class="section-heading">Открытые вакансии</h2>
 
         <div v-if="vacancies.length === 0" class="empty-state">
@@ -164,20 +100,21 @@ onMounted(fetchEmployerData)
               class="tags-wrapper"
               v-if="(vac.skills && vac.skills.length) || (vac.courses && vac.courses.length)"
             >
-              <span v-for="skill in vac.skills?.slice(0, 5)" :key="skill" class="static-tag">{{
-                skill
-              }}</span>
+              <span v-for="skill in vac.skills?.slice(0, 5)" :key="skill" class="static-tag">
+                {{ skill }}
+              </span>
               <span
                 v-for="course in vac.courses?.slice(0, 3)"
                 :key="course"
                 class="static-tag course-tag"
-                >{{ course }}</span
               >
+                {{ course }}
+              </span>
             </div>
 
             <div class="vacancy-footer">
               <InteractionButtons
-                v-if="role === 'student'"
+                v-if="isStudent"
                 :target-id="vac.id"
                 favorite-type="Vacancy"
                 :initial-is-favorite="vac.isFavorite"
@@ -190,120 +127,43 @@ onMounted(fetchEmployerData)
           </AppCard>
         </div>
       </div>
-    </template>
-
-    <div v-else class="empty-state">Компания не найдена.</div>
+    </div>
   </div>
 </template>
 
 <style scoped>
 .public-view-page {
-  max-width: 900px;
-  margin: 0 auto;
   padding-top: 24px;
   padding-bottom: 40px;
-}
-
-.hero-compact-card {
-  padding: 24px 32px;
-  margin-bottom: 32px;
-}
-.hero-grid {
-  display: grid;
-  grid-template-columns: 1fr 1.5fr 100px;
-  gap: 16px;
-  align-items: center;
-}
-.col-personal {
-  display: flex;
-  flex-direction: column;
-  gap: 4px;
-}
-.page-title {
-  margin: 0;
-  font-size: 26px;
-  color: var(--dark-text);
-  font-weight: 700;
-}
-.text-muted {
-  font-size: 15px;
-  color: var(--gray-text);
-}
-
-.employer-actions {
-  margin-top: 8px;
-}
-
-.col-study {
-  display: flex;
-  flex-direction: column;
-}
-.uni-name {
-  font-size: 18px;
-  font-weight: 600;
-  color: var(--dark-text);
-  margin: 0 0 6px 0;
-}
-.website-link {
-  font-size: 15px;
-  font-weight: 500;
-  color: var(--susu-blue);
-  text-decoration: none;
-}
-.website-link:hover {
-  text-decoration: underline;
-}
-.col-visual {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 8px;
-}
-.avatar {
-  width: 80px;
-  height: 80px;
-  border-radius: 12px;
-  overflow: hidden;
-  background-color: #f1f5f9;
-  border: 1px solid var(--gray-border);
-}
-.avatar img {
   width: 100%;
-  height: 100%;
-  object-fit: cover;
 }
-.avatar-placeholder {
-  width: 100%;
-  height: 100%;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  color: var(--gray-text-focus);
+
+.vacancies-wrapper {
+  max-width: 900px;
+  margin: 0 auto;
+  padding: 0 15px;
+  margin-top: 32px;
 }
-.icon-large {
-  width: 32px;
-  height: 32px;
-  opacity: 0.7;
+
+.mt-4 {
+  margin-top: 24px;
 }
-.status-text {
-  font-size: 13px;
-  color: var(--susu-blue);
-  font-weight: 600;
-  margin: 0;
+.loading {
   text-align: center;
+  color: var(--gray-text);
+  padding: 20px;
 }
 
-/* Список вакансий */
 .vacancies-section {
   display: flex;
   flex-direction: column;
   gap: 16px;
 }
 .section-heading {
-  font-size: 20px;
-  font-weight: 600;
+  font-size: 22px;
+  font-weight: 700;
   color: var(--dark-text);
-  margin: 0 0 8px 0;
+  margin: 0 0 12px 0;
   padding-left: 4px;
 }
 .vacancies-list {
@@ -407,17 +267,6 @@ onMounted(fetchEmployerData)
 }
 
 @media (max-width: 768px) {
-  .hero-grid {
-    grid-template-columns: 1fr;
-    text-align: center;
-  }
-  .col-personal {
-    align-items: center;
-  }
-  .col-study {
-    padding-top: 12px;
-    border-top: 1px solid var(--gray-border);
-  }
   .vacancy-content-top {
     flex-direction: column-reverse;
   }

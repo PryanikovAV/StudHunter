@@ -1,0 +1,21 @@
+# Secrets and environment variables
+.env
+*.env
+appsettings.Development.json
+appsettings.json
+
+# .NET
+bin/
+obj/
+*.user
+*.suo
+.vs/
+
+# Node.js / Vue
+node_modules/
+dist/
+npm-debug.log
+
+# Mac/Windows system files
+.DS_Store
+Thumbs.db

@@ -22,7 +22,7 @@ const vacancy = ref<VacancyFillDto>({
   title: '',
   description: '',
   salary: null,
-  type: 'FullTime',
+  type: 'Job',
   skillIds: [],
   courseIds: [],
   skills: [],
@@ -111,10 +111,8 @@ onMounted(loadVacancy)
           <div class="form-group">
             <label>Тип занятости <span class="required">*</span></label>
             <select v-model="vacancy.type" class="input-main" required>
-              <option value="FullTime">Полная занятость</option>
-              <option value="PartTime">Частичная занятость</option>
+              <option value="Job">Полная занятость</option>
               <option value="Internship">Стажировка</option>
-              <option value="Project">Проектная работа</option>
             </select>
           </div>
 

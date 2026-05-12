@@ -29,9 +29,12 @@ public record VacancySearchDto(
     string? ActualAddress,
     string? ContactPhone,
     string? ContactEmail,
+    string? AvatarUrl,
     bool IsDeleted,
     List<string> Courses,
     List<string> Skills,
+    int? TotalResponses = null,
+    int? ActiveResponses = null,
     bool IsFavorite = false,
     bool IsBlocked = false
 );
@@ -42,7 +45,11 @@ public record VacancySearchFilter
     public string? SearchTerm { get; init; }
     public List<Guid> CourseIds { get; init; } = new();
     public List<Guid> SkillIds { get; init; } = new();
-    public string? VacancyType { get; init; }
+    public Guid? CityId { get; init; }
+    public List<Guid> SpecializationIds { get; init; } = new();
+    public List<string> VacancyTypes { get; init; } = new();
+    public decimal? MinSalary { get; init; }
+    public bool OnlyWithSalary { get; init; } = false;
     public PaginationParams Paging { get; init; } = new PaginationParams();
 }
 
@@ -77,6 +84,7 @@ public static class VacancyMapper
             ActualAddress: e.OrganizationDetails?.ActualAddress,
             ContactPhone: e.ContactPhone,
             ContactEmail: e.ContactEmail ?? e.Email,
+            AvatarUrl: e.AvatarUrl,
             IsDeleted: v.IsDeleted,
             Courses: v.Courses?.Select(c => c.Course.Name).OrderBy(n => n).ToList() ?? new List<string>(),
             Skills: v.AdditionalSkills?.Select(s => s.AdditionalSkill.Name).OrderBy(n => n).ToList() ?? new List<string>(),

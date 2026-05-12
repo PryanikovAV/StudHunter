@@ -1,32 +1,121 @@
+# services:
+#   postgres:
+#     image: postgres:latest
+#     container_name: studhunter-postgres
+#     environment:
+#       POSTGRES_USER: postgres
+#       POSTGRES_PASSWORD: postgres
+#       POSTGRES_DB: studhunter
+#     ports:
+#       - "5433:5432"
+#     volumes:
+#       - studhunter-data:/var/lib/postgresql
+#     restart: unless-stopped
+#   studhunter-api:
+#     build:
+#       context: .
+#       dockerfile: StudHunter.API/Dockerfile
+#     container_name: studhunter-api
+#     ports:
+#       - "5010:8080"
+#     environment:
+#       - ASPNETCORE_ENVIRONMENT=Development
+#       - ASPNETCORE_HTTP_PORTS=8080
+#       - ConnectionStrings__DefaultConnection=Host=postgres;Port=5432;Database=studhunter;Username=postgres;Password=postgres
+#       - Jwt__Key=MyTopSecretVeryLongKeyForStudHunter123!
+#       - Jwt__Issuer=StudHunter
+#       - Jwt__Audience=StudHunter
+#     depends_on:
+#       - postgres
+#     restart: unless-stopped
+# volumes:
+#   studhunter-data:
+
+
+# services:
+#   postgres:
+#     image: postgres:latest
+#     container_name: studhunter-db
+#     restart: always
+#     environment:
+#       POSTGRES_USER: postgres
+#       POSTGRES_PASSWORD: your_secure_password # Измени на свой
+#       POSTGRES_DB: studhunter
+#     volumes:
+#       - studhunter-db-data:/var/lib/postgresql/data
+
+#   backend:
+#     build:
+#       context: ./backend
+#       dockerfile: StudHunter.API/Dockerfile
+#     container_name: studhunter-api
+#     restart: always
+#     environment:
+#       - ASPNETCORE_ENVIRONMENT=Production
+#       - ASPNETCORE_HTTP_PORTS=8080
+#       - ConnectionStrings__DefaultConnection=Host=postgres;Port=5432;Database=studhunter;Username=postgres;Password=your_secure_password
+#       - Jwt__Key=MyTopSecretVeryLongKeyForStudHunter123!
+#       - Jwt__Issuer=StudHunter
+#       - Jwt__Audience=StudHunterUsers
+#     depends_on:
+#       - postgres
+
+#   frontend:
+#     build:
+#       context: ./frontend
+#       # Внутри фронтенда при сборке (Vite) нужно будет указать URL бэкенда
+#     container_name: studhunter-ui
+#     restart: always
+#     ports:
+#       - "80:80" # Фронтенд будет доступен по обычному HTTP
+#     depends_on:
+#       - backend
+
+# volumes:
+#   studhunter-db-data:
+
+
+version: '3.8'
+
 services:
   postgres:
-    image: postgres:latest
-    container_name: studhunter-postgres
+    image: postgres:18-alpine
+    container_name: studhunter-db
+    restart: always
     environment:
-      POSTGRES_USER: postgres
-      POSTGRES_PASSWORD: postgres
-      POSTGRES_DB: studhunter
-    ports:
-      - "5433:5432"
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      POSTGRES_DB: ${POSTGRES_DB}
     volumes:
-      - studhunter-data:/var/lib/postgresql
-    restart: unless-stopped
-  studhunter-api:
+      - studhunter-db-data:/var/lib/postgresql/data
+
+  backend:
     build:
-      context: .
+      context: ./backend
       dockerfile: StudHunter.API/Dockerfile
     container_name: studhunter-api
-    ports:
-      - "5010:8080"
+    restart: always
     environment:
-      - ASPNETCORE_ENVIRONMENT=Development
+      - ASPNETCORE_ENVIRONMENT=Production
       - ASPNETCORE_HTTP_PORTS=8080
-      - ConnectionStrings__DefaultConnection=Host=postgres;Port=5432;Database=studhunter;Username=postgres;Password=postgres
-      - Jwt__Key=MyTopSecretVeryLongKeyForStudHunter123!
+      - ConnectionStrings__DefaultConnection=Host=postgres;Port=5432;Database=${POSTGRES_DB};Username=${POSTGRES_USER};Password=${POSTGRES_PASSWORD}
+      - Jwt__Key=${JWT_KEY}
       - Jwt__Issuer=StudHunter
-      - Jwt__Audience=StudHunter
+      - Jwt__Audience=StudHunterUsers
     depends_on:
       - postgres
-    restart: unless-stopped
+
+  frontend:
+    build:
+      context: ./frontend
+      args:
+      - VITE_API_URL=${VITE_API_URL}
+    container_name: studhunter-ui
+    restart: always
+    ports:
+      - "80:80"
+    depends_on:
+      - backend
+
 volumes:
-  studhunter-data:
+  studhunter-db-data:  

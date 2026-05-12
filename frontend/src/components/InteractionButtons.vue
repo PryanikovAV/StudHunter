@@ -120,17 +120,20 @@ const toggleBlock = async () => {
 }
 
 .btn-fav {
-  background-color: var(--dark-text, #111827);
+  background-color: transparent;
   border: 1px solid var(--dark-text, #111827);
-  color: #ffffff;
+  color: var(--dark-text, #111827);
 }
+
 .btn-fav:hover {
-  opacity: 0.8;
+  background-color: #f3f4f6;
   transform: scale(1.05);
 }
+
 .btn-fav.active {
-  background-color: var(--susu-blue, #005aaa);
-  border-color: var(--susu-blue, #005aaa);
+  background-color: var(--dark-text, #111827);
+  border-color: var(--dark-text, #111827);
+  color: #ffffff;
 }
 
 .btn-block {

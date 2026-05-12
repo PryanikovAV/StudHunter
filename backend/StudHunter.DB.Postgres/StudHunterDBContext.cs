@@ -1,6 +1,5 @@
 ﻿using Microsoft.EntityFrameworkCore;
 using StudHunter.DB.Postgres.Models;
-using StudHunter.DB.Postgres.Configurations;
 
 namespace StudHunter.DB.Postgres;
 
@@ -41,6 +40,34 @@ public class StudHunterDbContext : DbContext
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         base.OnModelCreating(modelBuilder);
+
+        modelBuilder.HasPostgresExtension("pg_trgm");
+
+        modelBuilder.Entity<Employer>(entity =>
+        {
+            entity.HasIndex(e => e.Name)
+                  .HasMethod("gin")
+                  .HasOperators("gin_trgm_ops");
+        });
+
+        modelBuilder.Entity<Vacancy>(entity =>
+        {
+            entity.HasIndex(v => v.Title)
+                  .HasMethod("gin")
+                  .HasOperators("gin_trgm_ops");
+
+            entity.HasIndex(v => v.Description)
+                  .HasMethod("gin")
+                  .HasOperators("gin_trgm_ops");
+        });
+
+        modelBuilder.Entity<Resume>(entity =>
+        {
+            entity.HasIndex(r => r.Title)
+                  .HasMethod("gin")
+                  .HasOperators("gin_trgm_ops");
+        });
+
         modelBuilder.Entity<User>().UseTpcMappingStrategy();
         modelBuilder.ApplyConfigurationsFromAssembly(typeof(StudHunterDbContext).Assembly);
     }

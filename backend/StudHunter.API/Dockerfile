@@ -6,6 +6,10 @@ USER $APP_UID
 WORKDIR /app
 EXPOSE 8080
 
+# Установка fontconfig для QuestPDF в Linux
+USER root
+RUN apt-get update && apt-get install -y fontconfig && rm -rf /var/lib/apt/lists/*
+USER $APP_UID
 
 # This stage is used to build the service project
 FROM mcr.microsoft.com/dotnet/sdk:10.0 AS build

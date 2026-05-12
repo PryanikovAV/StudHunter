@@ -7,14 +7,22 @@ using StudHunter.API.Services;
 using StudHunter.API.Services.AdminServices;
 using StudHunter.API.Services.AuthService;
 using StudHunter.API.Services.Background;
+using StudHunter.API.Services.Files;
+using StudHunter.API.Services.Pdf;
+using StudHunter.API.Services.Search;
 using StudHunter.DB.Postgres;
 using StudHunter.DB.Postgres.Models;
 
 var builder = WebApplication.CreateBuilder(args);
 
 var connectionString = builder.Configuration.GetConnectionString("DefaultConnection");
+
 builder.Services.AddDbContext<StudHunterDbContext>(options =>
-    options.UseNpgsql(connectionString));
+    options.UseNpgsql(connectionString, npgsqlOptions =>
+        npgsqlOptions.EnableRetryOnFailure(
+            maxRetryCount: 5,
+            maxRetryDelay: TimeSpan.FromSeconds(10),
+            errorCodesToAdd: null)));
 
 builder.Services.AddAuth(builder.Configuration);
 builder.Services.AddControllers();
@@ -43,6 +51,10 @@ builder.Services.AddScoped<IAuthService, AuthService>();
 builder.Services.AddScoped<IPasswordHasher, PasswordHasher>();
 builder.Services.AddHostedService<InvitationCleanupService>();
 
+/* Сервис для работы с файлами */
+builder.Services.AddScoped<IFileService, LocalFileService>();
+builder.Services.AddScoped<IPdfService, QuestPdfService>();
+
 /* Пользовательские сервисы */
 builder.Services.AddScoped<IBlackListService, BlackListService>();
 builder.Services.AddScoped<IChatService, ChatService>();
@@ -53,6 +65,7 @@ builder.Services.AddScoped<IInvitationService, InvitationService>();
 builder.Services.AddScoped<INotificationService, NotificationService>();
 builder.Services.AddScoped<IRegistrationManager, RegistrationManager>();
 builder.Services.AddScoped<IResumeService, ResumeService>();
+builder.Services.AddScoped<ISearchService, SearchService>();
 builder.Services.AddScoped<IStudentService, StudentService>();
 builder.Services.AddScoped<IVacancyService, VacancyService>();
 
@@ -67,47 +80,40 @@ builder.Services.AddScoped<IAdminResumeService, AdminResumeService>();
 builder.Services.AddScoped<IAdminStudentService, AdminStudentService>();
 builder.Services.AddScoped<IAdminVacancyService, AdminVacancyService>();
 
-builder.Services.AddScoped<DictionarySeederService>();  // <-- Заполнение словарей
-
 var app = builder.Build();
 
 app.UseExceptionHandler();
 
-using (var scope = app.Services.CreateScope())   // <-- Заполнение словарей
+using (var scope = app.Services.CreateScope())  // <- Заполнение словарей
 {
     var services = scope.ServiceProvider;
     try
     {
         var context = services.GetRequiredService<StudHunterDbContext>();
-        context.Database.Migrate();
+        await context.Database.MigrateAsync();
 
-        var seeder = services.GetRequiredService<DictionarySeederService>();
-        await seeder.SeedAllAsync();
+        var seeder = new StudHunter.DB.Postgres.Seeding.DbSeeder(context);
+        await seeder.SeedAsync();
+
+        var hasher = services.GetRequiredService<IPasswordHasher>();
+        if (!context.Administrators.Any())
+        {
+            var admin = new Administrator
+            {
+                Email = "admin@example.com",
+                PasswordHash = hasher.HashPassword("password123"),
+                FirstName = "Главный",
+                LastName = "Администратор",
+                RegistrationStage = User.AccountStatus.FullyActivated
+            };
+            context.Administrators.Add(admin);
+            await context.SaveChangesAsync();
+        }
     }
     catch (Exception ex)
     {
         var logger = services.GetRequiredService<ILogger<Program>>();
-        logger.LogError(ex, "Ошибка при инициализации базы данных");
-    }
-}
-
-using (var scope = app.Services.CreateScope())
-{
-    var context = scope.ServiceProvider.GetRequiredService<StudHunterDbContext>();
-    var hasher = scope.ServiceProvider.GetRequiredService<IPasswordHasher>();
-
-    if (!context.Administrators.Any())
-    {
-        var admin = new Administrator
-        {
-            Email = "admin@example.com",
-            PasswordHash = hasher.HashPassword("password123"),
-            FirstName = "Главный",
-            LastName = "Администратор",
-            RegistrationStage = User.AccountStatus.FullyActivated
-        };
-        context.Administrators.Add(admin);
-        context.SaveChanges();
+        logger.LogError(ex, "Произошла ошибка при инициализации БД");
     }
 }
 
@@ -119,6 +125,7 @@ if (app.Environment.IsDevelopment())
 
 app.UseRouting();
 app.UseCors("AllowFrontend");
+app.UseStaticFiles();  // <- Для доступа к загруженным файлам
 
 app.UseAuthentication();
 app.UseAuthorization();

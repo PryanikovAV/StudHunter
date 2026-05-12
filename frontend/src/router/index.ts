@@ -75,6 +75,11 @@ const router = createRouter({
           name: 'student-messages',
           component: () => import('@/views/ChatView.vue'),
         },
+        {
+          path: 'search',
+          name: 'student-vacancy-search',
+          component: () => import('@/views/student/StudentVacancySearch.vue'),
+        },
       ],
     },
 
@@ -120,12 +125,11 @@ const router = createRouter({
           name: 'employer-messages',
           component: () => import('@/views/ChatView.vue'),
         },
-        // {
-        //   // Маршрут для результатов поиска (который вызываем из SearchBar)
-        //   path: 'search',
-        //   name: 'employer-resume-search',
-        //   component: () => import('@/views/employer/ResumeSearchView.vue'),
-        // },
+        {
+          path: 'search',
+          name: 'employer-resume-search',
+          component: () => import('@/views/employer/EmployerResumeSearch.vue'),
+        },
       ],
     },
   ],

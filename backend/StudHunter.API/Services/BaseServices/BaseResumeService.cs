@@ -1,4 +1,5 @@
 ﻿using Microsoft.EntityFrameworkCore;
+using StudHunter.API.Extensions;
 using StudHunter.API.Infrastructure;
 using StudHunter.DB.Postgres;
 using StudHunter.DB.Postgres.Models;
@@ -15,13 +16,7 @@ public abstract class BaseResumeService(StudHunterDbContext context, IRegistrati
         if (ignoreFilters)
             query = query.IgnoreQueryFilters();
 
-        return query
-            .Include(r => r.Student)
-                .ThenInclude(s => s!.StudyPlan).ThenInclude(sp => sp!.Faculty)
-            .Include(r => r.Student)
-                .ThenInclude(s => s!.StudyPlan).ThenInclude(sp => sp!.StudyDirection)
-            .Include(r => r.AdditionalSkills)
-                .ThenInclude(ras => ras.AdditionalSkill);
+        return query.IncludeFullResumeDetails();
     }
 
     protected async Task<(HashSet<Guid> FavoriteStudentIds, HashSet<Guid> BlockedStudentIds)> GetResumeUiFlagsAsync(Guid? currentUserId, List<Resume> resumes)

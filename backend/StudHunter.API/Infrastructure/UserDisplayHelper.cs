@@ -30,7 +30,7 @@ public static class UserDisplayHelper
 {
     public static string GetUserDisplayName(User user) => user switch
     {
-        Student s => 
+        Student s =>
         $"{s.LastName ?? UserDefaultNames.DefaultLastName} " +
         $"{s.FirstName ?? UserDefaultNames.DefaultFirstName} " +
         $"{s.Patronymic ?? ""}".Trim(),
@@ -48,5 +48,23 @@ public static class UserDisplayHelper
         var age = today.Year - birthDate.Value.Year;
         if (birthDate.Value > today.AddYears(-age)) age--;
         return age;
+    }
+
+    public static string? GetAgeString(DateOnly? birthDate)
+    {
+        var age = CalculateAge(birthDate);
+        if (!age.HasValue) return null;
+
+        int lastDigit = age.Value % 10;
+        int lastTwoDigits = age.Value % 100;
+
+        string word = (lastTwoDigits is >= 11 and <= 14) ? "лет" : lastDigit switch
+        {
+            1 => "год",
+            2 or 3 or 4 => "года",
+            _ => "лет"
+        };
+
+        return $"{age.Value} {word}";
     }
 }

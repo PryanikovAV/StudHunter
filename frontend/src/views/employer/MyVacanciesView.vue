@@ -1,11 +1,13 @@
 <script setup lang="ts">
 import { ref, computed, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
+import { useToast } from 'vue-toastification'
 import apiClient from '@/api'
 import AppCard from '@/components/AppCard.vue'
-import type { VacancyListDto } from '@/types/vacancy' // Импортируем тип
+import type { VacancyListDto } from '@/types/vacancy'
 
 const router = useRouter()
+const toast = useToast()
 const vacancies = ref<VacancyListDto[]>([])
 const isLoading = ref(true)
 const activeTab = ref<'active' | 'archived'>('active')
@@ -37,6 +39,7 @@ const hideVacancy = async (id: string) => {
     const target = vacancies.value.find((v) => v.id === id)
     if (target) target.isDeleted = true
 
+    toast.success('Вакансия перемещена в архив')
     emit('update-hero')
   } catch (error) {
     console.error('Ошибка скрытия:', error)
@@ -49,6 +52,7 @@ const restoreVacancy = async (id: string) => {
     const target = vacancies.value.find((v) => v.id === id)
     if (target) target.isDeleted = false
 
+    toast.success('Вакансия успешно опубликована')
     emit('update-hero')
   } catch (error) {
     console.error('Ошибка восстановления:', error)
@@ -111,7 +115,19 @@ onMounted(fetchVacancies)
 
         <div class="vc-meta">
           <span class="text-muted">Обновлено: {{ formatDate(vacancy.updatedAt) }}</span>
-          <span class="text-muted">• Откликов: 0 (скоро)</span>
+
+          <span class="text-muted" v-if="vacancy.totalResponses !== undefined">
+            <span class="dot-separator">•</span>
+            Отклики:
+            <span
+              v-if="vacancy.activeResponses && vacancy.activeResponses > 0"
+              class="response-active"
+            >
+              {{ vacancy.activeResponses }} новых
+            </span>
+            <span v-else>0 новых</span>
+            / {{ vacancy.totalResponses || 0 }} всего
+          </span>
         </div>
 
         <div class="vc-actions">
@@ -144,16 +160,13 @@ onMounted(fetchVacancies)
 </template>
 
 <style scoped>
-/* Удалили .vacancies-page */
-
 .header-row {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-bottom: 24px; /* Стандартный отступ после заголовка */
+  margin-bottom: 24px;
 }
 
-/* Переопределяем стили кнопки, чтобы она была компактной и не ломала высоту */
 .compact-btn {
   height: 36px !important;
   padding: 0 16px !important;
@@ -196,7 +209,7 @@ onMounted(fetchVacancies)
 }
 
 .vacancy-card {
-  padding: 24px;
+  padding: 24px 24px 16px 24px;
 }
 
 .vc-header {
@@ -219,7 +232,20 @@ onMounted(fetchVacancies)
 }
 
 .vc-meta {
-  margin-bottom: 20px;
+  margin-bottom: 16px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.dot-separator {
+  margin: 0 4px;
+}
+
+.response-active {
+  color: var(--susu-blue, #005aaa);
+  font-weight: 600;
 }
 
 .vc-actions {
@@ -230,6 +256,11 @@ onMounted(fetchVacancies)
 }
 
 .restore-btn {
-  color: var(--green-text-success);
+  color: var(--green-text-success, #16a34a);
+  border-color: var(--green-text-success, #16a34a);
+}
+
+.restore-btn:hover {
+  background-color: #f0fdf4;
 }
 </style>
