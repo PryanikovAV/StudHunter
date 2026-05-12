@@ -1,29 +1,45 @@
 <script setup lang="ts">
-import { useRouter } from 'vue-router'
+import { computed } from 'vue'
+import { useRouter, useRoute } from 'vue-router'
 import StudentHero from '@/components/StudentHero.vue'
 import SearchBar from '@/components/SearchBar.vue'
 
 const router = useRouter()
+const route = useRoute()
+
+const isSearchPage = computed(() => route.name === 'student-vacancy-search')
 
 const handleStudentSearch = (query: string) => {
   if (!query.trim()) return
 
   router.push({
-    name: 'student-search',
+    name: 'student-vacancy-search',
     query: { q: query },
+  })
+}
+
+const handleAdvancedSearch = () => {
+  router.push({
+    name: 'student-vacancy-search',
   })
 }
 </script>
 
 <template>
   <div class="layout-wrapper">
-    <StudentHero />
+    <template v-if="!isSearchPage">
+      <StudentHero />
 
-    <div class="search-bar-wrapper">
-      <div class="container">
-        <SearchBar placeholder="Профессия, должность или компания" @search="handleStudentSearch" />
+      <div class="search-bar-wrapper">
+        <div class="container">
+          <SearchBar
+            placeholder="Профессия, должность или компания"
+            @search="handleStudentSearch"
+            @advanced-search="handleAdvancedSearch"
+          />
+        </div>
       </div>
-    </div>
+    </template>
 
     <main class="layout-content">
       <router-view />

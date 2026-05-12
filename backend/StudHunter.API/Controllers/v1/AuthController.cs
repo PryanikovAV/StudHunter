@@ -7,6 +7,7 @@ using StudHunter.API.Services.AuthService;
 namespace StudHunter.API.Controllers.v1;
 
 [AllowAnonymous]
+[Route("api/v1/auth")]
 public class AuthController(IAuthService authService) : BaseController
 {
     [HttpPost("login")]

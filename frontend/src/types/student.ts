@@ -15,7 +15,7 @@ export interface StudentProfileDto {
   gender: 'Male' | 'Female' | null
   birthDate: string | null
   avatarUrl: string | null
-  isForeign: boolean
+  isForeign?: boolean | null
   status: 'Studying' | 'SeekingJob' | 'SeekingInternship' | 'Interning' | 'Working'
   universityId: string | null
   facultyId: string | null
@@ -34,4 +34,22 @@ export interface ResumeFillDto {
   isDeleted: boolean
   skillIds: string[]
   skills: { id: string; name: string }[]
+  updatedAt?: string | null
+}
+
+export interface VacancyShortDto {
+  id: string
+  title: string
+}
+
+export interface StudentHeroDto {
+  fullName: string
+  birthDate: string | null
+  avatarUrl: string | null
+  status: string
+  universityName: string | null
+  facultyName: string | null
+  departmentName: string | null
+  studyDirectionName: string | null
+  courseNumber: number | null
 }

@@ -1,29 +1,37 @@
 <script setup lang="ts">
-import { ref } from 'vue'
+import { ref, watch } from 'vue'
 import IconSearch from '@/components/icons/IconSearch.vue'
 import IconFilters from '@/components/icons/IconFilters.vue'
 import AppInput from '@/components/AppInput.vue'
 
-withDefaults(
+const props = withDefaults(
   defineProps<{
     placeholder?: string
+    initialValue?: string
   }>(),
   {
     placeholder: 'Поиск...',
+    initialValue: '',
   },
 )
 
 const emit = defineEmits<{
   (e: 'search', query: string): void
+  (e: 'advanced-search'): void
 }>()
 
-const searchQuery = ref('')
+const searchQuery = ref(props.initialValue)
+
+watch(
+  () => props.initialValue,
+  (newVal) => {
+    searchQuery.value = newVal || ''
+  },
+)
 
 const handleSearch = () => {
   const query = searchQuery.value.trim()
-  if (query) {
-    emit('search', query)
-  }
+  emit('search', query)
 }
 </script>
 
@@ -34,7 +42,12 @@ const handleSearch = () => {
 
       <AppInput type="text" v-model="searchQuery" :placeholder="placeholder" class="search-input" />
 
-      <button type="button" class="filter-btn" title="Расширенный поиск">
+      <button
+        type="button"
+        class="filter-btn"
+        title="Расширенный поиск"
+        @click="emit('advanced-search')"
+      >
         <IconFilters class="icon-main" />
       </button>
     </div>

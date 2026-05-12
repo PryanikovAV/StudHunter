@@ -26,28 +26,24 @@ public class EmployerService(
 {
     public async Task<Result<EmployerDto>> GetEmployerProfileAsync(Guid employerId)
     {
-        var data = await GetEmployerQuery(asNoTracking: true, includeOrganizationDetails: true)
-            .Where(e => e.Id == employerId)
-            .Select(e => new
-            {
-                Employer = e,
-                ActiveVacanciesCount = e.Vacancies.Count(v => !v.IsDeleted)
-            })
-            .FirstOrDefaultAsync();
+        var employer = await GetEmployerQuery(
+                asNoTracking: true,
+                includeOrganizationDetails: true,
+                includeVacancies: true)
+            .FirstOrDefaultAsync(e => e.Id == employerId);
 
-        if (data == null)
+        if (employer == null)
             return Result<EmployerDto>.Failure(ErrorMessages.EntityNotFound(nameof(Employer)), StatusCodes.Status404NotFound);
 
-        var dto = EmployerMapper.ToDto(data.Employer);
-
-        var finalDto = dto with { VacanciesCount = data.ActiveVacanciesCount };
-
-        return Result<EmployerDto>.Success(finalDto);
+        return Result<EmployerDto>.Success(EmployerMapper.ToDto(employer));
     }
 
     public async Task<Result<EmployerHeroDto>> GetEmployerHeroAsync(Guid employerId, Guid? currentUserId = null)
     {
-        var employer = await GetEmployerQuery(asNoTracking: true, includeVacancies: true)
+        var employer = await GetEmployerQuery(
+                asNoTracking: true,
+                includeOrganizationDetails: true,
+                includeVacancies: true)
             .FirstOrDefaultAsync(e => e.Id == employerId && e.RegistrationStage == User.AccountStatus.FullyActivated);
 
         if (employer == null)
@@ -96,19 +92,8 @@ public class EmployerService(
         return await SaveChangesAsync<Employer>();
     }
 
-    public async Task<Result<string>> UpdateAvatarAsync(Guid employerId, ChangeAvatarDto dto)
-    {
-        var employer = await GetEmployerQuery().FirstOrDefaultAsync(e => e.Id == employerId);
-
-        if (employer == null)
-            return Result<string>.Failure(ErrorMessages.EntityNotFound(nameof(Employer)), StatusCodes.Status404NotFound);
-
-        employer.AvatarUrl = dto.AvatarUrl;
-
-        var result = await SaveChangesAsync<Employer>();
-
-        return result.IsSuccess ? Result<string>.Success(employer.AvatarUrl) : Result<string>.Failure(result.ErrorMessage!);
-    }
+    public Task<Result<string>> UpdateAvatarAsync(Guid employerId, ChangeAvatarDto dto) =>
+        UpdateUserAvatarInternalAsync<Employer>(employerId, dto.AvatarUrl);
 
     public async Task<Result<bool>> DeleteEmployerAsync(Guid employerId, string password)
     {

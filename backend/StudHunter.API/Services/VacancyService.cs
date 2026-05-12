@@ -10,13 +10,13 @@ namespace StudHunter.API.Services;
 public interface IVacancyService
 {
     Task<Result<VacancyFillDto>> GetVacancyByIdForEditAsync(Guid vacancyId, Guid employerId);
-    Task<Result<PagedResult<VacancySearchDto>>> GetMyVacanciesAsync(Guid employerId, PaginationParams paging, bool includeDeleted);
+    Task<Result<PagedResult<VacancySearchDto>>> GetVacanciesByEmployerAsync(Guid employerId, PaginationParams paging, bool includeDeleted);
     Task<Result<VacancySearchDto>> GetVacancyDetailsAsync(Guid vacancyId, Guid? currentUserId = null);
     Task<Result<VacancyFillDto>> CreateVacancyAsync(Guid employerId, VacancyFillDto dto);
     Task<Result<VacancyFillDto>> UpdateVacancyAsync(Guid vacancyId, Guid employerId, VacancyFillDto dto);
     Task<Result<bool>> SoftDeleteVacancyAsync(Guid vacancyId, Guid employerId);
     Task<Result<bool>> RestoreVacancyAsync(Guid vacancyId, Guid employerId);
-    Task<Result<PagedResult<VacancySearchDto>>> SearchVacanciesAsync(VacancySearchFilter filter, Guid? currentUserId = null);
+    Task<Result<HomePageDto>> GetHomePageDataAsync(Guid? currentUserId = null);
 }
 
 public class VacancyService(StudHunterDbContext context, IRegistrationManager registrationManager)
@@ -33,14 +33,39 @@ public class VacancyService(StudHunterDbContext context, IRegistrationManager re
         return Result<VacancyFillDto>.Success(VacancyMapper.ToFillDto(vacancy));
     }
 
-    public async Task<Result<PagedResult<VacancySearchDto>>> GetMyVacanciesAsync(Guid employerId, PaginationParams paging, bool includeDeleted)
+    public async Task<Result<PagedResult<VacancySearchDto>>> GetVacanciesByEmployerAsync(
+        Guid employerId,
+        PaginationParams paging,
+        bool includeDeleted = false)
     {
-        var query = GetVacancyQuery(asNoTracking: true, ignoreFilters: includeDeleted, includeEmployerData: true, includeTags: true)
+        var query = GetVacancyQuery(
+                asNoTracking: true,
+                ignoreFilters: includeDeleted,
+                includeEmployerData: true,
+                includeTags: true)
             .Where(v => v.EmployerId == employerId);
 
-        var pagedEntities = await query.OrderByDescending(v => v.CreatedAt).ToPagedResultAsync(paging);
+        if (!includeDeleted)
+        {
+            query = query.Where(v => v.Employer.RegistrationStage == User.AccountStatus.FullyActivated);
+        }
 
-        var dtos = pagedEntities.Items.Select(v => VacancyMapper.ToSearchDto(v)).ToList();
+        var projectedQuery = query.Select(v => new
+        {
+            Vacancy = v,
+            Total = v.Invitations.Count(i => i.Type == Invitation.InvitationType.Response),
+            Active = v.Invitations.Count(i => i.Type == Invitation.InvitationType.Response && i.Status == Invitation.InvitationStatus.Sent)
+        });
+
+        var pagedEntities = await projectedQuery
+            .OrderByDescending(x => x.Vacancy.CreatedAt)
+            .ToPagedResultAsync(paging);
+
+        var dtos = pagedEntities.Items.Select(item =>
+        {
+            var baseDto = VacancyMapper.ToSearchDto(item.Vacancy);
+            return baseDto with { TotalResponses = item.Total, ActiveResponses = item.Active };
+        }).ToList();
 
         return Result<PagedResult<VacancySearchDto>>.Success(new PagedResult<VacancySearchDto>(
             dtos, pagedEntities.TotalCount, pagedEntities.PageNumber, pagedEntities.PageSize));
@@ -48,10 +73,21 @@ public class VacancyService(StudHunterDbContext context, IRegistrationManager re
 
     public async Task<Result<VacancySearchDto>> GetVacancyDetailsAsync(Guid vacancyId, Guid? currentUserId = null)
     {
-        var vacancy = await GetVacancyQuery(asNoTracking: true, includeEmployerData: true, includeTags: true)
+        var vacancy = await GetVacancyQuery(
+            asNoTracking: true,
+            includeEmployerData: true,
+            includeTags: true)
             .FirstOrDefaultAsync(v => v.Id == vacancyId);
 
-        if (vacancy == null) return Result<VacancySearchDto>.Failure(ErrorMessages.EntityNotFound(nameof(Vacancy)));
+        if (vacancy == null)
+            return Result<VacancySearchDto>.Failure(ErrorMessages.EntityNotFound(nameof(Vacancy)));
+
+        if (vacancy.Employer.RegistrationStage != User.AccountStatus.FullyActivated && vacancy.EmployerId != currentUserId)
+        {
+            return Result<VacancySearchDto>.Failure(
+                "Вакансия временно недоступна: профиль работодателя находится на проверке.",
+                StatusCodes.Status403Forbidden);
+        }
 
         var (favIds, blkIds) = await GetVacancyUiFlagsAsync(currentUserId, new List<Vacancy> { vacancy });
 
@@ -118,48 +154,6 @@ public class VacancyService(StudHunterDbContext context, IRegistrationManager re
         return Result<bool>.Success(true);
     }
 
-    public async Task<Result<PagedResult<VacancySearchDto>>> SearchVacanciesAsync(VacancySearchFilter filter, Guid? currentUserId = null)
-    {
-        var query = GetVacancyQuery(asNoTracking: true, includeEmployerData: true, includeTags: true)
-            .Where(v => !v.IsDeleted && !v.Employer.IsDeleted && v.Employer.RegistrationStage == User.AccountStatus.FullyActivated);
-
-        if (filter.EmployerId.HasValue)
-        {
-            query = query.Where(v => v.EmployerId == filter.EmployerId.Value);
-        }
-
-        if (!string.IsNullOrWhiteSpace(filter.SearchTerm))
-        {
-            var term = $"%{filter.SearchTerm.Trim()}%";
-            query = query.Where(v =>
-                EF.Functions.ILike(v.Title, term) ||
-                (v.Description != null && EF.Functions.ILike(v.Description, term)) ||
-                EF.Functions.ILike(v.Employer.Name, term));
-        }
-
-        if (filter.CourseIds?.Any() == true)
-            query = query.Where(v => v.Courses.Any(c => filter.CourseIds.Contains(c.CourseId)));
-
-        if (filter.SkillIds?.Any() == true)
-            query = query.Where(v => v.AdditionalSkills.Any(s => filter.SkillIds.Contains(s.AdditionalSkillId)));
-
-        if (!string.IsNullOrWhiteSpace(filter.VacancyType) && Enum.TryParse<Vacancy.VacancyType>(filter.VacancyType, out var type))
-            query = query.Where(v => v.Type == type);
-
-        var pagedEntities = await query.OrderByDescending(v => v.UpdatedAt).ToPagedResultAsync(filter.Paging);
-
-        var (favIds, blkIds) = await GetVacancyUiFlagsAsync(currentUserId, pagedEntities.Items);
-
-        var dtos = pagedEntities.Items.Select(v => VacancyMapper.ToSearchDto(
-            v,
-            favIds.Contains(v.Id),
-            blkIds.Contains(v.EmployerId)
-        )).ToList();
-
-        return Result<PagedResult<VacancySearchDto>>.Success(new PagedResult<VacancySearchDto>(
-            dtos, pagedEntities.TotalCount, pagedEntities.PageNumber, pagedEntities.PageSize));
-    }
-
     public async Task<Result<bool>> RestoreVacancyAsync(Guid vacancyId, Guid employerId)
     {
         var vacancy = await GetVacancyQuery(ignoreFilters: true)
@@ -179,5 +173,64 @@ public class VacancyService(StudHunterDbContext context, IRegistrationManager re
 
         await _context.SaveChangesAsync();
         return Result<bool>.Success(true);
+    }
+
+    public async Task<Result<HomePageDto>> GetHomePageDataAsync(Guid? currentUserId = null)
+    {
+        var baseQuery = GetVacancyQuery(asNoTracking: true, includeEmployerData: true, includeTags: true)
+            .Where(v => !v.IsDeleted && !v.Employer.IsDeleted && v.Employer.RegistrationStage == User.AccountStatus.FullyActivated);
+
+        if (currentUserId.HasValue)
+        {
+            var blockedEmployerIds = await _context.BlackLists
+                .Where(b => b.UserId == currentUserId.Value)
+                .Select(b => b.BlockedUserId)
+                .ToListAsync();
+
+            if (blockedEmployerIds.Any())
+                baseQuery = baseQuery.Where(v => !blockedEmployerIds.Contains(v.EmployerId));
+        }
+
+        var categories = new List<CategoryCardDto>();
+
+        var internshipsCount = await baseQuery.CountAsync(v => v.Type == Vacancy.VacancyType.Internship);
+        categories.Add(new CategoryCardDto("Стажировки и практики", internshipsCount, "VacancyTypes", Vacancy.VacancyType.Internship.ToString()));
+
+
+        var jobsCount = await baseQuery.CountAsync(v => v.Type == Vacancy.VacancyType.Job);
+        categories.Add(new CategoryCardDto("Первая работа", jobsCount, "VacancyTypes", Vacancy.VacancyType.Job.ToString()));
+
+        // ТОП-2 самые популярные Specialization
+        var topSpecializations = await baseQuery
+            .Where(v => v.Employer.SpecializationId != null)
+            .GroupBy(v => new { v.Employer.SpecializationId, v.Employer.Specialization!.Name })
+            .Select(g => new
+            {
+                SpecId = g.Key.SpecializationId,
+                Name = g.Key.Name,
+                Count = g.Count()
+            })
+            .OrderByDescending(x => x.Count)
+            .Take(2)
+            .ToListAsync();
+
+        foreach (var spec in topSpecializations)
+        {
+            categories.Add(new CategoryCardDto(spec.Name, spec.Count, "SpecializationIds", spec.SpecId.ToString()!));
+        }
+
+        var latestEntities = await baseQuery
+            .OrderByDescending(v => v.CreatedAt)
+            .Take(8)
+            .ToListAsync();
+
+        var (favIds, blkIds) = await GetVacancyUiFlagsAsync(currentUserId, latestEntities);
+        var latestDtos = latestEntities.Select(v => VacancyMapper.ToSearchDto(
+            v,
+            favIds.Contains(v.Id),
+            blkIds.Contains(v.EmployerId)
+        )).ToList();
+
+        return Result<HomePageDto>.Success(new HomePageDto(categories, latestDtos));
     }
 }

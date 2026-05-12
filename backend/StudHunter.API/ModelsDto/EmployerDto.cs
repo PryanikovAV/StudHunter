@@ -23,7 +23,7 @@ public record EmployerDto(
     string? LegalAddress,
     string? ActualAddress,
     DateTime CreatedAt,
-    int VacanciesCount
+    int ActiveVacanciesCount
 );
 
 public record EmployerHeroDto(
@@ -33,10 +33,18 @@ public record EmployerHeroDto(
     string? CityName,
     string? SpecializationName,
     string? Website,
+    string? ContactEmail,
+    string? ContactPhone,
+    string RegistrationStage,
+    string? Inn,
+    string? Ogrn,
+    string? Kpp,
+    string? LegalAddress,
+    string? ActualAddress,
     int ActiveVacanciesCount,
     bool IsFavorite = false,
     bool IsBlocked = false
-); 
+);
 
 public record AdminEmployerDto(
     Guid Id,
@@ -57,10 +65,10 @@ public record AdminEmployerDto(
     string? LegalAddress,
     string? ActualAddress,
     DateTime CreatedAt,
-    int VacanciesCount,
+    int ActiveVacanciesCount,
     bool IsDeleted)
     : EmployerDto(Id, Email, RegistrationStage, Name, CityId, CityName, ContactPhone, ContactEmail,
-        AvatarUrl, Description, Website, SpecializationId, SpecializationName, Inn, Ogrn, Kpp, LegalAddress, ActualAddress, CreatedAt, VacanciesCount);
+        AvatarUrl, Description, Website, SpecializationId, SpecializationName, Inn, Ogrn, Kpp, LegalAddress, ActualAddress, CreatedAt, ActiveVacanciesCount);
 
 public record UpdateEmployerDto(
     [Required][StringLength(255)] string Name,
@@ -75,15 +83,6 @@ public record UpdateEmployerDto(
     [StringLength(9)] string? Kpp,
     string? LegalAddress,
     string? ActualAddress
-);
-
-public record ChangePasswordDto(
-    [Required] string CurrentPassword,
-    [Required][StringLength(255, MinimumLength = 8)] string NewPassword
-);
-
-public record ChangeAvatarDto(
-    [Required][Url] string AvatarUrl
 );
 
 public static class EmployerMapper
@@ -117,10 +116,19 @@ public static class EmployerMapper
         CityName: employer.City?.Name,
         SpecializationName: employer.Specialization?.Name,
         Website: employer.Website,
+        ContactEmail: employer.ContactPhone,
+        ContactPhone: employer.ContactEmail,
+        RegistrationStage: employer.RegistrationStage.ToString(),
+
+        Inn: employer.OrganizationDetails?.Inn,
+        Ogrn: employer.OrganizationDetails?.Ogrn,
+        Kpp: employer.OrganizationDetails?.Kpp,
+        LegalAddress: employer.OrganizationDetails?.LegalAddress,
+        ActualAddress: employer.OrganizationDetails?.ActualAddress,
+
         ActiveVacanciesCount: employer.Vacancies?.Count(v => !v.IsDeleted) ?? 0,
         IsFavorite: isFavorite,
-        IsBlocked: isBlocked
-    );
+        IsBlocked: isBlocked);
 
     public static AdminEmployerDto ToAdminDto(Employer e) => new(
         e.Id, 

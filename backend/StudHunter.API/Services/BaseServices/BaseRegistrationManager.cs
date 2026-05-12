@@ -1,4 +1,5 @@
-﻿using StudHunter.API.Infrastructure;
+﻿using Microsoft.EntityFrameworkCore;
+using StudHunter.API.Infrastructure;
 using StudHunter.DB.Postgres;
 using StudHunter.DB.Postgres.Models;
 
@@ -42,7 +43,7 @@ public abstract class BaseRegistrationManager(StudHunterDbContext context)
             student.RegistrationStage = User.AccountStatus.Anonymous;
     }
 
-    public static void RecalculateEmployerStageInternal(Employer employer)
+    public void RecalculateEmployerStageInternal(Employer employer)
     {
         if (employer.IsDeleted)
         {
@@ -50,20 +51,41 @@ public abstract class BaseRegistrationManager(StudHunterDbContext context)
             return;
         }
 
-        if (employer.RegistrationStage == User.AccountStatus.Anonymous)
-            return;
+        bool isDataValid = !string.IsNullOrWhiteSpace(employer.Name) &&
+                           employer.Name != UserDefaultNames.DefaultCompanyName &&
+                           !string.IsNullOrWhiteSpace(employer.ContactEmail);
 
-        bool isDataValid =
-            employer.Name != UserDefaultNames.DefaultCompanyName &&
-            !string.IsNullOrWhiteSpace(employer.ContactPhone) &&
-            !string.IsNullOrWhiteSpace(employer.Description);
-
-        if (isDataValid && employer.RegistrationStage == User.AccountStatus.FullyActivated)
+        if (!isDataValid)
+        {
+            employer.RegistrationStage = User.AccountStatus.Anonymous;
             return;
-        else
+        }
+
+        if (employer.RegistrationStage == User.AccountStatus.FullyActivated)
+        {
+            var entry = _context.Entry(employer);
+            bool isRadicalChange = entry.State == EntityState.Modified && entry.Property(e => e.Name).IsModified;
+
+            if (employer.OrganizationDetails != null)
+            {
+                var orgEntry = _context.Entry(employer.OrganizationDetails);
+                if (orgEntry.State == EntityState.Modified || orgEntry.State == EntityState.Added)
+                {
+                    isRadicalChange |= orgEntry.Property(o => o.Inn).IsModified ||
+                                       orgEntry.Property(o => o.Ogrn).IsModified;
+                }
+            }
+
+            if (isRadicalChange)
+            {
+                employer.RegistrationStage = User.AccountStatus.ProfileFilled;
+            }
+            return;
+        }
+
+        if (employer.RegistrationStage == User.AccountStatus.Anonymous && isDataValid)
         {
             employer.RegistrationStage = User.AccountStatus.ProfileFilled;
-            return;
         }
     }
 }

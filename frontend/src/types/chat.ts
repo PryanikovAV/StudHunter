@@ -2,6 +2,7 @@ export interface ChatParticipantDto {
   id: string
   displayName: string
   role: string
+  avatarUrl?: string | null
 }
 
 export interface ChatDto {

@@ -1,19 +1,19 @@
 <script setup lang="ts">
 import { ref, onMounted } from 'vue'
 import apiClient from '@/api'
-import AppCard from '@/components/AppCard.vue'
-import AppInput from '@/components/AppInput.vue'
-import AppTagAutocomplete from '@/components/AppTagAutocomplete.vue'
-import { calculateAge } from '@/utils/dateUtils'
-import type { StudentProfileDto, ResumeFillDto, DictionaryItem } from '@/types/student' // Импортируем типы
+import ResumeDocument from '@/components/ResumeDocument.vue'
+import DownloadButton from '@/components/DownloadButton.vue'
+import { downloadResumePdf } from '@/utils/fileUtils'
+import type { StudentProfileDto, DictionaryItem } from '@/types/student'
+import type { ResumeDocumentDto, TagItem } from '@/types/resume'
 
 const profile = ref<StudentProfileDto | null>(null)
-const resume = ref<ResumeFillDto>({
+const resume = ref<ResumeDocumentDto>({
   title: '',
+  fullName: '',
   description: '',
   isDeleted: false,
-  skillIds: [],
-  skills: [],
+  skillsList: [],
 })
 
 const dictionaries = ref({
@@ -27,6 +27,7 @@ const dictionaries = ref({
 const isLoading = ref(true)
 const isSaving = ref(false)
 const isActionLoading = ref(false)
+const isDownloading = ref(false)
 
 const getDictName = (dict: DictionaryItem[], id: string | null | undefined): string | null => {
   if (!id) return null
@@ -34,20 +35,7 @@ const getDictName = (dict: DictionaryItem[], id: string | null | undefined): str
   return item ? item.name : null
 }
 
-const formatGender = (gender: string | null) => {
-  if (gender === 'Male') return 'Мужской'
-  if (gender === 'Female') return 'Женский'
-  return null
-}
-
-const formatStudyForm = (form: string | undefined) => {
-  if (form === 'FullTime') return 'Очная'
-  if (form === 'PartTime') return 'Очно-заочная'
-  if (form === 'Correspondence') return 'Заочная'
-  return null
-}
-
-const fetchSkills = async (query: string) => {
+const fetchSkills = async (query: string): Promise<TagItem[]> => {
   const response = await apiClient.get(`/dictionaries/skills/search?q=${query}&limit=10`)
   return response.data
 }
@@ -57,7 +45,7 @@ const fetchData = async () => {
   try {
     const [profRes, resRes, cities, unis, facs, deps, dirs] = await Promise.all([
       apiClient.get<StudentProfileDto>('/students/me/profile'),
-      apiClient.get<ResumeFillDto>('/my-resume'),
+      apiClient.get('/my-resume'),
       apiClient.get('/dictionaries/cities'),
       apiClient.get('/dictionaries/universities'),
       apiClient.get('/dictionaries/faculties'),
@@ -74,9 +62,41 @@ const fetchData = async () => {
       directions: dirs.data,
     }
 
-    if (resRes.data && resRes.data.id) {
-      resume.value = resRes.data
-      if (!resume.value.skills) resume.value.skills = []
+    const p = profile.value
+
+    let citizenshipStatus = null
+    if (p.isForeign === true) {
+      citizenshipStatus = 'Иностранный студент'
+    } else if (p.isForeign === false) {
+      citizenshipStatus = 'Резидент'
+    }
+
+    resume.value = {
+      id: resRes.data?.id,
+      title: resRes.data?.title || '',
+      description: resRes.data?.description || '',
+      skillsList: resRes.data?.skills || [],
+      isDeleted: resRes.data?.isDeleted || false,
+      updatedAt: resRes.data?.updatedAt || null,
+      fullName: `${p.lastName} ${p.firstName} ${p.patronymic || ''}`.trim(),
+      birthDate: p.birthDate,
+      gender: p.gender,
+      cityName: getDictName(dictionaries.value.cities, p.cityId),
+
+      citizenship: citizenshipStatus,
+
+      email: p.contactEmail,
+      phone: p.contactPhone,
+      universityName: getDictName(dictionaries.value.universities, p.universityId),
+      facultyName: getDictName(dictionaries.value.faculties, p.facultyId),
+      departmentName: getDictName(dictionaries.value.departments, p.departmentId),
+      studyDirectionName: getDictName(dictionaries.value.directions, p.studyDirectionId),
+      courseNumber: p.courseNumber,
+      studyForm: p.studyForm,
+      completedCourses: p.courses?.map((c: { name: string }) => c.name) || [],
+
+      avatarUrl: p.avatarUrl || null,
+      status: p.status || null,
     }
   } catch (error) {
     console.error('Ошибка загрузки данных', error)
@@ -86,14 +106,22 @@ const fetchData = async () => {
 }
 
 const saveResume = async () => {
+  if (!resume.value.title.trim()) {
+    window.alert('Поле "Желаемая должность" обязательно для заполнения.')
+    return
+  }
   isSaving.value = true
   try {
     const payload = {
-      ...resume.value,
-      skillIds: resume.value.skills.map((s) => s.id),
+      title: resume.value.title,
+      description: resume.value.description,
+      isDeleted: resume.value.isDeleted,
+      skillIds: (resume.value.skillsList || []).map((s) => s.id),
     }
 
     await apiClient.put('/my-resume', payload)
+
+    resume.value.updatedAt = new Date().toISOString()
     window.alert('Резюме успешно сохранено!')
   } catch (error) {
     console.error('Ошибка сохранения', error)
@@ -110,7 +138,6 @@ const hideResume = async () => {
     )
   )
     return
-
   isActionLoading.value = true
   try {
     await apiClient.delete('/my-resume')
@@ -136,6 +163,13 @@ const restoreResume = async () => {
   }
 }
 
+const handleDownload = async () => {
+  if (!resume.value.id || isDownloading.value) return
+  isDownloading.value = true
+  await downloadResumePdf(resume.value.id, resume.value.fullName)
+  isDownloading.value = false
+}
+
 onMounted(fetchData)
 </script>
 
@@ -147,167 +181,52 @@ onMounted(fetchData)
 
     <template v-else-if="profile">
       <div v-if="resume.isDeleted" class="deleted-banner">
-        <p>
-          Вы скрыли своё резюме. Работодатели не смогут найти вас, однако вы можете продолжать
-          откликаться на вакансии.
-        </p>
+        <p>Вы скрыли своё резюме. Работодатели не смогут найти вас.</p>
+        <button class="btn-main btn-dark" @click="restoreResume" :disabled="isActionLoading">
+          Восстановить резюме
+        </button>
       </div>
 
-      <AppCard :class="['resume-sheet', { 'is-hidden': resume.isDeleted }]">
-        <fieldset :disabled="resume.isDeleted" class="clean-fieldset">
-          <form @submit.prevent="saveResume" class="resume-form">
-            <header class="resume-header">
-              <div class="header-main">
-                <h2 class="full-name">
-                  {{ profile.lastName }} {{ profile.firstName }} {{ profile.patronymic || '' }}
-                </h2>
-                <div class="personal-details">
-                  <span v-if="profile.birthDate">{{ calculateAge(profile.birthDate) }}</span>
-                  <span v-else class="text-missing">возраст не указан</span>
-                  <span class="separator">•</span>
-                  <span v-if="profile.gender">{{ formatGender(profile.gender) }}</span>
-                  <span v-else class="text-missing">пол не указан</span>
-                  <span class="separator">•</span>
-                  <span v-if="profile.cityId">{{
-                    getDictName(dictionaries.cities, profile.cityId)
-                  }}</span>
-                  <span v-else class="text-missing">город не указан (укажите в настройках)</span>
-                </div>
-              </div>
+      <fieldset :disabled="resume.isDeleted" class="clean-fieldset">
+        <ResumeDocument
+          mode="student"
+          :data="resume"
+          :fetch-skills-fn="fetchSkills"
+          @update:title="resume.title = $event"
+          @update:description="resume.description = $event"
+          @update:skillsList="resume.skillsList = $event"
+        >
+          <template #actions-left>
+            <DownloadButton
+              v-if="resume.id && !resume.isDeleted"
+              :is-loading="isDownloading"
+              title="Скачать моё резюме"
+              @click="handleDownload"
+            />
+          </template>
 
-              <div class="header-contacts">
-                <div class="contact-item">
-                  <span class="contact-label">Телефон:</span>
-                  <span v-if="profile.contactPhone">{{ profile.contactPhone }}</span>
-                  <span v-else class="text-missing">не указан</span>
-                </div>
-                <div class="contact-item">
-                  <span class="contact-label">Email:</span>
-                  <span v-if="profile.contactEmail">{{ profile.contactEmail }}</span>
-                  <span v-else class="text-missing">не указан</span>
-                </div>
-                <router-link to="/student/profile" class="edit-link"
-                  >✏️ Изменить личные данные</router-link
-                >
-              </div>
-            </header>
+          <template #actions-right>
+            <template v-if="!resume.isDeleted">
+              <button
+                v-if="resume.id"
+                class="btn-main btn-outline"
+                @click="hideResume"
+                :disabled="isSaving || isActionLoading"
+              >
+                Скрыть резюме
+              </button>
 
-            <hr class="divider" />
-
-            <div class="form-group editable-section">
-              <label>Желаемая должность <span class="required">*</span></label>
-              <AppInput
-                v-model="resume.title"
-                placeholder="Например: Frontend-разработчик (Vue) / Младший аналитик"
-                required
-                class="title-input"
-              />
-            </div>
-
-            <section class="readonly-section">
-              <h3 class="section-title">Образование</h3>
-              <ul class="education-list">
-                <li>
-                  <span class="edu-label">ВУЗ:</span>
-                  <span v-if="profile.universityId" class="edu-val">{{
-                    getDictName(dictionaries.universities, profile.universityId)
-                  }}</span>
-                  <span v-else class="text-missing">укажите ВУЗ в настройках профиля</span>
-                </li>
-                <li>
-                  <span class="edu-label">Факультет/Институт:</span>
-                  <span v-if="profile.facultyId" class="edu-val">{{
-                    getDictName(dictionaries.faculties, profile.facultyId)
-                  }}</span>
-                  <span v-else class="text-missing">не указан</span>
-                </li>
-                <li>
-                  <span class="edu-label">Кафедра:</span>
-                  <span v-if="profile.departmentId" class="edu-val">{{
-                    getDictName(dictionaries.departments, profile.departmentId)
-                  }}</span>
-                  <span v-else class="text-missing">не указана</span>
-                </li>
-                <li>
-                  <span class="edu-label">Направление:</span>
-                  <span v-if="profile.studyDirectionId" class="edu-val">{{
-                    getDictName(dictionaries.directions, profile.studyDirectionId)
-                  }}</span>
-                  <span v-else class="text-missing">не указано</span>
-                </li>
-                <li>
-                  <span class="edu-label">Курс и форма:</span>
-                  <span v-if="profile.courseNumber" class="edu-val"
-                    >{{ profile.courseNumber }} курс, {{ formatStudyForm(profile.studyForm) }}</span
-                  >
-                  <span v-else class="text-missing">не указаны</span>
-                </li>
-              </ul>
-
-              <div class="passed-courses">
-                <span class="edu-label">Пройденные дисциплины:</span>
-                <div
-                  class="static-tags-container"
-                  v-if="profile.courses && profile.courses.length > 0"
-                >
-                  <span v-for="course in profile.courses" :key="course.id" class="static-tag">{{
-                    course.name
-                  }}</span>
-                </div>
-                <span v-else class="text-missing block-missing"
-                  >дисциплины не добавлены (укажите в настройках профиля)</span
-                >
-              </div>
-            </section>
-
-            <div class="form-group editable-section">
-              <label>Ключевые навыки (для поиска)</label>
-              <AppTagAutocomplete
-                v-model="resume.skills"
-                :fetch-fn="fetchSkills"
-                placeholder="Введите навык (например, JavaScript, PostgreSQL, Figma)..."
-              />
-            </div>
-
-            <div class="form-group editable-section">
-              <label>О себе</label>
-              <textarea
-                v-model="resume.description"
-                class="input-main textarea-field"
-                placeholder="Опишите ваши учебные проекты, курсовые работы, достижения и мотивацию. Что вы умеете делать руками?"
-                rows="6"
-              ></textarea>
-            </div>
-          </form>
-        </fieldset>
-      </AppCard>
-
-      <div class="resume-actions-panel">
-        <template v-if="!resume.isDeleted">
-          <button
-            v-if="resume.id"
-            class="btn-main btn-outline btn-danger"
-            @click="hideResume"
-            :disabled="isSaving || isActionLoading"
-          >
-            Скрыть резюме
-          </button>
-
-          <button
-            class="btn-main btn-dark"
-            @click="saveResume"
-            :disabled="isSaving || isActionLoading"
-          >
-            {{ isSaving ? 'Сохранение...' : 'Сохранить изменения' }}
-          </button>
-        </template>
-
-        <template v-else>
-          <button class="btn-main btn-dark" @click="restoreResume" :disabled="isActionLoading">
-            Восстановить резюме
-          </button>
-        </template>
-      </div>
+              <button
+                class="btn-main btn-dark"
+                @click="saveResume"
+                :disabled="isSaving || isActionLoading"
+              >
+                {{ isSaving ? 'Сохранение...' : 'Сохранить изменения' }}
+              </button>
+            </template>
+          </template>
+        </ResumeDocument>
+      </fieldset>
     </template>
   </div>
 </template>
@@ -317,209 +236,40 @@ onMounted(fetchData)
   margin-bottom: 24px;
   color: var(--dark-text);
 }
+.loading {
+  text-align: center;
+  color: var(--gray-text);
+  padding: 40px;
+}
 
 .deleted-banner {
   background-color: #f8fafc;
   border: 1px solid var(--gray-border);
   border-radius: 8px;
-  padding: 12px 16px;
-  margin-bottom: 20px;
-  text-align: center;
+  padding: 16px 20px;
+  margin-bottom: 24px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
 }
 .deleted-banner p {
   margin: 0;
-  font-size: 14px;
-  color: var(--gray-text-focus);
+  font-size: 15px;
+  font-weight: 500;
+  color: var(--dark-text);
 }
 
-.resume-sheet {
-  padding: 40px;
-  transition: all 0.3s ease;
-}
-.resume-sheet.is-hidden {
-  opacity: 0.5;
-  filter: grayscale(40%);
-  pointer-events: none;
-}
 .clean-fieldset {
   border: none;
   padding: 0;
   margin: 0;
 }
 
-.resume-actions-panel {
-  display: flex;
-  justify-content: flex-end;
-  gap: 16px;
-  margin-top: 24px;
-}
-
-.resume-form {
-  display: flex;
-  flex-direction: column;
-  gap: 32px;
-}
-.resume-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: flex-start;
-  flex-wrap: wrap;
-  gap: 24px;
-}
-
-.header-main {
-  flex: 1;
-  min-width: 250px;
-}
-
-.full-name {
-  font-size: 28px;
-  font-weight: 700;
-  margin-bottom: 8px;
-  color: var(--dark-text);
-  line-height: 1.2;
-}
-
-.personal-details {
-  font-size: 15px;
-  color: var(--gray-text-focus);
-}
-
-.separator {
-  margin: 0 8px;
-  color: var(--gray-border);
-}
-
-.header-contacts {
-  display: flex;
-  flex-direction: column;
-  gap: 6px;
-  font-size: 14px;
-  background-color: #f9fafb;
-  padding: 16px;
-  border-radius: 8px;
-  min-width: 200px;
-}
-
-.contact-item {
-  display: flex;
-  gap: 8px;
-}
-
-.contact-label {
-  color: var(--gray-text-focus);
-  font-weight: 500;
-}
-
-.edit-link {
-  margin-top: 8px;
-  font-size: 13px;
-  color: var(--susu-blue, #005aaa);
-  text-decoration: none;
-  align-self: flex-start;
-}
-.edit-link:hover {
-  text-decoration: underline;
-}
-.divider {
-  border: none;
-  border-top: 1px solid var(--gray-border);
-  margin: 0;
-}
-.text-missing {
-  color: #9ca3af;
-  font-style: italic;
-  font-size: 13px;
-}
-.block-missing {
-  display: block;
-  margin-top: 4px;
-}
-.section-title {
-  font-size: 18px;
-  font-weight: 600;
-  margin-bottom: 16px;
-  color: var(--dark-text);
-  text-transform: uppercase;
-  letter-spacing: 0.5px;
-}
-.education-list {
-  list-style: none;
-  padding: 0;
-  margin: 0 0 16px 0;
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-  font-size: 15px;
-}
-.edu-label {
-  font-weight: 600;
-  color: var(--gray-text-focus);
-  margin-right: 8px;
-}
-.edu-val {
-  color: var(--dark-text);
-}
-.passed-courses {
-  margin-top: 16px;
-}
-.static-tags-container {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 8px;
-  margin-top: 8px;
-}
-.static-tag {
-  display: inline-flex;
-  align-items: center;
-  background-color: var(--gray-border);
-  color: var(--gray-text-focus);
-  padding: 4px 12px;
-  border-radius: 16px;
-  font-size: 13px;
-  border: 1px solid var(--gray-border);
-}
-.form-group {
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-}
-.form-group label {
-  font-size: 15px;
-  font-weight: 600;
-  color: var(--dark-text);
-}
-.required {
-  color: #ef4444;
-}
-.title-input {
-  font-size: 16px;
-  font-weight: 500;
-}
-.textarea-field {
-  width: 100%;
-  box-sizing: border-box;
-  padding: 16px;
-  border: 1px solid var(--gray-border);
-  border-radius: 8px;
-  font-size: 15px;
-  font-family: inherit;
-  background-color: var(--background-field);
-  resize: vertical;
-  line-height: 1.5;
-  transition: border-color 0.1s ease;
-}
-.textarea-field:focus {
-  outline: none;
-  border-color: var(--gray-border-focus);
-}
-
 @media (max-width: 640px) {
-  .resume-sheet {
-    padding: 24px 16px;
-  }
-  .header-contacts {
-    width: 100%;
+  .deleted-banner {
+    flex-direction: column;
+    text-align: center;
   }
 }
 </style>

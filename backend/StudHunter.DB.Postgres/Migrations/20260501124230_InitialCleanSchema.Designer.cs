@@ -12,17 +12,18 @@ using StudHunter.DB.Postgres;
 namespace StudHunter.DB.Postgres.Migrations
 {
     [DbContext(typeof(StudHunterDbContext))]
-    [Migration("20260219114553_SpecializationsAdd")]
-    partial class SpecializationsAdd
+    [Migration("20260501124230_InitialCleanSchema")]
+    partial class InitialCleanSchema
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
-                .HasAnnotation("ProductVersion", "10.0.1")
+                .HasAnnotation("ProductVersion", "10.0.4")
                 .HasAnnotation("Relational:MaxIdentifierLength", 63);
 
+            NpgsqlModelBuilderExtensions.HasPostgresExtension(modelBuilder, "pg_trgm");
             NpgsqlModelBuilderExtensions.UseIdentityByDefaultColumns(modelBuilder);
 
             modelBuilder.Entity("StudHunter.DB.Postgres.Models.AdditionalSkill", b =>
@@ -43,23 +44,6 @@ namespace StudHunter.DB.Postgres.Migrations
                         .IsUnique();
 
                     b.ToTable("AdditionalSkills");
-
-                    b.HasData(
-                        new
-                        {
-                            Id = new Guid("cccccccc-5e11-4b2a-9e1d-3b5a1f2c4d5e"),
-                            Name = "c#"
-                        },
-                        new
-                        {
-                            Id = new Guid("dddddddd-5e11-4b2a-9e1d-3b5a1f2c4d5e"),
-                            Name = "postgresql"
-                        },
-                        new
-                        {
-                            Id = new Guid("eeeeeeee-5e11-4b2a-9e1d-3b5a1f2c4d5e"),
-                            Name = "vue.js"
-                        });
                 });
 
             modelBuilder.Entity("StudHunter.DB.Postgres.Models.BlackList", b =>
@@ -142,18 +126,6 @@ namespace StudHunter.DB.Postgres.Migrations
                         .IsUnique();
 
                     b.ToTable("Cities");
-
-                    b.HasData(
-                        new
-                        {
-                            Id = new Guid("8f8e833b-8f9b-4b2a-9e1d-3b5a1f2c4d5e"),
-                            Name = "Челябинск"
-                        },
-                        new
-                        {
-                            Id = new Guid("11111111-8f9b-4b2a-9e1d-3b5a1f2c4d5e"),
-                            Name = "Екатеринбург"
-                        });
                 });
 
             modelBuilder.Entity("StudHunter.DB.Postgres.Models.Course", b =>
@@ -178,18 +150,6 @@ namespace StudHunter.DB.Postgres.Migrations
                         .IsUnique();
 
                     b.ToTable("Courses");
-
-                    b.HasData(
-                        new
-                        {
-                            Id = new Guid("ffffffff-c001-4b2a-9e1d-3b5a1f2c4d5e"),
-                            Name = "Объектно-ориентированное программирование"
-                        },
-                        new
-                        {
-                            Id = new Guid("00000000-c001-4b2a-9e1d-3b5a1f2c4d5e"),
-                            Name = "Базы данных"
-                        });
                 });
 
             modelBuilder.Entity("StudHunter.DB.Postgres.Models.Department", b =>
@@ -202,6 +162,9 @@ namespace StudHunter.DB.Postgres.Migrations
                     b.Property<string>("Description")
                         .HasColumnType("text");
 
+                    b.Property<Guid>("FacultyId")
+                        .HasColumnType("uuid");
+
                     b.Property<string>("Name")
                         .IsRequired()
                         .HasMaxLength(255)
@@ -209,22 +172,9 @@ namespace StudHunter.DB.Postgres.Migrations
 
                     b.HasKey("Id");
 
-                    b.HasIndex("Name")
-                        .IsUnique();
+                    b.HasIndex("FacultyId");
 
                     b.ToTable("Departments");
-
-                    b.HasData(
-                        new
-                        {
-                            Id = new Guid("88888888-deaf-4b2a-9e1d-3b5a1f2c4d5e"),
-                            Name = "Информационно-измерительная техника"
-                        },
-                        new
-                        {
-                            Id = new Guid("99999999-deaf-4b2a-9e1d-3b5a1f2c4d5e"),
-                            Name = "Прикладная математика и информатика"
-                        });
                 });
 
             modelBuilder.Entity("StudHunter.DB.Postgres.Models.Faculty", b =>
@@ -233,6 +183,10 @@ namespace StudHunter.DB.Postgres.Migrations
                         .ValueGeneratedOnAdd()
                         .HasColumnType("uuid")
                         .HasDefaultValueSql("gen_random_uuid()");
+
+                    b.Property<string>("Abbreviation")
+                        .HasMaxLength(50)
+                        .HasColumnType("VARCHAR(50)");
 
                     b.Property<string>("Description")
                         .HasMaxLength(1000)
@@ -243,32 +197,14 @@ namespace StudHunter.DB.Postgres.Migrations
                         .HasMaxLength(255)
                         .HasColumnType("VARCHAR(255)");
 
+                    b.Property<Guid>("UniversityId")
+                        .HasColumnType("uuid");
+
                     b.HasKey("Id");
 
-                    b.HasIndex("Name")
-                        .IsUnique();
+                    b.HasIndex("UniversityId");
 
                     b.ToTable("Faculties");
-
-                    b.HasData(
-                        new
-                        {
-                            Id = new Guid("55555555-face-4b2a-9e1d-3b5a1f2c4d5e"),
-                            Description = "ВШЭКН ЮУрГУ",
-                            Name = "Высшая школа электроники и компьютерных наук"
-                        },
-                        new
-                        {
-                            Id = new Guid("66666666-face-4b2a-9e1d-3b5a1f2c4d5e"),
-                            Description = "ИЕТН",
-                            Name = "Институт естественных и точных наук"
-                        },
-                        new
-                        {
-                            Id = new Guid("77777777-face-4b2a-9e1d-3b5a1f2c4d5e"),
-                            Description = "ЧГиК",
-                            Name = "Факультет культурологии"
-                        });
                 });
 
             modelBuilder.Entity("StudHunter.DB.Postgres.Models.Favorite", b =>
@@ -286,7 +222,7 @@ namespace StudHunter.DB.Postgres.Migrations
                     b.Property<Guid?>("EmployerId")
                         .HasColumnType("UUID");
 
-                    b.Property<Guid?>("ResumeId")
+                    b.Property<Guid?>("StudentId")
                         .HasColumnType("UUID");
 
                     b.Property<Guid>("UserId")
@@ -299,7 +235,7 @@ namespace StudHunter.DB.Postgres.Migrations
 
                     b.HasIndex("EmployerId");
 
-                    b.HasIndex("ResumeId");
+                    b.HasIndex("StudentId");
 
                     b.HasIndex("UserId");
 
@@ -309,9 +245,9 @@ namespace StudHunter.DB.Postgres.Migrations
                         .IsUnique()
                         .HasFilter("\"EmployerId\" IS NOT NULL");
 
-                    b.HasIndex("UserId", "ResumeId")
+                    b.HasIndex("UserId", "StudentId")
                         .IsUnique()
-                        .HasFilter("\"ResumeId\" IS NOT NULL");
+                        .HasFilter("\"StudentId\" IS NOT NULL");
 
                     b.HasIndex("UserId", "VacancyId")
                         .IsUnique()
@@ -319,7 +255,7 @@ namespace StudHunter.DB.Postgres.Migrations
 
                     b.ToTable("Favorites", t =>
                         {
-                            t.HasCheckConstraint("CK_Favorite_AtLeastOneTarget", "\"VacancyId\" IS NOT NULL OR \"EmployerId\" IS NOT NULL OR \"ResumeId\" IS NOT NULL");
+                            t.HasCheckConstraint("CK_Favorite_AtLeastOneTarget", "\"VacancyId\" IS NOT NULL OR \"EmployerId\" IS NOT NULL OR \"StudentId\" IS NOT NULL");
                         });
                 });
 
@@ -335,6 +271,9 @@ namespace StudHunter.DB.Postgres.Migrations
                         .HasColumnType("TIMESTAMPTZ")
                         .HasDefaultValueSql("CURRENT_TIMESTAMP");
 
+                    b.Property<Guid>("EmployerId")
+                        .HasColumnType("UUID");
+
                     b.Property<DateTime>("ExpiredAt")
                         .HasColumnType("TIMESTAMPTZ");
 
@@ -342,20 +281,14 @@ namespace StudHunter.DB.Postgres.Migrations
                         .HasMaxLength(1000)
                         .HasColumnType("character varying(1000)");
 
-                    b.Property<Guid>("ReceiverId")
-                        .HasColumnType("UUID");
-
                     b.Property<Guid?>("ResumeId")
-                        .HasColumnType("UUID");
+                        .HasColumnType("uuid");
 
-                    b.Property<Guid>("SenderId")
-                        .HasColumnType("UUID");
-
-                    b.Property<string>("SnapshotReceiverName")
+                    b.Property<string>("SnapshotEmployerName")
                         .HasMaxLength(255)
                         .HasColumnType("character varying(255)");
 
-                    b.Property<string>("SnapshotSenderName")
+                    b.Property<string>("SnapshotStudentName")
                         .HasMaxLength(255)
                         .HasColumnType("character varying(255)");
 
@@ -368,6 +301,9 @@ namespace StudHunter.DB.Postgres.Migrations
                         .HasColumnType("INTEGER")
                         .HasDefaultValue(0);
 
+                    b.Property<Guid>("StudentId")
+                        .HasColumnType("UUID");
+
                     b.Property<int>("Type")
                         .HasColumnType("INTEGER");
 
@@ -377,27 +313,20 @@ namespace StudHunter.DB.Postgres.Migrations
                         .HasDefaultValueSql("CURRENT_TIMESTAMP");
 
                     b.Property<Guid?>("VacancyId")
-                        .HasColumnType("UUID");
+                        .HasColumnType("uuid");
 
                     b.HasKey("Id");
+
+                    b.HasIndex("EmployerId");
 
                     b.HasIndex("ExpiredAt")
                         .HasFilter("\"Status\" = 0");
 
-                    b.HasIndex("ReceiverId");
-
                     b.HasIndex("ResumeId");
-
-                    b.HasIndex("SenderId");
 
                     b.HasIndex("VacancyId");
 
-                    b.HasIndex("SenderId", "ReceiverId", "Status")
-                        .IsUnique()
-                        .HasDatabaseName("IX_Unique_Active_General_Offer")
-                        .HasFilter("\"Status\" = 0 AND \"VacancyId\" IS NULL");
-
-                    b.HasIndex("SenderId", "ReceiverId", "VacancyId", "Status")
+                    b.HasIndex("StudentId", "EmployerId", "VacancyId", "Type")
                         .IsUnique()
                         .HasDatabaseName("IX_Unique_Active_Invitation")
                         .HasFilter("\"Status\" = 0");
@@ -578,6 +507,11 @@ namespace StudHunter.DB.Postgres.Migrations
                     b.HasIndex("StudentId")
                         .IsUnique();
 
+                    b.HasIndex("Title");
+
+                    NpgsqlIndexBuilderExtensions.HasMethod(b.HasIndex("Title"), "gin");
+                    NpgsqlIndexBuilderExtensions.HasOperators(b.HasIndex("Title"), new[] { "gin_trgm_ops" });
+
                     b.ToTable("Resumes");
                 });
 
@@ -613,24 +547,7 @@ namespace StudHunter.DB.Postgres.Migrations
                     b.HasIndex("Name")
                         .IsUnique();
 
-                    b.ToTable("Specialization");
-
-                    b.HasData(
-                        new
-                        {
-                            Id = new Guid("12345678-9abc-4b2a-9e1d-3b5a1f2c4d5e"),
-                            Name = "Розничная торговля"
-                        },
-                        new
-                        {
-                            Id = new Guid("87654321-9abc-4b2a-9e1d-3b5a1f2c4d5e"),
-                            Name = "Гостиницы, рестораны, общепит"
-                        },
-                        new
-                        {
-                            Id = new Guid("abcdefab-9abc-4b2a-9e1d-3b5a1f2c4d5e"),
-                            Name = "Медицина, фармацевтика, аптеки"
-                        });
+                    b.ToTable("Specializations");
                 });
 
             modelBuilder.Entity("StudHunter.DB.Postgres.Models.StudyDirection", b =>
@@ -644,6 +561,9 @@ namespace StudHunter.DB.Postgres.Migrations
                         .HasMaxLength(20)
                         .HasColumnType("VARCHAR(20)");
 
+                    b.Property<Guid>("DepartmentId")
+                        .HasColumnType("uuid");
+
                     b.Property<string>("Description")
                         .HasMaxLength(1000)
                         .HasColumnType("TEXT");
@@ -655,24 +575,9 @@ namespace StudHunter.DB.Postgres.Migrations
 
                     b.HasKey("Id");
 
-                    b.HasIndex("Name")
-                        .IsUnique();
+                    b.HasIndex("DepartmentId");
 
                     b.ToTable("StudyDirections");
-
-                    b.HasData(
-                        new
-                        {
-                            Id = new Guid("aaaaaaaa-d1e1-4b2a-9e1d-3b5a1f2c4d5e"),
-                            Code = "09.03.04",
-                            Name = "Программная инженерия"
-                        },
-                        new
-                        {
-                            Id = new Guid("bbbbbbbb-d1e2-4b2a-9e1d-3b5a1f2c4d5e"),
-                            Code = "10.05.03",
-                            Name = "Информационная безопасность"
-                        });
                 });
 
             modelBuilder.Entity("StudHunter.DB.Postgres.Models.StudyPlan", b =>
@@ -715,6 +620,9 @@ namespace StudHunter.DB.Postgres.Migrations
                     b.Property<Guid?>("UniversityId")
                         .HasColumnType("uuid");
 
+                    b.Property<Guid?>("UniversityId1")
+                        .HasColumnType("uuid");
+
                     b.HasKey("Id");
 
                     b.HasIndex("DepartmentId");
@@ -727,6 +635,8 @@ namespace StudHunter.DB.Postgres.Migrations
                     b.HasIndex("StudyDirectionId");
 
                     b.HasIndex("UniversityId");
+
+                    b.HasIndex("UniversityId1");
 
                     b.ToTable("StudyPlans");
                 });
@@ -754,8 +664,12 @@ namespace StudHunter.DB.Postgres.Migrations
                         .HasDefaultValueSql("gen_random_uuid()");
 
                     b.Property<string>("Abbreviation")
+                        .IsRequired()
                         .HasMaxLength(50)
                         .HasColumnType("VARCHAR(50)");
+
+                    b.Property<Guid>("CityId")
+                        .HasColumnType("uuid");
 
                     b.Property<string>("Name")
                         .IsRequired()
@@ -764,30 +678,12 @@ namespace StudHunter.DB.Postgres.Migrations
 
                     b.HasKey("Id");
 
+                    b.HasIndex("CityId");
+
                     b.HasIndex("Name")
                         .IsUnique();
 
                     b.ToTable("Universities");
-
-                    b.HasData(
-                        new
-                        {
-                            Id = new Guid("22222222-1234-4b2a-9e1d-3b5a1f2c4d5e"),
-                            Abbreviation = "ЮУрГУ",
-                            Name = "Южно-Уральский государственный университет"
-                        },
-                        new
-                        {
-                            Id = new Guid("33333333-1234-4b2a-9e1d-3b5a1f2c4d5e"),
-                            Abbreviation = "ЧелГУ",
-                            Name = "Челябинский государственный университет"
-                        },
-                        new
-                        {
-                            Id = new Guid("44444444-1234-4b2a-9e1d-3b5a1f2c4d5e"),
-                            Abbreviation = "ЧГиК",
-                            Name = "Челябинский государственный институт культуры"
-                        });
                 });
 
             modelBuilder.Entity("StudHunter.DB.Postgres.Models.User", b =>
@@ -899,7 +795,17 @@ namespace StudHunter.DB.Postgres.Migrations
 
                     b.HasKey("Id");
 
+                    b.HasIndex("Description");
+
+                    NpgsqlIndexBuilderExtensions.HasMethod(b.HasIndex("Description"), "gin");
+                    NpgsqlIndexBuilderExtensions.HasOperators(b.HasIndex("Description"), new[] { "gin_trgm_ops" });
+
                     b.HasIndex("EmployerId");
+
+                    b.HasIndex("Title");
+
+                    NpgsqlIndexBuilderExtensions.HasMethod(b.HasIndex("Title"), "gin");
+                    NpgsqlIndexBuilderExtensions.HasOperators(b.HasIndex("Title"), new[] { "gin_trgm_ops" });
 
                     b.ToTable("Vacancies", t =>
                         {
@@ -981,6 +887,11 @@ namespace StudHunter.DB.Postgres.Migrations
                         .HasMaxLength(255)
                         .HasColumnType("VARCHAR(255)");
 
+                    b.HasIndex("Name");
+
+                    NpgsqlIndexBuilderExtensions.HasMethod(b.HasIndex("Name"), "gin");
+                    NpgsqlIndexBuilderExtensions.HasOperators(b.HasIndex("Name"), new[] { "gin_trgm_ops" });
+
                     b.HasIndex("SpecializationId");
 
                     b.ToTable("Employers");
@@ -1059,6 +970,28 @@ namespace StudHunter.DB.Postgres.Migrations
                     b.Navigation("User2");
                 });
 
+            modelBuilder.Entity("StudHunter.DB.Postgres.Models.Department", b =>
+                {
+                    b.HasOne("StudHunter.DB.Postgres.Models.Faculty", "Faculty")
+                        .WithMany("Departments")
+                        .HasForeignKey("FacultyId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.Navigation("Faculty");
+                });
+
+            modelBuilder.Entity("StudHunter.DB.Postgres.Models.Faculty", b =>
+                {
+                    b.HasOne("StudHunter.DB.Postgres.Models.University", "University")
+                        .WithMany("Faculties")
+                        .HasForeignKey("UniversityId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.Navigation("University");
+                });
+
             modelBuilder.Entity("StudHunter.DB.Postgres.Models.Favorite", b =>
                 {
                     b.HasOne("StudHunter.DB.Postgres.Models.Employer", "Employer")
@@ -1066,9 +999,9 @@ namespace StudHunter.DB.Postgres.Migrations
                         .HasForeignKey("EmployerId")
                         .OnDelete(DeleteBehavior.Cascade);
 
-                    b.HasOne("StudHunter.DB.Postgres.Models.Resume", "Resume")
+                    b.HasOne("StudHunter.DB.Postgres.Models.Student", "Student")
                         .WithMany()
-                        .HasForeignKey("ResumeId")
+                        .HasForeignKey("StudentId")
                         .OnDelete(DeleteBehavior.Cascade);
 
                     b.HasOne("StudHunter.DB.Postgres.Models.User", "User")
@@ -1084,7 +1017,7 @@ namespace StudHunter.DB.Postgres.Migrations
 
                     b.Navigation("Employer");
 
-                    b.Navigation("Resume");
+                    b.Navigation("Student");
 
                     b.Navigation("User");
 
@@ -1093,9 +1026,9 @@ namespace StudHunter.DB.Postgres.Migrations
 
             modelBuilder.Entity("StudHunter.DB.Postgres.Models.Invitation", b =>
                 {
-                    b.HasOne("StudHunter.DB.Postgres.Models.User", "Receiver")
-                        .WithMany("ReceivedInvitations")
-                        .HasForeignKey("ReceiverId")
+                    b.HasOne("StudHunter.DB.Postgres.Models.Employer", "Employer")
+                        .WithMany("Invitations")
+                        .HasForeignKey("EmployerId")
                         .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
 
@@ -1104,9 +1037,9 @@ namespace StudHunter.DB.Postgres.Migrations
                         .HasForeignKey("ResumeId")
                         .OnDelete(DeleteBehavior.Restrict);
 
-                    b.HasOne("StudHunter.DB.Postgres.Models.User", "Sender")
-                        .WithMany("SentInvitations")
-                        .HasForeignKey("SenderId")
+                    b.HasOne("StudHunter.DB.Postgres.Models.Student", "Student")
+                        .WithMany("Invitations")
+                        .HasForeignKey("StudentId")
                         .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
 
@@ -1115,11 +1048,11 @@ namespace StudHunter.DB.Postgres.Migrations
                         .HasForeignKey("VacancyId")
                         .OnDelete(DeleteBehavior.Restrict);
 
-                    b.Navigation("Receiver");
+                    b.Navigation("Employer");
 
                     b.Navigation("Resume");
 
-                    b.Navigation("Sender");
+                    b.Navigation("Student");
 
                     b.Navigation("Vacancy");
                 });
@@ -1208,6 +1141,17 @@ namespace StudHunter.DB.Postgres.Migrations
                     b.Navigation("Resume");
                 });
 
+            modelBuilder.Entity("StudHunter.DB.Postgres.Models.StudyDirection", b =>
+                {
+                    b.HasOne("StudHunter.DB.Postgres.Models.Department", "Department")
+                        .WithMany("StudyDirections")
+                        .HasForeignKey("DepartmentId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.Navigation("Department");
+                });
+
             modelBuilder.Entity("StudHunter.DB.Postgres.Models.StudyPlan", b =>
                 {
                     b.HasOne("StudHunter.DB.Postgres.Models.Department", "Department")
@@ -1235,6 +1179,10 @@ namespace StudHunter.DB.Postgres.Migrations
                         .WithMany()
                         .HasForeignKey("UniversityId")
                         .OnDelete(DeleteBehavior.Restrict);
+
+                    b.HasOne("StudHunter.DB.Postgres.Models.University", null)
+                        .WithMany("StudyPlans")
+                        .HasForeignKey("UniversityId1");
 
                     b.Navigation("Department");
 
@@ -1264,6 +1212,17 @@ namespace StudHunter.DB.Postgres.Migrations
                     b.Navigation("Course");
 
                     b.Navigation("StudyPlan");
+                });
+
+            modelBuilder.Entity("StudHunter.DB.Postgres.Models.University", b =>
+                {
+                    b.HasOne("StudHunter.DB.Postgres.Models.City", "City")
+                        .WithMany("Universities")
+                        .HasForeignKey("CityId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.Navigation("City");
                 });
 
             modelBuilder.Entity("StudHunter.DB.Postgres.Models.User", b =>
@@ -1347,6 +1306,11 @@ namespace StudHunter.DB.Postgres.Migrations
                     b.Navigation("Messages");
                 });
 
+            modelBuilder.Entity("StudHunter.DB.Postgres.Models.City", b =>
+                {
+                    b.Navigation("Universities");
+                });
+
             modelBuilder.Entity("StudHunter.DB.Postgres.Models.Course", b =>
                 {
                     b.Navigation("StudyPlanCourses");
@@ -1356,11 +1320,15 @@ namespace StudHunter.DB.Postgres.Migrations
 
             modelBuilder.Entity("StudHunter.DB.Postgres.Models.Department", b =>
                 {
+                    b.Navigation("StudyDirections");
+
                     b.Navigation("StudyPlans");
                 });
 
             modelBuilder.Entity("StudHunter.DB.Postgres.Models.Faculty", b =>
                 {
+                    b.Navigation("Departments");
+
                     b.Navigation("StudyPlans");
                 });
 
@@ -1381,6 +1349,13 @@ namespace StudHunter.DB.Postgres.Migrations
                     b.Navigation("StudyPlanCourses");
                 });
 
+            modelBuilder.Entity("StudHunter.DB.Postgres.Models.University", b =>
+                {
+                    b.Navigation("Faculties");
+
+                    b.Navigation("StudyPlans");
+                });
+
             modelBuilder.Entity("StudHunter.DB.Postgres.Models.User", b =>
                 {
                     b.Navigation("BlackLists");
@@ -1390,10 +1365,6 @@ namespace StudHunter.DB.Postgres.Migrations
                     b.Navigation("ChatsAsUser2");
 
                     b.Navigation("Favorites");
-
-                    b.Navigation("ReceivedInvitations");
-
-                    b.Navigation("SentInvitations");
                 });
 
             modelBuilder.Entity("StudHunter.DB.Postgres.Models.Vacancy", b =>
@@ -1407,6 +1378,8 @@ namespace StudHunter.DB.Postgres.Migrations
 
             modelBuilder.Entity("StudHunter.DB.Postgres.Models.Employer", b =>
                 {
+                    b.Navigation("Invitations");
+
                     b.Navigation("OrganizationDetails");
 
                     b.Navigation("Vacancies");
@@ -1414,6 +1387,8 @@ namespace StudHunter.DB.Postgres.Migrations
 
             modelBuilder.Entity("StudHunter.DB.Postgres.Models.Student", b =>
                 {
+                    b.Navigation("Invitations");
+
                     b.Navigation("Resume");
 
                     b.Navigation("StudyPlan");

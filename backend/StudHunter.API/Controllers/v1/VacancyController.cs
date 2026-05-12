@@ -13,7 +13,7 @@ public class EmployerVacancyController(IVacancyService vacancyService) : BaseCon
 {
     [HttpGet]
     public async Task<IActionResult> GetMyVacancies([FromQuery] PaginationParams paging, [FromQuery] bool includeDeleted = true) =>
-        HandleResult(await vacancyService.GetMyVacanciesAsync(AuthorizedUserId, paging, includeDeleted));
+        HandleResult(await vacancyService.GetVacanciesByEmployerAsync(AuthorizedUserId, paging, includeDeleted));
 
     [HttpGet("{vacancyId:guid}")]
     public async Task<IActionResult> GetVacancy(Guid vacancyId) =>
@@ -41,8 +41,8 @@ public class EmployerVacancyController(IVacancyService vacancyService) : BaseCon
 public class VacancyController(IVacancyService vacancyService, IInvitationService invitationService) : BaseController
 {
     [HttpGet]
-    public async Task<IActionResult> SearchVacancies([FromQuery] VacancySearchFilter filter) =>
-        HandleResult(await vacancyService.SearchVacanciesAsync(filter, AuthorizedUserId));
+    public async Task<IActionResult> GetVacanciesList([FromQuery] Guid EmployerId, [FromQuery] PaginationParams paging) => 
+        HandleResult(await vacancyService.GetVacanciesByEmployerAsync(EmployerId, paging, false));
 
     [HttpGet("{vacancyId:guid}")]
     public async Task<IActionResult> GetVacancyDetails(Guid vacancyId) =>
@@ -62,5 +62,13 @@ public class VacancyController(IVacancyService vacancyService, IInvitationServic
         );
 
         return HandleResult(await invitationService.CreateResponseAsync(AuthorizedUserId, dto));
+    }
+
+    [AllowAnonymous]
+    [HttpGet("featured")]
+    public async Task<IActionResult> GetFeaturedVacancies()
+    {
+        Guid? userId = User.Identity?.IsAuthenticated == true ? AuthorizedUserId : null;
+        return HandleResult(await vacancyService.GetHomePageDataAsync(userId));
     }
 }

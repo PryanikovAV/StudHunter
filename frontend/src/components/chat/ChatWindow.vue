@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { ref, watch, nextTick } from 'vue'
+import { useToast } from 'vue-toastification'
 import type { ChatDto, MessageDto } from '@/types/chat'
 import { formatChatTime } from '@/utils/dateUtils'
 import IconSend from '@/components/icons/IconSend.vue'
@@ -19,6 +20,7 @@ const emit = defineEmits<{
   (e: 'send', content: string): void
 }>()
 
+const toast = useToast()
 const newMessage = ref('')
 const messagesContainer = ref<HTMLElement | null>(null)
 
@@ -36,7 +38,7 @@ const handleSend = () => {
 }
 
 const handleUnblock = () => {
-  window.alert('В разработке')
+  toast.info('Функция разблокировки в разработке')
 }
 
 watch(
@@ -65,12 +67,20 @@ watch(
         </button>
 
         <div class="header-info">
+          <img
+            v-if="chat.interlocutor.avatarUrl"
+            :src="chat.interlocutor.avatarUrl"
+            alt="Avatar"
+            class="chat-avatar-img small"
+          />
           <div
+            v-else
             class="chat-avatar small"
             :class="chat.interlocutor.role === 'Student' ? 'student-bg' : 'company-bg'"
           >
             {{ getInitials(chat.interlocutor.displayName) }}
           </div>
+
           <div class="header-text">
             <h3 class="header-name">{{ chat.interlocutor.displayName }}</h3>
             <span class="header-role">{{
@@ -200,6 +210,18 @@ watch(
   font-size: 12px;
   color: var(--gray-text-focus);
 }
+
+.chat-avatar-img {
+  border-radius: 50%;
+  object-fit: cover;
+  flex-shrink: 0;
+  border: 1px solid var(--gray-border);
+}
+.chat-avatar-img.small {
+  width: 40px;
+  height: 40px;
+}
+
 .chat-avatar {
   width: 40px;
   height: 40px;
@@ -347,6 +369,7 @@ watch(
 .btn-text:hover {
   text-decoration: underline;
 }
+
 @media (max-width: 768px) {
   .chat-window.hidden-on-mobile {
     display: none !important;

@@ -56,7 +56,6 @@ const changeStatus = async (id: string, action: 'accept' | 'reject' | 'cancel') 
     }
   } catch (error) {
     console.error(`Ошибка при ${action}:`, error)
-    window.alert('Не удалось изменить статус') // Добавили window.
   }
 }
 

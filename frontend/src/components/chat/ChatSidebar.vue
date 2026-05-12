@@ -34,7 +34,14 @@ const getInitials = (name: string) => (name ? name.charAt(0).toUpperCase() : '?'
         :class="{ active: selectedChatId === chat.id }"
         @click="$emit('select', chat.id)"
       >
+        <img
+          v-if="chat.interlocutor.avatarUrl"
+          :src="chat.interlocutor.avatarUrl"
+          alt="Avatar"
+          class="chat-avatar-img"
+        />
         <div
+          v-else
           class="chat-avatar"
           :class="chat.interlocutor.role === 'Student' ? 'student-bg' : 'company-bg'"
         >
@@ -118,6 +125,16 @@ const getInitials = (name: string) => (name ? name.charAt(0).toUpperCase() : '?'
 .chat-list-item.active {
   background-color: #e2e8f0;
 }
+
+.chat-avatar-img {
+  width: 48px;
+  height: 48px;
+  border-radius: 50%;
+  object-fit: cover;
+  flex-shrink: 0;
+  border: 1px solid var(--gray-border);
+}
+
 .chat-avatar {
   width: 48px;
   height: 48px;
@@ -195,6 +212,7 @@ const getInitials = (name: string) => (name ? name.charAt(0).toUpperCase() : '?'
   display: inline-block;
   flex-shrink: 0;
 }
+
 @media (max-width: 768px) {
   .chat-sidebar.hidden-on-mobile {
     display: none !important;

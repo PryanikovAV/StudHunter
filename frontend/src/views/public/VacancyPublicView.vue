@@ -5,27 +5,7 @@ import apiClient from '@/api'
 import AppCard from '@/components/AppCard.vue'
 import BackButton from '@/components/BackButton.vue'
 import InteractionButtons from '@/components/InteractionButtons.vue'
-
-interface VacancyDetailsDto {
-  id: string
-  employerId: string
-  title: string
-  description: string | null
-  salary: number | null
-  type: string
-  updatedAt: string
-  employerName: string
-  specializationName: string | null
-  cityName: string | null
-  actualAddress: string | null
-  contactPhone: string | null
-  contactEmail: string | null
-  isDeleted: boolean
-  courses: string[]
-  skills: string[]
-  isFavorite?: boolean
-  isBlocked?: boolean
-}
+import type { VacancyDetailsDto } from '@/types/vacancy'
 
 const route = useRoute()
 const router = useRouter()

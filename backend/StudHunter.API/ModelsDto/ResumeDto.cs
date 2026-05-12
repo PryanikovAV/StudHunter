@@ -21,10 +21,20 @@ public record ResumeSearchDto(
     string? Email,
     string? Phone,
     string FullName,
+    string? CityName,
+    string? UniversityName,
     string? FacultyName,
+    string? DepartmentName,
     string? StudyDirectionName,
     int? CourseNumber,
+    string? AvatarUrl,
+    DateOnly? BirthDate,
+    string? Gender,
+    bool IsForeign,
+    string Status,
+    string? StudyForm,
     List<string> Skills,
+    List<string> CompletedCourses,
     bool IsFavorite = false,
     bool IsBlocked = false
 );
@@ -33,6 +43,17 @@ public record ResumeSearchFilter
 {
     public string? SearchTerm { get; init; }
     public List<Guid> SkillIds { get; init; } = new();
+    public List<string> Statuses { get; init; } = new();
+    public List<string> StudyForms { get; init; } = new();
+    public Guid? CityId { get; init; }
+    public Guid? UniversityId { get; init; }
+    public Guid? FacultyId { get; init; }
+    public Guid? DepartmentId { get; init; }
+    public Guid? StudyDirectionId { get; init; }
+    public int? CourseNumber { get; init; }
+    public List<Guid> CourseIds { get; init; } = new();
+    public bool? IsForeign { get; init; }
+    public bool? HasAvatar { get; init; }
     public PaginationParams Paging { get; init; } = new PaginationParams();
 }
 
@@ -90,7 +111,7 @@ public static class ResumeMapper
 
     public static ResumeSearchDto ToSearchDto(Resume r, bool maskContacts, bool isFavorite = false, bool isBlocked = false)
     {
-        var fullName = $"{r.Student.LastName} {r.Student.FirstName}".Trim();
+        var fullName = $"{r.Student.LastName} {r.Student.FirstName} {r.Student.Patronymic}".Trim();
 
         string? displayEmail = maskContacts ? "Доступно после аккредитации" : r.Student.ContactEmail ?? r.Student.Email;
         string? displayPhone = maskContacts ? "Скрыто" : r.Student.ContactPhone;
@@ -106,15 +127,32 @@ public static class ResumeMapper
             Email: displayEmail,
             Phone: displayPhone,
             FullName: fullName,
+            CityName: r.Student.City?.Name,
+            UniversityName: sp?.University?.Name,
             FacultyName: sp?.Faculty?.Name,
+            DepartmentName: sp?.Department?.Name,
             StudyDirectionName: sp?.StudyDirection?.Name,
             CourseNumber: sp?.CourseNumber,
+
             Skills: r.AdditionalSkills?
                         .Select(ras => ras.AdditionalSkill.Name)
                         .OrderBy(n => n)
                         .ToList() ?? new List<string>(),
+
+            CompletedCourses: sp?.StudyPlanCourses?
+                        .Select(spc => spc.Course.Name)
+                        .OrderBy(n => n)
+                        .ToList() ?? new List<string>(),
+
             IsFavorite: isFavorite,
-            IsBlocked: isBlocked
+            IsBlocked: isBlocked,
+
+            AvatarUrl: r.Student.AvatarUrl,
+            BirthDate: r.Student.BirthDate,
+            Gender: r.Student.Gender?.ToString(),
+            IsForeign: r.Student.IsForeign ?? false,
+            Status: r.Student.Status.ToString(),
+            StudyForm: sp?.StudyForm.ToString()
         );
     }
 }

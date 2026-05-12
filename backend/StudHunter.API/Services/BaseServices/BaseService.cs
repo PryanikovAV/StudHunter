@@ -10,6 +10,20 @@ public abstract class BaseService(StudHunterDbContext context, IRegistrationMana
     protected readonly StudHunterDbContext _context = context;
     protected readonly IRegistrationManager _registrationManager = registrationManager;
 
+    protected async Task<Result<string>> UpdateUserAvatarInternalAsync<TEntity>(Guid entityId, string avatarUrl)
+    where TEntity : User
+    {
+        var entity = await _context.Set<TEntity>().FirstOrDefaultAsync(e => e.Id == entityId);
+
+        if (entity == null)
+            return Result<string>.Failure(ErrorMessages.EntityNotFound(typeof(TEntity).Name), StatusCodes.Status404NotFound);
+
+        entity.AvatarUrl = avatarUrl;
+
+        var result = await SaveChangesAsync<TEntity>();
+        return result.IsSuccess ? Result<string>.Success(entity.AvatarUrl) : Result<string>.Failure(result.ErrorMessage!);
+    }
+
     protected Result<bool> EnsureCanPerform(User user, UserAction action)
     {
         var role = GetRole(user);

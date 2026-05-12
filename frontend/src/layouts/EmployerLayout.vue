@@ -1,11 +1,14 @@
 <script setup lang="ts">
-import { ref } from 'vue'
-import { useRouter } from 'vue-router'
+import { ref, computed } from 'vue'
+import { useRouter, useRoute } from 'vue-router'
 import EmployerHero from '@/components/EmployerHero.vue'
 import SearchBar from '@/components/SearchBar.vue'
 
 const router = useRouter()
+const route = useRoute()
 const heroRef = ref<InstanceType<typeof EmployerHero> | null>(null)
+
+const isSearchPage = computed(() => route.name === 'employer-resume-search')
 
 const handleResumeSearch = (query: string) => {
   if (!query.trim()) return
@@ -13,6 +16,12 @@ const handleResumeSearch = (query: string) => {
   router.push({
     name: 'employer-resume-search',
     query: { q: query },
+  })
+}
+
+const handleAdvancedSearch = () => {
+  router.push({
+    name: 'employer-resume-search',
   })
 }
 
@@ -25,16 +34,19 @@ const refreshHero = () => {
 
 <template>
   <div class="layout-wrapper">
-    <EmployerHero ref="heroRef" />
+    <template v-if="!isSearchPage">
+      <EmployerHero ref="heroRef" />
 
-    <div class="search-bar-wrapper">
-      <div class="container" style="margin-top: 16px">
-        <SearchBar
-          placeholder="Навык, профессия, ВУЗ или имя студента"
-          @search="handleResumeSearch"
-        />
+      <div class="search-bar-wrapper">
+        <div class="container">
+          <SearchBar
+            placeholder="Навык, профессия, ВУЗ или имя студента"
+            @search="handleResumeSearch"
+            @advanced-search="handleAdvancedSearch"
+          />
+        </div>
       </div>
-    </div>
+    </template>
 
     <main class="layout-content">
       <router-view @update-hero="refreshHero" />

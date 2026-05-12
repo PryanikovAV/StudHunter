@@ -80,18 +80,8 @@ public class StudentService(
         return await SaveChangesAsync<Student>();
     }
 
-    public async Task<Result<string>> UpdateAvatarAsync(Guid studentId, ChangeAvatarDto dto)
-    {
-        var student = await GetStudentQuery().FirstOrDefaultAsync(s => s.Id == studentId);
-        
-        if (student == null)
-            return Result<string>.Failure(ErrorMessages.EntityNotFound(nameof(Student)), StatusCodes.Status404NotFound);
-
-        student.AvatarUrl = dto.AvatarUrl;
-        var result = await SaveChangesAsync<Student>();
-
-        return result.IsSuccess ? Result<string>.Success(student.AvatarUrl) : Result<string>.Failure(result.ErrorMessage!);
-    }
+    public Task<Result<string>> UpdateAvatarAsync(Guid studentId, ChangeAvatarDto dto) => 
+        UpdateUserAvatarInternalAsync<Student>(studentId, dto.AvatarUrl);
 
     public async Task<Result<bool>> DeleteStudentAsync(Guid studentId, string password)
     {

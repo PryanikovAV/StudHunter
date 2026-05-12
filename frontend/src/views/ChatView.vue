@@ -18,6 +18,7 @@ const isLoadingChats = ref(true)
 const activeInvitationId = ref<string | null>(null)
 
 const currentChat = computed(() => chats.value.find((c) => c.id === selectedChatId.value))
+const userRole = computed(() => (localStorage.getItem('userRole') || '').toLowerCase())
 
 const currentUserId = computed(() => {
   const token = localStorage.getItem('token')
@@ -100,7 +101,6 @@ const handleSendMessage = async (content: string) => {
     if (updatedChat) await handleSelectChat(updatedChat.id)
   } catch (error) {
     console.error('Ошибка отправки:', error)
-    window.alert('Не удалось отправить сообщение.')
   }
 }
 
@@ -182,7 +182,7 @@ onUnmounted(() => {
 </script>
 
 <template>
-  <div class="chat-page-root">
+  <div class="chat-page-root" :class="{ 'is-employer': userRole === 'employer' }">
     <h1 class="page-title">Мессенджер</h1>
 
     <AppCard class="chat-main-card">
@@ -207,11 +207,14 @@ onUnmounted(() => {
 .chat-page-root {
   display: flex;
   flex-direction: column;
-  height: calc(100vh - 350px);
+  height: calc(100vh - 380px);
   min-height: 500px;
   max-width: 900px;
   width: 100%;
-  margin: 0 auto;
+  margin: 0 auto 32px auto;
+}
+.chat-page-root.is-employer {
+  height: calc(100vh - 430px);
 }
 
 .page-title {

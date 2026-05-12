@@ -1,13 +1,5 @@
 import * as signalR from '@microsoft/signalr'
-
-export interface MessageDto {
-  id: string
-  senderId: string | null
-  content: string
-  sentAt: string
-  invitationId: string | null
-  isRead: boolean
-}
+import type { MessageDto } from '@/types/chat'
 
 class SignalRService {
   private connection: signalR.HubConnection | null = null
@@ -16,10 +8,9 @@ class SignalRService {
     if (this.connection?.state === signalR.HubConnectionState.Connected) {
       return
     }
-    const backendBaseUrl = 'http://localhost:5000'
 
     this.connection = new signalR.HubConnectionBuilder()
-      .withUrl(`${backendBaseUrl}/hubs/chat`, {
+      .withUrl('/hubs/chat', {
         accessTokenFactory: () => token,
       })
       .withAutomaticReconnect()

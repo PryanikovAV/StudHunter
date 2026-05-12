@@ -3,16 +3,17 @@ using Microsoft.EntityFrameworkCore.Migrations;
 
 #nullable disable
 
-#pragma warning disable CA1814 // Prefer jagged arrays over multidimensional
-
 namespace StudHunter.DB.Postgres.Migrations
 {
     /// <inheritdoc />
-    public partial class InitialCreateFull : Migration
+    public partial class AddSpecializations : Migration
     {
         /// <inheritdoc />
         protected override void Up(MigrationBuilder migrationBuilder)
         {
+            migrationBuilder.AlterDatabase()
+                .Annotation("Npgsql:PostgresExtension:pg_trgm", ",,");
+
             migrationBuilder.CreateTable(
                 name: "AdditionalSkills",
                 columns: table => new
@@ -81,32 +82,6 @@ namespace StudHunter.DB.Postgres.Migrations
                 });
 
             migrationBuilder.CreateTable(
-                name: "Departments",
-                columns: table => new
-                {
-                    Id = table.Column<Guid>(type: "uuid", nullable: false, defaultValueSql: "gen_random_uuid()"),
-                    Name = table.Column<string>(type: "VARCHAR(255)", maxLength: 255, nullable: false),
-                    Description = table.Column<string>(type: "text", nullable: true)
-                },
-                constraints: table =>
-                {
-                    table.PrimaryKey("PK_Departments", x => x.Id);
-                });
-
-            migrationBuilder.CreateTable(
-                name: "Faculties",
-                columns: table => new
-                {
-                    Id = table.Column<Guid>(type: "uuid", nullable: false, defaultValueSql: "gen_random_uuid()"),
-                    Name = table.Column<string>(type: "VARCHAR(255)", maxLength: 255, nullable: false),
-                    Description = table.Column<string>(type: "TEXT", maxLength: 1000, nullable: true)
-                },
-                constraints: table =>
-                {
-                    table.PrimaryKey("PK_Faculties", x => x.Id);
-                });
-
-            migrationBuilder.CreateTable(
                 name: "Notifications",
                 columns: table => new
                 {
@@ -125,30 +100,15 @@ namespace StudHunter.DB.Postgres.Migrations
                 });
 
             migrationBuilder.CreateTable(
-                name: "StudyDirections",
+                name: "Specializations",
                 columns: table => new
                 {
                     Id = table.Column<Guid>(type: "uuid", nullable: false, defaultValueSql: "gen_random_uuid()"),
-                    Name = table.Column<string>(type: "VARCHAR(255)", maxLength: 255, nullable: false),
-                    Code = table.Column<string>(type: "VARCHAR(20)", maxLength: 20, nullable: true),
-                    Description = table.Column<string>(type: "TEXT", maxLength: 1000, nullable: true)
+                    Name = table.Column<string>(type: "VARCHAR(100)", maxLength: 100, nullable: false)
                 },
                 constraints: table =>
                 {
-                    table.PrimaryKey("PK_StudyDirections", x => x.Id);
-                });
-
-            migrationBuilder.CreateTable(
-                name: "Universities",
-                columns: table => new
-                {
-                    Id = table.Column<Guid>(type: "uuid", nullable: false, defaultValueSql: "gen_random_uuid()"),
-                    Name = table.Column<string>(type: "VARCHAR(255)", maxLength: 255, nullable: false),
-                    Abbreviation = table.Column<string>(type: "VARCHAR(50)", maxLength: 50, nullable: true)
-                },
-                constraints: table =>
-                {
-                    table.PrimaryKey("PK_Universities", x => x.Id);
+                    table.PrimaryKey("PK_Specializations", x => x.Id);
                 });
 
             migrationBuilder.CreateTable(
@@ -176,37 +136,6 @@ namespace StudHunter.DB.Postgres.Migrations
                     table.PrimaryKey("PK_Administrators", x => x.Id);
                     table.ForeignKey(
                         name: "FK_Administrators_Cities_CityId",
-                        column: x => x.CityId,
-                        principalTable: "Cities",
-                        principalColumn: "Id",
-                        onDelete: ReferentialAction.Restrict);
-                });
-
-            migrationBuilder.CreateTable(
-                name: "Employers",
-                columns: table => new
-                {
-                    Id = table.Column<Guid>(type: "UUID", nullable: false, defaultValueSql: "gen_random_uuid()"),
-                    RegistrationStage = table.Column<int>(type: "INTEGER", nullable: false, defaultValue: 1),
-                    Email = table.Column<string>(type: "VARCHAR(255)", maxLength: 255, nullable: false),
-                    PasswordHash = table.Column<string>(type: "VARCHAR(255)", nullable: false),
-                    CityId = table.Column<Guid>(type: "UUID", nullable: true),
-                    ContactEmail = table.Column<string>(type: "VARCHAR(255)", maxLength: 255, nullable: true),
-                    ContactPhone = table.Column<string>(type: "VARCHAR(20)", maxLength: 20, nullable: true),
-                    AvatarUrl = table.Column<string>(type: "VARCHAR(255)", maxLength: 255, nullable: true),
-                    CreatedAt = table.Column<DateTime>(type: "TIMESTAMPTZ", nullable: false, defaultValueSql: "CURRENT_TIMESTAMP"),
-                    IsDeleted = table.Column<bool>(type: "BOOLEAN", nullable: false, defaultValue: false),
-                    DeletedAt = table.Column<DateTime>(type: "TIMESTAMPTZ", nullable: true),
-                    Name = table.Column<string>(type: "VARCHAR(255)", maxLength: 255, nullable: false),
-                    Description = table.Column<string>(type: "TEXT", maxLength: 1000, nullable: true),
-                    Website = table.Column<string>(type: "VARCHAR(255)", maxLength: 255, nullable: true),
-                    Specialization = table.Column<string>(type: "VARCHAR(255)", maxLength: 255, nullable: true)
-                },
-                constraints: table =>
-                {
-                    table.PrimaryKey("PK_Employers", x => x.Id);
-                    table.ForeignKey(
-                        name: "FK_Employers_Cities_CityId",
                         column: x => x.CityId,
                         principalTable: "Cities",
                         principalColumn: "Id",
@@ -248,15 +177,117 @@ namespace StudHunter.DB.Postgres.Migrations
                 });
 
             migrationBuilder.CreateTable(
+                name: "Universities",
+                columns: table => new
+                {
+                    Id = table.Column<Guid>(type: "uuid", nullable: false, defaultValueSql: "gen_random_uuid()"),
+                    CityId = table.Column<Guid>(type: "uuid", nullable: false),
+                    Name = table.Column<string>(type: "VARCHAR(255)", maxLength: 255, nullable: false),
+                    Abbreviation = table.Column<string>(type: "VARCHAR(50)", maxLength: 50, nullable: false)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_Universities", x => x.Id);
+                    table.ForeignKey(
+                        name: "FK_Universities_Cities_CityId",
+                        column: x => x.CityId,
+                        principalTable: "Cities",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Restrict);
+                });
+
+            migrationBuilder.CreateTable(
+                name: "Employers",
+                columns: table => new
+                {
+                    Id = table.Column<Guid>(type: "UUID", nullable: false, defaultValueSql: "gen_random_uuid()"),
+                    RegistrationStage = table.Column<int>(type: "INTEGER", nullable: false, defaultValue: 1),
+                    Email = table.Column<string>(type: "VARCHAR(255)", maxLength: 255, nullable: false),
+                    PasswordHash = table.Column<string>(type: "VARCHAR(255)", nullable: false),
+                    CityId = table.Column<Guid>(type: "UUID", nullable: true),
+                    ContactEmail = table.Column<string>(type: "VARCHAR(255)", maxLength: 255, nullable: true),
+                    ContactPhone = table.Column<string>(type: "VARCHAR(20)", maxLength: 20, nullable: true),
+                    AvatarUrl = table.Column<string>(type: "VARCHAR(255)", maxLength: 255, nullable: true),
+                    CreatedAt = table.Column<DateTime>(type: "TIMESTAMPTZ", nullable: false, defaultValueSql: "CURRENT_TIMESTAMP"),
+                    IsDeleted = table.Column<bool>(type: "BOOLEAN", nullable: false, defaultValue: false),
+                    DeletedAt = table.Column<DateTime>(type: "TIMESTAMPTZ", nullable: true),
+                    Name = table.Column<string>(type: "VARCHAR(255)", maxLength: 255, nullable: false),
+                    Description = table.Column<string>(type: "TEXT", maxLength: 1000, nullable: true),
+                    Website = table.Column<string>(type: "VARCHAR(255)", maxLength: 255, nullable: true),
+                    SpecializationId = table.Column<Guid>(type: "uuid", nullable: true)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_Employers", x => x.Id);
+                    table.ForeignKey(
+                        name: "FK_Employers_Cities_CityId",
+                        column: x => x.CityId,
+                        principalTable: "Cities",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Restrict);
+                    table.ForeignKey(
+                        name: "FK_Employers_Specializations_SpecializationId",
+                        column: x => x.SpecializationId,
+                        principalTable: "Specializations",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.SetNull);
+                });
+
+            migrationBuilder.CreateTable(
+                name: "Resumes",
+                columns: table => new
+                {
+                    Id = table.Column<Guid>(type: "uuid", nullable: false, defaultValueSql: "gen_random_uuid()"),
+                    StudentId = table.Column<Guid>(type: "UUID", nullable: false),
+                    Title = table.Column<string>(type: "VARCHAR(255)", maxLength: 255, nullable: false),
+                    Description = table.Column<string>(type: "TEXT", maxLength: 2500, nullable: true),
+                    CreatedAt = table.Column<DateTime>(type: "TIMESTAMPTZ", nullable: false, defaultValueSql: "CURRENT_TIMESTAMP"),
+                    UpdatedAt = table.Column<DateTime>(type: "TIMESTAMPTZ", nullable: false, defaultValueSql: "CURRENT_TIMESTAMP"),
+                    IsDeleted = table.Column<bool>(type: "BOOLEAN", nullable: false, defaultValue: false),
+                    DeletedAt = table.Column<DateTime>(type: "TIMESTAMPTZ", nullable: true)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_Resumes", x => x.Id);
+                    table.ForeignKey(
+                        name: "FK_Resumes_Students_StudentId",
+                        column: x => x.StudentId,
+                        principalTable: "Students",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Cascade);
+                });
+
+            migrationBuilder.CreateTable(
+                name: "Faculties",
+                columns: table => new
+                {
+                    Id = table.Column<Guid>(type: "uuid", nullable: false, defaultValueSql: "gen_random_uuid()"),
+                    UniversityId = table.Column<Guid>(type: "uuid", nullable: false),
+                    Name = table.Column<string>(type: "VARCHAR(255)", maxLength: 255, nullable: false),
+                    Abbreviation = table.Column<string>(type: "VARCHAR(50)", maxLength: 50, nullable: true),
+                    Description = table.Column<string>(type: "TEXT", maxLength: 1000, nullable: true)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_Faculties", x => x.Id);
+                    table.ForeignKey(
+                        name: "FK_Faculties_Universities_UniversityId",
+                        column: x => x.UniversityId,
+                        principalTable: "Universities",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Restrict);
+                });
+
+            migrationBuilder.CreateTable(
                 name: "OrganizationDetails",
                 columns: table => new
                 {
                     Id = table.Column<Guid>(type: "uuid", nullable: false, defaultValueSql: "gen_random_uuid()"),
                     EmployerId = table.Column<Guid>(type: "UUID", nullable: false),
-                    Inn = table.Column<string>(type: "VARCHAR(12)", maxLength: 12, nullable: false),
-                    Ogrn = table.Column<string>(type: "VARCHAR(15)", maxLength: 15, nullable: false),
-                    LegalAddress = table.Column<string>(type: "TEXT", nullable: false),
-                    ActualAddress = table.Column<string>(type: "TEXT", nullable: false),
+                    Inn = table.Column<string>(type: "VARCHAR(12)", maxLength: 12, nullable: true),
+                    Ogrn = table.Column<string>(type: "VARCHAR(15)", maxLength: 15, nullable: true),
+                    LegalAddress = table.Column<string>(type: "TEXT", nullable: true),
+                    ActualAddress = table.Column<string>(type: "TEXT", nullable: true),
                     Kpp = table.Column<string>(type: "VARCHAR(9)", maxLength: 9, nullable: true)
                 },
                 constraints: table =>
@@ -298,75 +329,128 @@ namespace StudHunter.DB.Postgres.Migrations
                 });
 
             migrationBuilder.CreateTable(
-                name: "Resumes",
+                name: "ResumeAdditionalSkills",
                 columns: table => new
                 {
-                    Id = table.Column<Guid>(type: "uuid", nullable: false, defaultValueSql: "gen_random_uuid()"),
-                    StudentId = table.Column<Guid>(type: "UUID", nullable: false),
-                    Title = table.Column<string>(type: "VARCHAR(255)", maxLength: 255, nullable: false),
-                    Description = table.Column<string>(type: "TEXT", maxLength: 2500, nullable: true),
-                    CreatedAt = table.Column<DateTime>(type: "TIMESTAMPTZ", nullable: false, defaultValueSql: "CURRENT_TIMESTAMP"),
-                    UpdatedAt = table.Column<DateTime>(type: "TIMESTAMPTZ", nullable: false, defaultValueSql: "CURRENT_TIMESTAMP"),
-                    IsDeleted = table.Column<bool>(type: "BOOLEAN", nullable: false, defaultValue: false),
-                    DeletedAt = table.Column<DateTime>(type: "TIMESTAMPTZ", nullable: true)
+                    ResumeId = table.Column<Guid>(type: "uuid", nullable: false),
+                    AdditionalSkillId = table.Column<Guid>(type: "uuid", nullable: false)
                 },
                 constraints: table =>
                 {
-                    table.PrimaryKey("PK_Resumes", x => x.Id);
+                    table.PrimaryKey("PK_ResumeAdditionalSkills", x => new { x.ResumeId, x.AdditionalSkillId });
                     table.ForeignKey(
-                        name: "FK_Resumes_Students_StudentId",
-                        column: x => x.StudentId,
-                        principalTable: "Students",
+                        name: "FK_ResumeAdditionalSkills_AdditionalSkills_AdditionalSkillId",
+                        column: x => x.AdditionalSkillId,
+                        principalTable: "AdditionalSkills",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Restrict);
+                    table.ForeignKey(
+                        name: "FK_ResumeAdditionalSkills_Resumes_ResumeId",
+                        column: x => x.ResumeId,
+                        principalTable: "Resumes",
                         principalColumn: "Id",
                         onDelete: ReferentialAction.Cascade);
                 });
 
             migrationBuilder.CreateTable(
-                name: "StudyPlans",
+                name: "Departments",
                 columns: table => new
                 {
-                    Id = table.Column<Guid>(type: "UUID", nullable: false, defaultValueSql: "gen_random_uuid()"),
-                    StudentId = table.Column<Guid>(type: "UUID", nullable: false),
-                    UniversityId = table.Column<Guid>(type: "uuid", nullable: true),
-                    FacultyId = table.Column<Guid>(type: "UUID", nullable: true),
-                    StudyDirectionId = table.Column<Guid>(type: "UUID", nullable: true),
-                    DepartmentId = table.Column<Guid>(type: "UUID", nullable: true),
-                    CourseNumber = table.Column<int>(type: "INTEGER", nullable: false, defaultValue: 1),
-                    StudyForm = table.Column<int>(type: "INTEGER", nullable: false, defaultValue: 0),
-                    IsDeleted = table.Column<bool>(type: "BOOLEAN", nullable: false, defaultValue: false),
-                    DeletedAt = table.Column<DateTime>(type: "TIMESTAMPTZ", nullable: true)
+                    Id = table.Column<Guid>(type: "uuid", nullable: false, defaultValueSql: "gen_random_uuid()"),
+                    FacultyId = table.Column<Guid>(type: "uuid", nullable: false),
+                    Name = table.Column<string>(type: "VARCHAR(255)", maxLength: 255, nullable: false),
+                    Description = table.Column<string>(type: "text", nullable: true)
                 },
                 constraints: table =>
                 {
-                    table.PrimaryKey("PK_StudyPlans", x => x.Id);
+                    table.PrimaryKey("PK_Departments", x => x.Id);
                     table.ForeignKey(
-                        name: "FK_StudyPlans_Departments_DepartmentId",
-                        column: x => x.DepartmentId,
-                        principalTable: "Departments",
-                        principalColumn: "Id",
-                        onDelete: ReferentialAction.Restrict);
-                    table.ForeignKey(
-                        name: "FK_StudyPlans_Faculties_FacultyId",
+                        name: "FK_Departments_Faculties_FacultyId",
                         column: x => x.FacultyId,
                         principalTable: "Faculties",
                         principalColumn: "Id",
                         onDelete: ReferentialAction.Restrict);
+                });
+
+            migrationBuilder.CreateTable(
+                name: "Favorites",
+                columns: table => new
+                {
+                    Id = table.Column<Guid>(type: "uuid", nullable: false, defaultValueSql: "gen_random_uuid()"),
+                    UserId = table.Column<Guid>(type: "UUID", nullable: false),
+                    VacancyId = table.Column<Guid>(type: "UUID", nullable: true),
+                    EmployerId = table.Column<Guid>(type: "UUID", nullable: true),
+                    StudentId = table.Column<Guid>(type: "UUID", nullable: true),
+                    AddedAt = table.Column<DateTime>(type: "TIMESTAMPTZ", nullable: false, defaultValueSql: "CURRENT_TIMESTAMP")
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_Favorites", x => x.Id);
+                    table.CheckConstraint("CK_Favorite_AtLeastOneTarget", "\"VacancyId\" IS NOT NULL OR \"EmployerId\" IS NOT NULL OR \"StudentId\" IS NOT NULL");
                     table.ForeignKey(
-                        name: "FK_StudyPlans_Students_StudentId",
+                        name: "FK_Favorites_Employers_EmployerId",
+                        column: x => x.EmployerId,
+                        principalTable: "Employers",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Cascade);
+                    table.ForeignKey(
+                        name: "FK_Favorites_Students_StudentId",
                         column: x => x.StudentId,
                         principalTable: "Students",
                         principalColumn: "Id",
                         onDelete: ReferentialAction.Cascade);
                     table.ForeignKey(
-                        name: "FK_StudyPlans_StudyDirections_StudyDirectionId",
-                        column: x => x.StudyDirectionId,
-                        principalTable: "StudyDirections",
+                        name: "FK_Favorites_Vacancies_VacancyId",
+                        column: x => x.VacancyId,
+                        principalTable: "Vacancies",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Cascade);
+                });
+
+            migrationBuilder.CreateTable(
+                name: "Invitations",
+                columns: table => new
+                {
+                    Id = table.Column<Guid>(type: "uuid", nullable: false, defaultValueSql: "gen_random_uuid()"),
+                    StudentId = table.Column<Guid>(type: "UUID", nullable: false),
+                    EmployerId = table.Column<Guid>(type: "UUID", nullable: false),
+                    VacancyId = table.Column<Guid>(type: "uuid", nullable: true),
+                    ResumeId = table.Column<Guid>(type: "uuid", nullable: true),
+                    Status = table.Column<int>(type: "INTEGER", nullable: false, defaultValue: 0),
+                    Type = table.Column<int>(type: "INTEGER", nullable: false),
+                    Message = table.Column<string>(type: "character varying(1000)", maxLength: 1000, nullable: true),
+                    SnapshotVacancyTitle = table.Column<string>(type: "character varying(255)", maxLength: 255, nullable: true),
+                    SnapshotEmployerName = table.Column<string>(type: "character varying(255)", maxLength: 255, nullable: true),
+                    SnapshotStudentName = table.Column<string>(type: "character varying(255)", maxLength: 255, nullable: true),
+                    CreatedAt = table.Column<DateTime>(type: "TIMESTAMPTZ", nullable: false, defaultValueSql: "CURRENT_TIMESTAMP"),
+                    UpdatedAt = table.Column<DateTime>(type: "TIMESTAMPTZ", nullable: false, defaultValueSql: "CURRENT_TIMESTAMP"),
+                    ExpiredAt = table.Column<DateTime>(type: "TIMESTAMPTZ", nullable: false)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_Invitations", x => x.Id);
+                    table.ForeignKey(
+                        name: "FK_Invitations_Employers_EmployerId",
+                        column: x => x.EmployerId,
+                        principalTable: "Employers",
                         principalColumn: "Id",
                         onDelete: ReferentialAction.Restrict);
                     table.ForeignKey(
-                        name: "FK_StudyPlans_Universities_UniversityId",
-                        column: x => x.UniversityId,
-                        principalTable: "Universities",
+                        name: "FK_Invitations_Resumes_ResumeId",
+                        column: x => x.ResumeId,
+                        principalTable: "Resumes",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Restrict);
+                    table.ForeignKey(
+                        name: "FK_Invitations_Students_StudentId",
+                        column: x => x.StudentId,
+                        principalTable: "Students",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Restrict);
+                    table.ForeignKey(
+                        name: "FK_Invitations_Vacancies_VacancyId",
+                        column: x => x.VacancyId,
+                        principalTable: "Vacancies",
                         principalColumn: "Id",
                         onDelete: ReferentialAction.Restrict);
                 });
@@ -420,122 +504,24 @@ namespace StudHunter.DB.Postgres.Migrations
                 });
 
             migrationBuilder.CreateTable(
-                name: "Favorites",
+                name: "StudyDirections",
                 columns: table => new
                 {
                     Id = table.Column<Guid>(type: "uuid", nullable: false, defaultValueSql: "gen_random_uuid()"),
-                    UserId = table.Column<Guid>(type: "UUID", nullable: false),
-                    VacancyId = table.Column<Guid>(type: "UUID", nullable: true),
-                    EmployerId = table.Column<Guid>(type: "UUID", nullable: true),
-                    ResumeId = table.Column<Guid>(type: "UUID", nullable: true),
-                    AddedAt = table.Column<DateTime>(type: "TIMESTAMPTZ", nullable: false, defaultValueSql: "CURRENT_TIMESTAMP")
+                    DepartmentId = table.Column<Guid>(type: "uuid", nullable: false),
+                    Name = table.Column<string>(type: "VARCHAR(255)", maxLength: 255, nullable: false),
+                    Code = table.Column<string>(type: "VARCHAR(20)", maxLength: 20, nullable: true),
+                    Description = table.Column<string>(type: "TEXT", maxLength: 1000, nullable: true)
                 },
                 constraints: table =>
                 {
-                    table.PrimaryKey("PK_Favorites", x => x.Id);
-                    table.CheckConstraint("CK_Favorite_AtLeastOneTarget", "\"VacancyId\" IS NOT NULL OR \"EmployerId\" IS NOT NULL OR \"ResumeId\" IS NOT NULL");
+                    table.PrimaryKey("PK_StudyDirections", x => x.Id);
                     table.ForeignKey(
-                        name: "FK_Favorites_Employers_EmployerId",
-                        column: x => x.EmployerId,
-                        principalTable: "Employers",
-                        principalColumn: "Id",
-                        onDelete: ReferentialAction.Cascade);
-                    table.ForeignKey(
-                        name: "FK_Favorites_Resumes_ResumeId",
-                        column: x => x.ResumeId,
-                        principalTable: "Resumes",
-                        principalColumn: "Id",
-                        onDelete: ReferentialAction.Cascade);
-                    table.ForeignKey(
-                        name: "FK_Favorites_Vacancies_VacancyId",
-                        column: x => x.VacancyId,
-                        principalTable: "Vacancies",
-                        principalColumn: "Id",
-                        onDelete: ReferentialAction.Cascade);
-                });
-
-            migrationBuilder.CreateTable(
-                name: "Invitations",
-                columns: table => new
-                {
-                    Id = table.Column<Guid>(type: "uuid", nullable: false, defaultValueSql: "gen_random_uuid()"),
-                    SenderId = table.Column<Guid>(type: "UUID", nullable: false),
-                    ReceiverId = table.Column<Guid>(type: "UUID", nullable: false),
-                    VacancyId = table.Column<Guid>(type: "UUID", nullable: true),
-                    ResumeId = table.Column<Guid>(type: "UUID", nullable: true),
-                    Status = table.Column<int>(type: "INTEGER", nullable: false, defaultValue: 0),
-                    Type = table.Column<int>(type: "INTEGER", nullable: false),
-                    Message = table.Column<string>(type: "character varying(1000)", maxLength: 1000, nullable: true),
-                    SnapshotVacancyTitle = table.Column<string>(type: "character varying(255)", maxLength: 255, nullable: true),
-                    SnapshotSenderName = table.Column<string>(type: "character varying(255)", maxLength: 255, nullable: true),
-                    SnapshotReceiverName = table.Column<string>(type: "character varying(255)", maxLength: 255, nullable: true),
-                    CreatedAt = table.Column<DateTime>(type: "TIMESTAMPTZ", nullable: false, defaultValueSql: "CURRENT_TIMESTAMP"),
-                    UpdatedAt = table.Column<DateTime>(type: "TIMESTAMPTZ", nullable: false, defaultValueSql: "CURRENT_TIMESTAMP"),
-                    ExpiredAt = table.Column<DateTime>(type: "TIMESTAMPTZ", nullable: false)
-                },
-                constraints: table =>
-                {
-                    table.PrimaryKey("PK_Invitations", x => x.Id);
-                    table.ForeignKey(
-                        name: "FK_Invitations_Resumes_ResumeId",
-                        column: x => x.ResumeId,
-                        principalTable: "Resumes",
+                        name: "FK_StudyDirections_Departments_DepartmentId",
+                        column: x => x.DepartmentId,
+                        principalTable: "Departments",
                         principalColumn: "Id",
                         onDelete: ReferentialAction.Restrict);
-                    table.ForeignKey(
-                        name: "FK_Invitations_Vacancies_VacancyId",
-                        column: x => x.VacancyId,
-                        principalTable: "Vacancies",
-                        principalColumn: "Id",
-                        onDelete: ReferentialAction.Restrict);
-                });
-
-            migrationBuilder.CreateTable(
-                name: "ResumeAdditionalSkills",
-                columns: table => new
-                {
-                    ResumeId = table.Column<Guid>(type: "uuid", nullable: false),
-                    AdditionalSkillId = table.Column<Guid>(type: "uuid", nullable: false)
-                },
-                constraints: table =>
-                {
-                    table.PrimaryKey("PK_ResumeAdditionalSkills", x => new { x.ResumeId, x.AdditionalSkillId });
-                    table.ForeignKey(
-                        name: "FK_ResumeAdditionalSkills_AdditionalSkills_AdditionalSkillId",
-                        column: x => x.AdditionalSkillId,
-                        principalTable: "AdditionalSkills",
-                        principalColumn: "Id",
-                        onDelete: ReferentialAction.Restrict);
-                    table.ForeignKey(
-                        name: "FK_ResumeAdditionalSkills_Resumes_ResumeId",
-                        column: x => x.ResumeId,
-                        principalTable: "Resumes",
-                        principalColumn: "Id",
-                        onDelete: ReferentialAction.Cascade);
-                });
-
-            migrationBuilder.CreateTable(
-                name: "StudyPlanCourses",
-                columns: table => new
-                {
-                    StudyPlanId = table.Column<Guid>(type: "UUID", nullable: false),
-                    CourseId = table.Column<Guid>(type: "uuid", nullable: false)
-                },
-                constraints: table =>
-                {
-                    table.PrimaryKey("PK_StudyPlanCourses", x => new { x.StudyPlanId, x.CourseId });
-                    table.ForeignKey(
-                        name: "FK_StudyPlanCourses_Courses_CourseId",
-                        column: x => x.CourseId,
-                        principalTable: "Courses",
-                        principalColumn: "Id",
-                        onDelete: ReferentialAction.Restrict);
-                    table.ForeignKey(
-                        name: "FK_StudyPlanCourses_StudyPlans_StudyPlanId",
-                        column: x => x.StudyPlanId,
-                        principalTable: "StudyPlans",
-                        principalColumn: "Id",
-                        onDelete: ReferentialAction.Cascade);
                 });
 
             migrationBuilder.CreateTable(
@@ -568,70 +554,84 @@ namespace StudHunter.DB.Postgres.Migrations
                         onDelete: ReferentialAction.SetNull);
                 });
 
-            migrationBuilder.InsertData(
-                table: "AdditionalSkills",
-                columns: new[] { "Id", "Name" },
-                values: new object[,]
+            migrationBuilder.CreateTable(
+                name: "StudyPlans",
+                columns: table => new
                 {
-                    { new Guid("cccccccc-5e11-4b2a-9e1d-3b5a1f2c4d5e"), "c#" },
-                    { new Guid("dddddddd-5e11-4b2a-9e1d-3b5a1f2c4d5e"), "postgresql" },
-                    { new Guid("eeeeeeee-5e11-4b2a-9e1d-3b5a1f2c4d5e"), "vue.js" }
+                    Id = table.Column<Guid>(type: "UUID", nullable: false, defaultValueSql: "gen_random_uuid()"),
+                    StudentId = table.Column<Guid>(type: "UUID", nullable: false),
+                    UniversityId = table.Column<Guid>(type: "uuid", nullable: true),
+                    FacultyId = table.Column<Guid>(type: "UUID", nullable: true),
+                    StudyDirectionId = table.Column<Guid>(type: "UUID", nullable: true),
+                    DepartmentId = table.Column<Guid>(type: "UUID", nullable: true),
+                    CourseNumber = table.Column<int>(type: "INTEGER", nullable: false, defaultValue: 1),
+                    StudyForm = table.Column<int>(type: "INTEGER", nullable: false, defaultValue: 0),
+                    IsDeleted = table.Column<bool>(type: "BOOLEAN", nullable: false, defaultValue: false),
+                    DeletedAt = table.Column<DateTime>(type: "TIMESTAMPTZ", nullable: true),
+                    UniversityId1 = table.Column<Guid>(type: "uuid", nullable: true)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_StudyPlans", x => x.Id);
+                    table.ForeignKey(
+                        name: "FK_StudyPlans_Departments_DepartmentId",
+                        column: x => x.DepartmentId,
+                        principalTable: "Departments",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Restrict);
+                    table.ForeignKey(
+                        name: "FK_StudyPlans_Faculties_FacultyId",
+                        column: x => x.FacultyId,
+                        principalTable: "Faculties",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Restrict);
+                    table.ForeignKey(
+                        name: "FK_StudyPlans_Students_StudentId",
+                        column: x => x.StudentId,
+                        principalTable: "Students",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Cascade);
+                    table.ForeignKey(
+                        name: "FK_StudyPlans_StudyDirections_StudyDirectionId",
+                        column: x => x.StudyDirectionId,
+                        principalTable: "StudyDirections",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Restrict);
+                    table.ForeignKey(
+                        name: "FK_StudyPlans_Universities_UniversityId",
+                        column: x => x.UniversityId,
+                        principalTable: "Universities",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Restrict);
+                    table.ForeignKey(
+                        name: "FK_StudyPlans_Universities_UniversityId1",
+                        column: x => x.UniversityId1,
+                        principalTable: "Universities",
+                        principalColumn: "Id");
                 });
 
-            migrationBuilder.InsertData(
-                table: "Cities",
-                columns: new[] { "Id", "Name" },
-                values: new object[,]
+            migrationBuilder.CreateTable(
+                name: "StudyPlanCourses",
+                columns: table => new
                 {
-                    { new Guid("11111111-8f9b-4b2a-9e1d-3b5a1f2c4d5e"), "Екатеринбург" },
-                    { new Guid("8f8e833b-8f9b-4b2a-9e1d-3b5a1f2c4d5e"), "Челябинск" }
-                });
-
-            migrationBuilder.InsertData(
-                table: "Courses",
-                columns: new[] { "Id", "Description", "Name" },
-                values: new object[,]
+                    StudyPlanId = table.Column<Guid>(type: "UUID", nullable: false),
+                    CourseId = table.Column<Guid>(type: "uuid", nullable: false)
+                },
+                constraints: table =>
                 {
-                    { new Guid("00000000-c001-4b2a-9e1d-3b5a1f2c4d5e"), null, "Базы данных" },
-                    { new Guid("ffffffff-c001-4b2a-9e1d-3b5a1f2c4d5e"), null, "Объектно-ориентированное программирование" }
-                });
-
-            migrationBuilder.InsertData(
-                table: "Departments",
-                columns: new[] { "Id", "Description", "Name" },
-                values: new object[,]
-                {
-                    { new Guid("88888888-deaf-4b2a-9e1d-3b5a1f2c4d5e"), null, "Информационно-измерительная техника" },
-                    { new Guid("99999999-deaf-4b2a-9e1d-3b5a1f2c4d5e"), null, "Прикладная математика и информатика" }
-                });
-
-            migrationBuilder.InsertData(
-                table: "Faculties",
-                columns: new[] { "Id", "Description", "Name" },
-                values: new object[,]
-                {
-                    { new Guid("55555555-face-4b2a-9e1d-3b5a1f2c4d5e"), "ВШЭКН ЮУрГУ", "Высшая школа электроники и компьютерных наук" },
-                    { new Guid("66666666-face-4b2a-9e1d-3b5a1f2c4d5e"), "ИЕТН", "Институт естественных и точных наук" },
-                    { new Guid("77777777-face-4b2a-9e1d-3b5a1f2c4d5e"), "ЧГиК", "Факультет культурологии" }
-                });
-
-            migrationBuilder.InsertData(
-                table: "StudyDirections",
-                columns: new[] { "Id", "Code", "Description", "Name" },
-                values: new object[,]
-                {
-                    { new Guid("aaaaaaaa-d1e1-4b2a-9e1d-3b5a1f2c4d5e"), "09.03.04", null, "Программная инженерия" },
-                    { new Guid("bbbbbbbb-d1e2-4b2a-9e1d-3b5a1f2c4d5e"), "10.05.03", null, "Информационная безопасность" }
-                });
-
-            migrationBuilder.InsertData(
-                table: "Universities",
-                columns: new[] { "Id", "Abbreviation", "Name" },
-                values: new object[,]
-                {
-                    { new Guid("22222222-1234-4b2a-9e1d-3b5a1f2c4d5e"), "ЮУрГУ", "Южно-Уральский государственный университет" },
-                    { new Guid("33333333-1234-4b2a-9e1d-3b5a1f2c4d5e"), "ЧелГУ", "Челябинский государственный университет" },
-                    { new Guid("44444444-1234-4b2a-9e1d-3b5a1f2c4d5e"), "ЧГиК", "Челябинский государственный институт культуры" }
+                    table.PrimaryKey("PK_StudyPlanCourses", x => new { x.StudyPlanId, x.CourseId });
+                    table.ForeignKey(
+                        name: "FK_StudyPlanCourses_Courses_CourseId",
+                        column: x => x.CourseId,
+                        principalTable: "Courses",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Restrict);
+                    table.ForeignKey(
+                        name: "FK_StudyPlanCourses_StudyPlans_StudyPlanId",
+                        column: x => x.StudyPlanId,
+                        principalTable: "StudyPlans",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Cascade);
                 });
 
             migrationBuilder.CreateIndex(
@@ -686,10 +686,9 @@ namespace StudHunter.DB.Postgres.Migrations
                 unique: true);
 
             migrationBuilder.CreateIndex(
-                name: "IX_Departments_Name",
+                name: "IX_Departments_FacultyId",
                 table: "Departments",
-                column: "Name",
-                unique: true);
+                column: "FacultyId");
 
             migrationBuilder.CreateIndex(
                 name: "IX_Employers_CityId",
@@ -703,10 +702,21 @@ namespace StudHunter.DB.Postgres.Migrations
                 unique: true);
 
             migrationBuilder.CreateIndex(
-                name: "IX_Faculties_Name",
+                name: "IX_Employers_Name",
+                table: "Employers",
+                column: "Name")
+                .Annotation("Npgsql:IndexMethod", "gin")
+                .Annotation("Npgsql:IndexOperators", new[] { "gin_trgm_ops" });
+
+            migrationBuilder.CreateIndex(
+                name: "IX_Employers_SpecializationId",
+                table: "Employers",
+                column: "SpecializationId");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_Faculties_UniversityId",
                 table: "Faculties",
-                column: "Name",
-                unique: true);
+                column: "UniversityId");
 
             migrationBuilder.CreateIndex(
                 name: "IX_Favorites_EmployerId",
@@ -714,9 +724,9 @@ namespace StudHunter.DB.Postgres.Migrations
                 column: "EmployerId");
 
             migrationBuilder.CreateIndex(
-                name: "IX_Favorites_ResumeId",
+                name: "IX_Favorites_StudentId",
                 table: "Favorites",
-                column: "ResumeId");
+                column: "StudentId");
 
             migrationBuilder.CreateIndex(
                 name: "IX_Favorites_UserId",
@@ -731,11 +741,11 @@ namespace StudHunter.DB.Postgres.Migrations
                 filter: "\"EmployerId\" IS NOT NULL");
 
             migrationBuilder.CreateIndex(
-                name: "IX_Favorites_UserId_ResumeId",
+                name: "IX_Favorites_UserId_StudentId",
                 table: "Favorites",
-                columns: new[] { "UserId", "ResumeId" },
+                columns: new[] { "UserId", "StudentId" },
                 unique: true,
-                filter: "\"ResumeId\" IS NOT NULL");
+                filter: "\"StudentId\" IS NOT NULL");
 
             migrationBuilder.CreateIndex(
                 name: "IX_Favorites_UserId_VacancyId",
@@ -750,15 +760,15 @@ namespace StudHunter.DB.Postgres.Migrations
                 column: "VacancyId");
 
             migrationBuilder.CreateIndex(
+                name: "IX_Invitations_EmployerId",
+                table: "Invitations",
+                column: "EmployerId");
+
+            migrationBuilder.CreateIndex(
                 name: "IX_Invitations_ExpiredAt",
                 table: "Invitations",
                 column: "ExpiredAt",
                 filter: "\"Status\" = 0");
-
-            migrationBuilder.CreateIndex(
-                name: "IX_Invitations_ReceiverId",
-                table: "Invitations",
-                column: "ReceiverId");
 
             migrationBuilder.CreateIndex(
                 name: "IX_Invitations_ResumeId",
@@ -766,26 +776,14 @@ namespace StudHunter.DB.Postgres.Migrations
                 column: "ResumeId");
 
             migrationBuilder.CreateIndex(
-                name: "IX_Invitations_SenderId",
-                table: "Invitations",
-                column: "SenderId");
-
-            migrationBuilder.CreateIndex(
                 name: "IX_Invitations_VacancyId",
                 table: "Invitations",
                 column: "VacancyId");
 
             migrationBuilder.CreateIndex(
-                name: "IX_Unique_Active_General_Offer",
-                table: "Invitations",
-                columns: new[] { "SenderId", "ReceiverId", "Status" },
-                unique: true,
-                filter: "\"Status\" = 0 AND \"VacancyId\" IS NULL");
-
-            migrationBuilder.CreateIndex(
                 name: "IX_Unique_Active_Invitation",
                 table: "Invitations",
-                columns: new[] { "SenderId", "ReceiverId", "VacancyId", "Status" },
+                columns: new[] { "StudentId", "EmployerId", "VacancyId", "Type" },
                 unique: true,
                 filter: "\"Status\" = 0");
 
@@ -848,6 +846,19 @@ namespace StudHunter.DB.Postgres.Migrations
                 unique: true);
 
             migrationBuilder.CreateIndex(
+                name: "IX_Resumes_Title",
+                table: "Resumes",
+                column: "Title")
+                .Annotation("Npgsql:IndexMethod", "gin")
+                .Annotation("Npgsql:IndexOperators", new[] { "gin_trgm_ops" });
+
+            migrationBuilder.CreateIndex(
+                name: "IX_Specializations_Name",
+                table: "Specializations",
+                column: "Name",
+                unique: true);
+
+            migrationBuilder.CreateIndex(
                 name: "IX_Students_CityId",
                 table: "Students",
                 column: "CityId");
@@ -859,10 +870,9 @@ namespace StudHunter.DB.Postgres.Migrations
                 unique: true);
 
             migrationBuilder.CreateIndex(
-                name: "IX_StudyDirections_Name",
+                name: "IX_StudyDirections_DepartmentId",
                 table: "StudyDirections",
-                column: "Name",
-                unique: true);
+                column: "DepartmentId");
 
             migrationBuilder.CreateIndex(
                 name: "IX_StudyPlanCourses_CourseId",
@@ -896,15 +906,39 @@ namespace StudHunter.DB.Postgres.Migrations
                 column: "UniversityId");
 
             migrationBuilder.CreateIndex(
+                name: "IX_StudyPlans_UniversityId1",
+                table: "StudyPlans",
+                column: "UniversityId1");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_Universities_CityId",
+                table: "Universities",
+                column: "CityId");
+
+            migrationBuilder.CreateIndex(
                 name: "IX_Universities_Name",
                 table: "Universities",
                 column: "Name",
                 unique: true);
 
             migrationBuilder.CreateIndex(
+                name: "IX_Vacancies_Description",
+                table: "Vacancies",
+                column: "Description")
+                .Annotation("Npgsql:IndexMethod", "gin")
+                .Annotation("Npgsql:IndexOperators", new[] { "gin_trgm_ops" });
+
+            migrationBuilder.CreateIndex(
                 name: "IX_Vacancies_EmployerId",
                 table: "Vacancies",
                 column: "EmployerId");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_Vacancies_Title",
+                table: "Vacancies",
+                column: "Title")
+                .Annotation("Npgsql:IndexMethod", "gin")
+                .Annotation("Npgsql:IndexOperators", new[] { "gin_trgm_ops" });
 
             migrationBuilder.CreateIndex(
                 name: "IX_VacancyAdditionalSkills_AdditionalSkillId",
@@ -972,22 +1006,25 @@ namespace StudHunter.DB.Postgres.Migrations
                 name: "Vacancies");
 
             migrationBuilder.DropTable(
-                name: "Departments");
-
-            migrationBuilder.DropTable(
-                name: "Faculties");
-
-            migrationBuilder.DropTable(
                 name: "StudyDirections");
-
-            migrationBuilder.DropTable(
-                name: "Universities");
 
             migrationBuilder.DropTable(
                 name: "Students");
 
             migrationBuilder.DropTable(
                 name: "Employers");
+
+            migrationBuilder.DropTable(
+                name: "Departments");
+
+            migrationBuilder.DropTable(
+                name: "Specializations");
+
+            migrationBuilder.DropTable(
+                name: "Faculties");
+
+            migrationBuilder.DropTable(
+                name: "Universities");
 
             migrationBuilder.DropTable(
                 name: "Cities");

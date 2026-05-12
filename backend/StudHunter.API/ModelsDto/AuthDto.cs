@@ -20,3 +20,8 @@ public record RegisterEmployerDto(
 public record DeleteAccountDto(
     [Required] string Password
 );
+
+public record ChangePasswordDto(
+    [Required] string CurrentPassword,
+    [Required][StringLength(255, MinimumLength = 8)] string NewPassword
+);

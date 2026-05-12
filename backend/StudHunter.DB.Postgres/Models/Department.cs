@@ -1,10 +1,11 @@
 ﻿namespace StudHunter.DB.Postgres.Models;
-// TODO: Добавить связь с городом, факультетами, кафедрами и специальностями
+
 public class Department
 {
     public Guid Id { get; init; }
-
+    public Guid FacultyId { get; set; }
     private string _name = null!;
+    
     public string Name
     {
         get => _name;
@@ -16,6 +17,7 @@ public class Department
     }
 
     public string? Description { get; set; }
-
+    public virtual Faculty Faculty { get; set; } = null!;
+    public virtual ICollection<StudyDirection> StudyDirections { get; set; } = new HashSet<StudyDirection>();
     public virtual ICollection<StudyPlan> StudyPlans { get; set; } = new HashSet<StudyPlan>();
 }
