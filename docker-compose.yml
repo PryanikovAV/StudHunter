@@ -1,3 +1,4 @@
+# \StudHunter\docker-compose.yml
 version: '3.8'
 
 services:
@@ -10,7 +11,7 @@ services:
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
       POSTGRES_DB: ${POSTGRES_DB}
     volumes:
-      - studhunter-db-data:/var/lib/postgresql
+      - studhunter-db-data:/var/lib/postgresql/data
 
   backend:
     build:
@@ -18,6 +19,8 @@ services:
       dockerfile: StudHunter.API/Dockerfile
     container_name: studhunter-api
     restart: always
+    volumes:
+      - studhunter-uploads:/app/wwwroot/uploads
     environment:
       - ASPNETCORE_ENVIRONMENT=Production
       - ASPNETCORE_HTTP_PORTS=8080
@@ -35,7 +38,7 @@ services:
     build:
       context: ./frontend
       args:
-      - VITE_API_URL=${VITE_API_URL}
+        - VITE_API_URL=${VITE_API_URL}
     container_name: studhunter-ui
     restart: always
     ports:
@@ -44,4 +47,5 @@ services:
       - backend
 
 volumes:
-  studhunter-db-data:  
+  studhunter-db-data:
+  studhunter-uploads:

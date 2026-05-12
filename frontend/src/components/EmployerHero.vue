@@ -21,7 +21,7 @@ const props = withDefaults(
 )
 
 const toast = useToast()
-const isDev = import.meta.env.DEV
+// const isDev = import.meta.env.DEV // TODO: вернуть на релизе
 const heroData = ref<EmployerHeroDto | null>(null)
 const isLoading = ref(true)
 const fileInput = ref<HTMLInputElement | null>(null)
@@ -225,11 +225,13 @@ const handleFileSelect = async (event: Event) => {
           </div>
 
           <div class="col-visual">
-            <div
+            <!-- <div
               class="debug-wrapper"
               v-if="isDev && !readonlyMode"
               title="Сменить стадию аккредитации"
-            >
+            > -->
+            <!-- TODO: вернуть на релизе -->
+            <div class="debug-wrapper" v-if="!readonlyMode" title="Сменить стадию аккредитации">
               <span class="debug-badge">DEBUG</span>
               <select
                 class="debug-stage-select"

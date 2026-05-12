@@ -11,8 +11,9 @@ public class DebugController(IAdminEmployerService adminService, IWebHostEnviron
     [HttpPatch("employers/{id:guid}/stage")]
     public async Task<IActionResult> SetStage(Guid id, [FromQuery] User.AccountStatus stage)
     {
-        if (!env.IsDevelopment())
-            return NotFound();
+        // TODO: убрать на релизе
+        //if (!env.IsDevelopment())
+        //    return NotFound();
 
         var result = await adminService.SetRegistrationStageAsync(id, stage);
         return result.IsSuccess ? Ok() : BadRequest(result.ErrorMessage);
