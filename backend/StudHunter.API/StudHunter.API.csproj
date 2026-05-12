@@ -23,6 +23,19 @@
 		<ProjectReference Include="..\StudHunter.DB.Postgres\StudHunter.DB.Postgres.csproj" />
 	</ItemGroup>
 
+	<ItemGroup>
+	  <Folder Include="Fonts\" />
+	</ItemGroup>
+
+	<ItemGroup>
+		<None Update="Fonts\Roboto-Regular.ttf">
+			<CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+		</None>
+		<None Update="Fonts\Roboto-Medium.ttf">
+			<CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+		</None>
+	</ItemGroup>
+
 	<ProjectExtensions>
 		<VisualStudio>
 			<UserProperties properties_4launchsettings_1json__JsonSchema="" />

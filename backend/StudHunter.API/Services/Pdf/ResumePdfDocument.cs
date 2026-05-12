@@ -30,7 +30,7 @@ public class ResumePdfDocument(ResumeSearchDto resume) : IDocument
 
                 page.DefaultTextStyle(x => x
                     .FontSize(11)
-                    .FontFamily(Fonts.Arial)
+                    .FontFamily("Roboto")
                     .FontColor(DarkText));
 
                 page.Content().Element(ComposeContent);

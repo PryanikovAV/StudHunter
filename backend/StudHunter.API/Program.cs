@@ -19,10 +19,14 @@ var connectionString = builder.Configuration.GetConnectionString("DefaultConnect
 
 builder.Services.AddDbContext<StudHunterDbContext>(options =>
     options.UseNpgsql(connectionString, npgsqlOptions =>
+    {
+        npgsqlOptions.MigrationsAssembly("StudHunter.DB.Postgres");
+
         npgsqlOptions.EnableRetryOnFailure(
             maxRetryCount: 5,
             maxRetryDelay: TimeSpan.FromSeconds(10),
-            errorCodesToAdd: null)));
+            errorCodesToAdd: null);
+    }));
 
 builder.Services.AddAuth(builder.Configuration);
 builder.Services.AddControllers();
@@ -122,6 +126,11 @@ if (app.Environment.IsDevelopment())
     app.MapOpenApi();
     app.MapScalarApiReference();
 }
+
+// ״נטפעû הכÿ QuestPDF
+QuestPDF.Settings.License = QuestPDF.Infrastructure.LicenseType.Community;
+QuestPDF.Drawing.FontManager.RegisterFont(File.OpenRead("Fonts/Roboto-Regular.ttf"));
+QuestPDF.Drawing.FontManager.RegisterFont(File.OpenRead("Fonts/Roboto-Medium.ttf"));
 
 app.UseRouting();
 app.UseCors("AllowFrontend");
