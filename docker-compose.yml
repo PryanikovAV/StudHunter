@@ -1,6 +1,3 @@
-# \StudHunter\docker-compose.yml
-version: '3.8'
-
 services:
   postgres:
     image: postgres:18-alpine
@@ -11,7 +8,7 @@ services:
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
       POSTGRES_DB: ${POSTGRES_DB}
     volumes:
-      - studhunter-db-data:/var/lib/postgresql/data
+      - studhunter-db-data:/var/lib/postgresql 
 
   backend:
     build:
@@ -20,7 +17,7 @@ services:
     container_name: studhunter-api
     restart: always
     volumes:
-      - studhunter-uploads:/app/wwwroot/uploads
+      - studhunter-uploads:/app/wwwroot/uploads 
     environment:
       - ASPNETCORE_ENVIRONMENT=Production
       - ASPNETCORE_HTTP_PORTS=8080
