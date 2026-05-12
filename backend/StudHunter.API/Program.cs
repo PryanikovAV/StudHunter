@@ -88,13 +88,34 @@ var app = builder.Build();
 
 app.UseExceptionHandler();
 
-using (var scope = app.Services.CreateScope())  // <- Заполнение словарей
+using (var scope = app.Services.CreateScope())
 {
     var services = scope.ServiceProvider;
+    var logger = services.GetRequiredService<ILogger<Program>>();
     try
     {
         var context = services.GetRequiredService<StudHunterDbContext>();
-        await context.Database.MigrateAsync();
+
+        // --- ОЖИДАНИЕ DB> ---
+        int retries = 5;
+        while (retries > 0)
+        {
+            try
+            {
+                logger.LogInformation("применение миграций");
+                await context.Database.MigrateAsync();
+                logger.LogInformation("миграции применены");
+                break;
+            }
+            catch (Exception ex)
+            {
+                retries--;
+                if (retries == 0) throw;
+                logger.LogWarning($"DB ещё не готова, ожидание 3 сек. Осталось попыток: {retries}");
+                await Task.Delay(3000);
+            }
+        }
+        // --- КОНЕЦ ЦИКЛА ---
 
         var seeder = new StudHunter.DB.Postgres.Seeding.DbSeeder(context);
         await seeder.SeedAsync();
@@ -116,8 +137,7 @@ using (var scope = app.Services.CreateScope())  // <- Заполнение словарей
     }
     catch (Exception ex)
     {
-        var logger = services.GetRequiredService<ILogger<Program>>();
-        logger.LogError(ex, "Произошла ошибка при инициализации БД");
+        logger.LogError(ex, "CRITICAL ERROR: Failed to initialize the database.");
     }
 }
 
