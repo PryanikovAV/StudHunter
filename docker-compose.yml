@@ -8,7 +8,9 @@ services:
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
       POSTGRES_DB: ${POSTGRES_DB}
     volumes:
-      - studhunter-db-data:/var/lib/postgresql 
+      - studhunter-db-data:/var/lib/postgresql
+    ports:
+      - "127.0.0.1:5432:5432"
 
   backend:
     build:
@@ -17,7 +19,7 @@ services:
     container_name: studhunter-api
     restart: always
     volumes:
-      - studhunter-uploads:/app/wwwroot/uploads 
+      - studhunter-uploads:/app/wwwroot/uploads
     environment:
       - ASPNETCORE_ENVIRONMENT=Production
       - ASPNETCORE_HTTP_PORTS=8080
@@ -40,6 +42,9 @@ services:
     restart: always
     ports:
       - "80:80"
+      - "443:443"
+    volumes:
+      - /etc/letsencrypt:/etc/letsencrypt:ro
     depends_on:
       - backend
 
