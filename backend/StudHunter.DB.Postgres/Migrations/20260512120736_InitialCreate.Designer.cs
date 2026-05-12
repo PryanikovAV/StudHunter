@@ -12,7 +12,7 @@ using StudHunter.DB.Postgres;
 namespace StudHunter.DB.Postgres.Migrations
 {
     [DbContext(typeof(StudHunterDbContext))]
-    [Migration("20260512110457_InitialCreate")]
+    [Migration("20260512120736_InitialCreate")]
     partial class InitialCreate
     {
         /// <inheritdoc />
