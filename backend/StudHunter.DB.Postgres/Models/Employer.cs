@@ -2,7 +2,7 @@
 
 public class Employer : User
 {
-    public string Name { get; set; } = null!;
+    public string Name { get; set; } = null!;  // TODO: проработать запись в БД: буквы, пробьелы, символы
     public string? Description { get; set; }
     public string? Website { get; set; }
     public Guid? SpecializationId { get; set; }

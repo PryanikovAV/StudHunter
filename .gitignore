@@ -2,6 +2,7 @@
 .env
 *.env
 appsettings.Development.json
+docker-compose.override.yml
 
 # .NET
 bin/

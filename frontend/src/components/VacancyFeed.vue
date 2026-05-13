@@ -94,6 +94,7 @@ const openVacancy = (id: string) => {
   display: flex;
   flex-direction: column;
   justify-content: space-between;
+  min-width: 0;
 }
 
 .interactive-card:not(.is-employer) {
@@ -148,6 +149,7 @@ const openVacancy = (id: string) => {
   gap: 10px;
   padding-top: 14px;
   border-top: 1px solid var(--gray-border);
+  min-width: 0;
 }
 
 .company-logo {
@@ -184,5 +186,6 @@ const openVacancy = (id: string) => {
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
+  flex: 1;
 }
 </style>

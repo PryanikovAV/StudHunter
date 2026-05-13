@@ -204,6 +204,15 @@ onUnmounted(() => {
 </template>
 
 <style scoped>
+/* .chat-page-root {
+  display: flex;
+  flex-direction: column;
+  height: calc(100vh - 380px);
+  min-height: 500px;
+  max-width: 900px;
+  width: 100%;
+  margin: 0 auto 32px auto;
+} */
 .chat-page-root {
   display: flex;
   flex-direction: column;
@@ -212,6 +221,7 @@ onUnmounted(() => {
   max-width: 900px;
   width: 100%;
   margin: 0 auto 32px auto;
+  padding: 0 20px; /* Добавлен аккуратный отступ от краев экрана */
 }
 .chat-page-root.is-employer {
   height: calc(100vh - 430px);

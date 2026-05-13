@@ -155,8 +155,15 @@ body {
   padding: 16px 0;
 }
 
+/* .page-narrow {
+  max-width: 900px;
+  width: 100%;
+  margin: 0 auto;
+} */
 .page-narrow {
   max-width: 900px;
   width: 100%;
   margin: 0 auto;
+  padding: 0 20px; /* Защитный отступ для мобильных экранов */
+  box-sizing: border-box; /* Чтобы отступы не увеличивали ширину 100% */
 }

@@ -11,3 +11,9 @@ public record HomePageDto(
     List<CategoryCardDto> PopularCategories,
     List<VacancySearchDto> LatestVacancies
 );
+
+public record GeneralStatisticsDto(
+    int TotalResumes,
+    int TotalVacancies,
+    int AccreditedEmployers
+);

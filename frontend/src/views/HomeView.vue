@@ -90,10 +90,15 @@ const handleAdvancedSearch = () => {
           @advanced-search="handleAdvancedSearch"
         />
 
-        <div class="search-footer" v-if="userRole !== 'employer'">
-          <router-link to="/employer-promo" class="btn-main btn-secondary">
+        <div class="search-footer">
+          <a
+            href="https://www.susu.ru/ru/partners"
+            target="_blank"
+            rel="noopener noreferrer"
+            class="btn-main btn-secondary"
+          >
             Я ищу сотрудника
-          </router-link>
+          </a>
         </div>
       </div>
     </section>

@@ -10,6 +10,7 @@ using StudHunter.API.Services.Background;
 using StudHunter.API.Services.Files;
 using StudHunter.API.Services.Pdf;
 using StudHunter.API.Services.Search;
+using StudHunter.API.Services.StatisticsService;
 using StudHunter.DB.Postgres;
 using StudHunter.DB.Postgres.Models;
 
@@ -52,8 +53,9 @@ builder.Services.AddProblemDetails();
 
 /* Сервисы авторизации и фоновые задачи */
 builder.Services.AddScoped<IAuthService, AuthService>();
-builder.Services.AddScoped<IPasswordHasher, PasswordHasher>();
 builder.Services.AddHostedService<InvitationCleanupService>();
+builder.Services.AddScoped<IPasswordHasher, PasswordHasher>();
+builder.Services.AddScoped<IStatisticsService, StatisticsService>();
 
 /* Сервис для работы с файлами */
 builder.Services.AddScoped<IFileService, LocalFileService>();
@@ -107,7 +109,7 @@ using (var scope = app.Services.CreateScope())
                 logger.LogInformation("миграции применены");
                 break;
             }
-            catch (Exception ex)
+            catch (Exception)
             {
                 retries--;
                 if (retries == 0) throw;
@@ -117,10 +119,14 @@ using (var scope = app.Services.CreateScope())
         }
         // --- КОНЕЦ ЦИКЛА ---
 
-        var seeder = new StudHunter.DB.Postgres.Seeding.DbSeeder(context);
+        var hasher = services.GetRequiredService<IPasswordHasher>();
+
+        var seeder = new StudHunter.DB.Postgres.Seeding.DbSeeder(
+            context,
+            password => hasher.HashPassword(password));
+        
         await seeder.SeedAsync();
 
-        var hasher = services.GetRequiredService<IPasswordHasher>();
         if (!context.Administrators.Any())
         {
             var admin = new Administrator

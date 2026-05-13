@@ -11,3 +11,9 @@ export interface HomePageDto {
   popularCategories: CategoryCardDto[]
   latestVacancies: VacancySearchDto[]
 }
+
+export interface GeneralStatisticsDto {
+  totalResumes: number
+  totalVacancies: number
+  accreditedEmployers: number
+}

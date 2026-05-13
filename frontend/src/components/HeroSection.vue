@@ -1,17 +1,31 @@
 <script setup lang="ts">
-import { computed } from 'vue'
+import { ref, computed, onMounted } from 'vue'
 import IconLogo from '@/components/icons/IconLogo.vue'
+import apiClient from '@/api'
+import type { GeneralStatisticsDto } from '@/types/home'
 
 const siteName = 'StudHunter'
 const universityName = 'ЮУрГУ'
 const slogan = computed(() => `Работа и стажировки для студентов ${universityName}`)
 
-const stats = {
-  resumes: 2847,
-  vacancies: 1153,
-  employers: 2402,
-}
+const stats = ref<GeneralStatisticsDto>({
+  totalResumes: 0,
+  totalVacancies: 0,
+  accreditedEmployers: 0,
+})
+
 const formatNumber = (num: number) => num.toLocaleString('ru-RU')
+
+const fetchStatistics = async () => {
+  try {
+    const response = await apiClient.get<GeneralStatisticsDto>('/statistics/general')
+    stats.value = response.data
+  } catch (error) {
+    console.error('Ошибка загрузки статистики:', error)
+  }
+}
+
+onMounted(fetchStatistics)
 
 const isAuthenticated = !!localStorage.getItem('token')
 const userRole = localStorage.getItem('userRole')?.toLowerCase() || ''
@@ -22,7 +36,6 @@ const authLink = computed(() => {
 })
 
 const authLinkText = computed(() => (isAuthenticated ? 'Личный кабинет' : 'Войти'))
-
 const createResumeLink = isAuthenticated ? '/student/resume' : '/login'
 </script>
 
@@ -54,15 +67,15 @@ const createResumeLink = isAuthenticated ? '/student/resume' : '/login'
 
           <div class="hero-stats">
             <div class="stat-item">
-              <span class="stat-value">{{ formatNumber(stats.resumes) }}</span>
+              <span class="stat-value">{{ formatNumber(stats.totalResumes) }}</span>
               <span class="stat-label">Создано<br />резюме</span>
             </div>
             <div class="stat-item">
-              <span class="stat-value">{{ formatNumber(stats.vacancies) }}</span>
+              <span class="stat-value">{{ formatNumber(stats.totalVacancies) }}</span>
               <span class="stat-label">Размещено<br />вакансий</span>
             </div>
             <div class="stat-item">
-              <span class="stat-value">{{ formatNumber(stats.employers) }}</span>
+              <span class="stat-value">{{ formatNumber(stats.accreditedEmployers) }}</span>
               <span class="stat-label">Аккредитованных<br />работодателей</span>
             </div>
           </div>
@@ -82,6 +95,7 @@ const createResumeLink = isAuthenticated ? '/student/resume' : '/login'
   user-select: none;
   overflow: hidden;
 }
+
 .hero-content {
   position: relative;
   z-index: 3;
@@ -173,10 +187,57 @@ const createResumeLink = isAuthenticated ? '/student/resume' : '/login'
   opacity: 0.2;
   z-index: 1;
 }
-
 .hero-overlay {
   background: linear-gradient(90deg, rgba(255, 255, 255, 1) 0%, rgba(39, 88, 134, 0.7) 100%);
   opacity: 0.55;
   z-index: 2;
+}
+
+/* --- АДАПТИВНОСТЬ --- */
+@media (max-width: 992px) {
+  .hero {
+    height: auto;
+    padding: 40px 0;
+  }
+  .hero-content {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 32px;
+    padding-bottom: 0;
+  }
+  .hero-left {
+    margin-bottom: 0;
+  }
+  .hero-right {
+    align-items: flex-start;
+  }
+  .hero-actions {
+    margin-bottom: 32px;
+  }
+  .hero-title {
+    font-size: 42px;
+  }
+}
+
+@media (max-width: 500px) {
+  .hero-stats {
+    gap: 20px;
+    flex-wrap: wrap;
+  }
+  .stat-item {
+    align-items: flex-start;
+    text-align: left;
+  }
+  .hero-actions {
+    flex-direction: column;
+    width: 100%;
+  }
+  .hero-actions .btn-main {
+    width: 100%;
+    justify-content: center;
+  }
+  .hero-overlay {
+    background: rgba(255, 255, 255, 0.9);
+  }
 }
 </style>

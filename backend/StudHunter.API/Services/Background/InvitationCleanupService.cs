@@ -4,7 +4,9 @@ using StudHunter.DB.Postgres.Models;
 
 namespace StudHunter.API.Services.Background;
 
-public class InvitationCleanupService(IServiceScopeFactory scopeFactory, ILogger<InvitationCleanupService> logger) : BackgroundService
+public class InvitationCleanupService(
+    IServiceScopeFactory scopeFactory, 
+    ILogger<InvitationCleanupService> logger) : BackgroundService
 {
     protected override async Task ExecuteAsync(CancellationToken stoppingToken)
     {
