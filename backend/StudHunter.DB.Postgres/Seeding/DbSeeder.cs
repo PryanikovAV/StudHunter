@@ -191,6 +191,7 @@ public class DbSeeder(StudHunterDbContext context, Func<string, string> hashPass
             .RuleFor(s => s.Email, f => $"student{studentCounter++}@bogus.com")
             .RuleFor(s => s.PasswordHash, f => defaultPasswordHash)
             .RuleFor(s => s.RegistrationStage, f => User.AccountStatus.FullyActivated)
+            .RuleFor(s => s.IsForeign, f => false)
             .RuleFor(s => s.CityId, f => chelyabinskId)
             .RuleFor(s => s.ContactEmail, f => "test@email.ru")
             .RuleFor(s => s.ContactPhone, f => f.Phone.PhoneNumber("79#########"))
