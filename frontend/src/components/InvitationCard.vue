@@ -1,30 +1,7 @@
 <script setup lang="ts">
 import { computed } from 'vue'
 import AppCard from '@/components/AppCard.vue'
-
-interface InvitationCardDto {
-  id: string
-  status: string
-  type: string
-  direction: string
-  sentAt: string
-  message: string | null
-  candidate: {
-    studentId: string
-    fullName: string
-    courseNumber: number | null
-    universityAbbreviation: string | null
-    skills: string[]
-    resumeId: string | null
-  }
-  job: {
-    employerId: string
-    companyName: string
-    vacancyTitle: string | null
-    salary: number | null
-    vacancyId: string | null
-  }
-}
+import type { InvitationCardDto } from '@/types/invitation'
 
 const props = defineProps<{
   invitation: InvitationCardDto

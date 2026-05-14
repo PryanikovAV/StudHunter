@@ -130,19 +130,8 @@ public class ChatService(StudHunterDbContext context,
             var dto = ChatMapper.ToDto(message);
 
             await _chatHubContext.Clients
-                .Group(message.ChatId.ToString())
+                .Users(senderId.ToString(), receiverId.ToString())
                 .SendAsync("ReceiveMessage", dto);
-
-            //var sender = await _context.Users.FindAsync(senderId);
-
-            //await _notificationService.SendAsync(
-            //    userId: receiverId,
-            //    title: $"Новое сообщение от {UserDisplayHelper.GetUserDisplayName(sender!)}",
-            //    message: content.Length > 50 ? content[..50] + "..." : content,
-            //    type: Notification.NotificationType.ChatMessage,
-            //    entityId: chat.Id,
-            //    senderId: senderId
-            //);
         }
 
         return result.IsSuccess
