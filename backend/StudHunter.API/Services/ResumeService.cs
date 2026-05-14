@@ -64,6 +64,11 @@ public class ResumeService(StudHunterDbContext context, IRegistrationManager reg
         if (student == null)
             return Result<ResumeFillDto>.Failure(ErrorMessages.EntityNotFound(nameof(Student)));
 
+        var permissionCheck = EnsureCanPerform(student, UserAction.CreateResume);
+        
+        if (!permissionCheck.IsSuccess)
+            return Result<ResumeFillDto>.Failure(permissionCheck.ErrorMessage!, permissionCheck.StatusCode);
+
         if (student.Resume == null)
         {
             student.Resume = new Resume { StudentId = studentId, Title = dto.Title };

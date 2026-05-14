@@ -48,6 +48,16 @@ public class InvitationService(StudHunterDbContext context,
 
     public async Task<Result<InvitationCardDto>> CreateResponseAsync(Guid studentId, CreateResponseDto dto)
     {
+        var student = await _context.Users.FindAsync(studentId);
+        
+        if (student == null)
+            return Result<InvitationCardDto>.Failure(ErrorMessages.EntityNotFound(nameof(User)));
+
+        var permissionCheck = EnsureCanPerform(student, UserAction.SendInvitation);
+        
+        if (!permissionCheck.IsSuccess)
+            return Result<InvitationCardDto>.Failure(permissionCheck.ErrorMessage!, permissionCheck.StatusCode);
+
         var vacancy = await _context.Vacancies.FirstOrDefaultAsync(v => v.Id == dto.VacancyId);
 
         if (vacancy == null)
@@ -73,6 +83,16 @@ public class InvitationService(StudHunterDbContext context,
 
     public async Task<Result<InvitationCardDto>> CreateOfferAsync(Guid employerId, CreateOfferDto dto)
     {
+        var employer = await _context.Users.FindAsync(employerId);
+        
+        if (employer == null)
+            return Result<InvitationCardDto>.Failure(ErrorMessages.EntityNotFound(nameof(User)));
+
+        var permissionCheck = EnsureCanPerform(employer, UserAction.SendInvitation);
+        
+        if (!permissionCheck.IsSuccess)
+            return Result<InvitationCardDto>.Failure(permissionCheck.ErrorMessage!, permissionCheck.StatusCode);
+
         var existing = await _context.Invitations.AnyAsync(i =>
             i.EmployerId == employerId && i.StudentId == dto.StudentId &&
             i.VacancyId == dto.VacancyId && i.Status == Invitation.InvitationStatus.Sent);

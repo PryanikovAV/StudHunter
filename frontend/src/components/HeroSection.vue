@@ -7,6 +7,7 @@ import type { GeneralStatisticsDto } from '@/types/home'
 const siteName = 'StudHunter'
 const universityName = 'ЮУрГУ'
 const slogan = computed(() => `Работа и стажировки для студентов ${universityName}`)
+const projectVersion = '[MVP 1.0]'
 
 const stats = ref<GeneralStatisticsDto>({
   totalResumes: 0,
@@ -50,6 +51,7 @@ const createResumeLink = isAuthenticated ? '/student/resume' : '/login'
           <div class="hero-logo-row">
             <IconLogo class="hero-logo-icon" />
             <h1 class="hero-title">{{ siteName }}</h1>
+            <span class="hero-version">{{ projectVersion }}</span>
           </div>
           <p class="hero-tagline">{{ slogan }}</p>
         </div>
@@ -134,6 +136,21 @@ const createResumeLink = isAuthenticated ? '/student/resume' : '/login'
   margin: 12px 0 0 0;
   color: var(--dark-text);
 }
+.hero-tagline {
+  font-size: 18px;
+  font-weight: 500;
+  margin: 12px 0 0 0;
+  color: var(--dark-text);
+}
+
+.hero-version {
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, 'Courier New', monospace;
+  font-size: 24px;
+  font-weight: 500;
+  color: var(--gray-text);
+  margin-left: 8px;
+  align-self: flex-end;
+}
 
 .hero-right {
   display: flex;
@@ -193,7 +210,6 @@ const createResumeLink = isAuthenticated ? '/student/resume' : '/login'
   z-index: 2;
 }
 
-/* --- АДАПТИВНОСТЬ --- */
 @media (max-width: 992px) {
   .hero {
     height: auto;
