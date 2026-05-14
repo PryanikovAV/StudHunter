@@ -4,6 +4,7 @@ import { useRouter } from 'vue-router'
 import apiClient from '@/api'
 import InvitationCard from '@/components/InvitationCard.vue'
 import type { InvitationCardDto } from '@/types/invitation'
+import { useNotificationStore } from '@/stores/notifications'
 
 const router = useRouter()
 const invitations = ref<InvitationCardDto[]>([])
@@ -71,7 +72,12 @@ const handleChat = (payload: { invitationId: string; receiverId: string }) => {
   })
 }
 
-onMounted(fetchInvitations)
+onMounted(() => {
+  const notificationStore = useNotificationStore()
+  notificationStore.clearInvitations()
+
+  fetchInvitations()
+})
 </script>
 
 <template>

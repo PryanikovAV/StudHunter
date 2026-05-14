@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { ref, onMounted, computed } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
+import { useToast } from 'vue-toastification'
 import apiClient from '@/api'
 import AppCard from '@/components/AppCard.vue'
 import BackButton from '@/components/BackButton.vue'
@@ -9,6 +10,8 @@ import type { VacancyDetailsDto } from '@/types/vacancy'
 
 const route = useRoute()
 const router = useRouter()
+const toast = useToast()
+
 const vacancyId = computed(() => route.params.id as string)
 
 const vacancy = ref<VacancyDetailsDto | null>(null)
@@ -26,7 +29,6 @@ const fetchVacancy = async () => {
     vacancy.value = response.data
   } catch (error) {
     console.error('Ошибка загрузки вакансии:', error)
-    alert('Не удалось загрузить вакансию. Возможно, она была удалена.')
     router.push('/')
   } finally {
     isLoading.value = false
@@ -47,7 +49,7 @@ const checkMyResume = async () => {
 const openApplyModal = async () => {
   await checkMyResume()
   if (!myResumeId.value) {
-    alert('У вас еще нет резюме! Пожалуйста, создайте его в профиле перед откликом.')
+    toast.warning('У вас еще нет резюме! Пожалуйста, создайте его в профиле перед откликом.')
     router.push('/student/profile')
     return
   }
@@ -66,12 +68,10 @@ const submitApplication = async () => {
 
     await apiClient.post(`/vacancies/${vacancyId.value}/apply`, payload)
 
-    alert('Отклик успешно отправлен!')
     showApplyModal.value = false
     applyMessage.value = ''
   } catch (error) {
     console.error('Ошибка отправки отклика:', error)
-    alert('Не удалось отправить отклик. Возможно, вы уже откликались на эту вакансию.')
   } finally {
     isApplying.value = false
   }

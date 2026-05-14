@@ -12,12 +12,15 @@ import IconChat from '@/components/icons/IconChat.vue'
 import IconFavorites from '@/components/icons/IconFavorites.vue'
 import IconVacancies from '@/components/icons/IconVacancies.vue'
 import IconLogo from '@/components/icons/IconLogo.vue'
+import { useNotificationStore } from '@/stores/notifications'
 
 const CURRENT_CITY = 'Челябинск'
 const CURRENT_UNIVERSITY = 'ЮУрГУ'
 
 const router = useRouter()
 const route = useRoute()
+
+const notificationStore = useNotificationStore()
 
 const isAuth = ref(false)
 const userRole = ref<string>('')
@@ -91,6 +94,7 @@ const isActive = (path: string) => route.path === path || route.path.startsWith(
               >
                 <IconChat class="icon-main" />
                 <span class="btn-text">Сообщения</span>
+                <span v-if="notificationStore.hasUnreadMessages" class="badge-dot"></span>
               </button>
 
               <button
@@ -100,6 +104,7 @@ const isActive = (path: string) => route.path === path || route.path.startsWith(
               >
                 <IconInvitations class="icon-main" />
                 <span class="btn-text">Отклики</span>
+                <span v-if="notificationStore.hasAnyInvitationAlert" class="badge-dot"></span>
               </button>
 
               <button
@@ -138,6 +143,7 @@ const isActive = (path: string) => route.path === path || route.path.startsWith(
               >
                 <IconChat class="icon-main" />
                 <span class="btn-text">Сообщения</span>
+                <span v-if="notificationStore.hasUnreadMessages" class="badge-dot"></span>
               </button>
 
               <button
@@ -147,6 +153,7 @@ const isActive = (path: string) => route.path === path || route.path.startsWith(
               >
                 <IconInvitations class="icon-main" />
                 <span class="btn-text">Отклики</span>
+                <span v-if="notificationStore.hasAnyInvitationAlert" class="badge-dot"></span>
               </button>
 
               <button
@@ -223,7 +230,6 @@ const isActive = (path: string) => route.path === path || route.path.startsWith(
   }
 }
 
-/* --- ЕДИНЫЙ СТИЛЬ КНОПОК --- */
 .nav-btn {
   background: transparent;
   border: none;
@@ -231,8 +237,6 @@ const isActive = (path: string) => route.path === path || route.path.startsWith(
   display: flex;
   align-items: center;
   gap: 8px;
-
-  /* Размеры и шрифт */
   padding: 8px 12px;
   border-radius: 8px;
   font-size: 14px;
@@ -243,6 +247,7 @@ const isActive = (path: string) => route.path === path || route.path.startsWith(
   transition:
     background-color 0.2s ease,
     opacity 0.2s ease;
+  position: relative;
 }
 .theme-light .nav-btn:hover {
   background-color: rgba(0, 0, 0, 0.05);
@@ -257,6 +262,19 @@ const isActive = (path: string) => route.path === path || route.path.startsWith(
   background-color: currentColor;
   opacity: 0.2;
   margin: 0 8px;
+}
+.badge-dot {
+  position: absolute;
+  top: 6px;
+  right: 6px;
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background-color: var(--white-text);
+  box-shadow: 0 0 4px rgba(0, 0, 0, 0.3);
+}
+.theme-light .badge-dot {
+  background-color: var(--susu-blue);
 }
 
 @media (max-width: 992px) {

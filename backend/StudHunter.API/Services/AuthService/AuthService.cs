@@ -106,7 +106,10 @@ public class AuthService(StudHunterDbContext context,
 
         RestoreRelatedEntities(user, deletedAt);
 
+        registrationManager.RecalculateRegistrationStage(user);
+
         var result = await SaveChangesAsync<User>();
+
         return result.IsSuccess
             ? CreateAuthResult(user)
             : Result<AuthDto>.Failure(ErrorMessages.RecoveryFailed());
@@ -134,7 +137,8 @@ public class AuthService(StudHunterDbContext context,
             issuer: configuration["Jwt:Issuer"],
             audience: configuration["Jwt:Audience"],
             claims: claims,
-            expires: DateTime.UtcNow.AddDays(7),  // TODO: изменить период действия токена
+            // expires: DateTime.UtcNow.AddDays(7),  // TODO: изменить период действия токена
+            expires: DateTime.UtcNow.AddMinutes(15),
             signingCredentials: new SigningCredentials(key, SecurityAlgorithms.HmacSha256)
         );
 

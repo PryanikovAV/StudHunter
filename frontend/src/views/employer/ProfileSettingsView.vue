@@ -5,12 +5,14 @@ import apiClient from '@/api'
 import AppCard from '@/components/AppCard.vue'
 import SecuritySettingsCard from '@/components/SecuritySettingsCard.vue'
 import type { EmployerDto } from '@/types/employer'
+import { useUserStore } from '@/stores/user'
 
 const profile = ref<EmployerDto | null>(null)
 const isLoading = ref(true)
 const isSavingProfile = ref(false)
 
 const router = useRouter()
+const userStore = useUserStore()
 
 const securityCardRef = ref<InstanceType<typeof SecuritySettingsCard> | null>(null)
 const isSavingPassword = ref(false)
@@ -20,11 +22,9 @@ const handleUpdatePassword = async (payload: { currentPassword: string; newPassw
   isSavingPassword.value = true
   try {
     await apiClient.put('/employers/me/password', payload)
-    window.alert('Пароль успешно изменен!')
     if (securityCardRef.value) securityCardRef.value.resetPasswordForm()
   } catch (error) {
     console.error('Ошибка изменения пароля', error)
-    window.alert('Не удалось изменить пароль. Проверьте текущий пароль.')
   } finally {
     isSavingPassword.value = false
   }
@@ -37,10 +37,10 @@ const handleDeleteAccount = async (password: string) => {
     if (securityCardRef.value) securityCardRef.value.closeDeleteModal()
     localStorage.removeItem('token')
     localStorage.removeItem('userRole')
+    userStore.clearProfile()
     router.push('/login')
   } catch (error) {
     console.error('Ошибка удаления', error)
-    window.alert('Не удалось удалить аккаунт. Возможно, неверный пароль.')
   } finally {
     isDeleting.value = false
   }
@@ -63,6 +63,8 @@ const fetchProfile = async () => {
     profile.value = profileRes.data
     dictionaries.value.cities = citiesRes.data
     dictionaries.value.specializations = specsRes.data
+
+    userStore.updateProfileLocally(profileRes.data as unknown as Record<string, unknown>)
   } catch (error) {
     console.error('Ошибка загрузки профиля или словарей', error)
   } finally {
@@ -88,11 +90,21 @@ const saveProfileData = async () => {
       legalAddress: profile.value.legalAddress,
       actualAddress: profile.value.actualAddress,
     }
+
     await apiClient.put('/employers/me/profile', payload)
-    window.alert('Профиль компании успешно обновлен!')
+
+    const cityName = dictionaries.value.cities.find((c) => c.id === payload.cityId)?.name || null
+    const specializationName =
+      dictionaries.value.specializations.find((s) => s.id === payload.specializationId)?.name ||
+      null
+
+    userStore.updateProfileLocally({
+      ...payload,
+      cityName,
+      specializationName,
+    } as unknown as Record<string, unknown>)
   } catch (error) {
     console.error('Ошибка сохранения профиля', error)
-    window.alert('Не удалось сохранить изменения.')
   } finally {
     isSavingProfile.value = false
   }

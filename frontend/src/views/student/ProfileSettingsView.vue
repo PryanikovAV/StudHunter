@@ -6,12 +6,14 @@ import AppCard from '@/components/AppCard.vue'
 import AppTagAutocomplete from '@/components/AppTagAutocomplete.vue'
 import SecuritySettingsCard from '@/components/SecuritySettingsCard.vue'
 import type { StudentProfileDto } from '@/types/student'
+import { useUserStore } from '@/stores/user'
 
 const profile = ref<StudentProfileDto | null>(null)
 const isLoading = ref(true)
 const isSaving = ref(false)
 
 const router = useRouter()
+const userStore = useUserStore()
 
 const securityCardRef = ref<InstanceType<typeof SecuritySettingsCard> | null>(null)
 const isSavingPassword = ref(false)
@@ -21,11 +23,9 @@ const handleUpdatePassword = async (payload: { currentPassword: string; newPassw
   isSavingPassword.value = true
   try {
     await apiClient.put('/student/me/password', payload)
-    window.alert('Пароль успешно изменен!')
     if (securityCardRef.value) securityCardRef.value.resetPasswordForm()
   } catch (error) {
     console.error('Ошибка изменения пароля', error)
-    window.alert('Не удалось изменить пароль. Проверьте текущий пароль.')
   } finally {
     isSavingPassword.value = false
   }
@@ -38,10 +38,10 @@ const handleDeleteAccount = async (password: string) => {
     if (securityCardRef.value) securityCardRef.value.closeDeleteModal()
     localStorage.removeItem('token')
     localStorage.removeItem('userRole')
+    userStore.clearProfile()
     router.push('/login')
   } catch (error) {
     console.error('Ошибка удаления аккаунта', error)
-    window.alert('Не удалось удалить аккаунт. Проверьте пароль.')
   } finally {
     isDeleting.value = false
   }
@@ -127,6 +127,9 @@ const fetchProfile = async () => {
     const response = await apiClient.get<StudentProfileDto>('/students/me/profile')
     profile.value = response.data
     if (!profile.value.courses) profile.value.courses = []
+
+    userStore.updateProfileLocally(response.data as unknown as Record<string, unknown>)
+
     await fetchDictionaries()
   } catch (error) {
     console.error('Ошибка загрузки профиля', error)
@@ -143,11 +146,34 @@ const saveProfile = async () => {
       ...profile.value,
       courseIds: profile.value.courses.map((c) => c.id),
     }
+
     await apiClient.put('/students/me/profile', payload)
-    window.alert('Профиль успешно обновлен')
+
+    const cityName = dictionaries.value.cities.find((c) => c.id === payload.cityId)?.name || null
+    const universityName =
+      dictionaries.value.universities.find((u) => u.id === payload.universityId)?.name || null
+    const facultyName =
+      dictionaries.value.faculties.find((f) => f.id === payload.facultyId)?.name || null
+    const departmentName =
+      dictionaries.value.departments.find((d) => d.id === payload.departmentId)?.name || null
+    const studyDirectionName =
+      dictionaries.value.directions.find((d) => d.id === payload.studyDirectionId)?.name || null
+
+    const nameParts = [payload.lastName, payload.firstName]
+    if (payload.patronymic) nameParts.push(payload.patronymic)
+    const fullName = nameParts.join(' ')
+
+    userStore.updateProfileLocally({
+      ...payload,
+      fullName,
+      cityName,
+      universityName,
+      facultyName,
+      departmentName,
+      studyDirectionName,
+    } as unknown as Record<string, unknown>)
   } catch (error) {
     console.error('Ошибка сохранения', error)
-    window.alert('Не удалось сохранить изменения')
   } finally {
     isSaving.value = false
   }

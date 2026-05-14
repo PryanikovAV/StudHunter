@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { ref, onMounted, computed } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
+import { useToast } from 'vue-toastification'
 import apiClient from '@/api'
 import AppCard from '@/components/AppCard.vue'
 import BackButton from '@/components/BackButton.vue'
@@ -13,6 +14,8 @@ import type { ResumeDocumentDto } from '@/types/resume'
 
 const route = useRoute()
 const router = useRouter()
+const toast = useToast()
+
 const studentId = computed(() => route.params.id as string)
 
 const resume = ref<ResumeDocumentDto | null>(null)
@@ -52,7 +55,6 @@ const fetchResume = async () => {
     } as ResumeDocumentDto
   } catch (error) {
     console.error('Ошибка загрузки резюме:', error)
-    alert('Не удалось загрузить профиль студента. Возможно, он скрыт.')
     router.push('/')
   } finally {
     isLoading.value = false
@@ -74,7 +76,9 @@ const loadMyVacancies = async () => {
 const openInviteModal = async () => {
   await loadMyVacancies()
   if (myVacancies.value.length === 0) {
-    alert('У вас нет активных вакансий! Сначала создайте вакансию, чтобы пригласить кандидата.')
+    toast.warning(
+      'У вас нет активных вакансий! Сначала создайте вакансию, чтобы пригласить кандидата.',
+    )
     router.push('/employer/vacancies')
     return
   }
@@ -89,12 +93,11 @@ const submitInvite = async () => {
       message: inviteMessage.value || null,
     }
     await apiClient.post(`/resumes/${studentId.value}/invite`, payload)
-    alert('Приглашение успешно отправлено!')
+    toast.success('Приглашение успешно отправлено!')
     showInviteModal.value = false
     inviteMessage.value = ''
   } catch (error) {
     console.error('Ошибка отправки приглашения:', error)
-    alert('Не удалось отправить приглашение. Возможно, вы уже приглашали этого кандидата.')
   } finally {
     isInviting.value = false
   }

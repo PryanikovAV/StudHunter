@@ -7,6 +7,7 @@ import apiClient from '@/api'
 import type { ChatDto, MessageDto, ChatParticipantDto } from '@/types/chat'
 import ChatSidebar from '@/components/chat/ChatSidebar.vue'
 import ChatWindow from '@/components/chat/ChatWindow.vue'
+import { useNotificationStore } from '@/stores/notifications'
 
 const route = useRoute()
 const router = useRouter()
@@ -138,7 +139,38 @@ const initChatFromUrl = async () => {
   }
 }
 
+const handleNewMessage = (newMessage: MessageDto) => {
+  const isMyMsg = newMessage.senderId?.toLowerCase() === currentUserId.value?.toLowerCase()
+  const targetChat = chats.value.find((c) => c.interlocutor.id === newMessage.senderId)
+  const isCurrentChatOpen =
+    currentChat.value && (newMessage.senderId === currentChat.value.interlocutor.id || isMyMsg)
+
+  if (isCurrentChatOpen) {
+    messages.value.push(newMessage)
+    if (!isMyMsg) {
+      apiClient.patch(`/chats/${currentChat.value?.id}/read`).catch((e) => console.error(e))
+    }
+  } else {
+    if (targetChat && !isMyMsg) {
+      targetChat.unreadCount = (targetChat.unreadCount || 0) + 1
+    }
+  }
+  if (targetChat) {
+    if (!isMyMsg) {
+      targetChat.lastMessage = newMessage.content
+      targetChat.lastMessageAt = newMessage.sentAt
+    }
+    chats.value = [targetChat, ...chats.value.filter((c) => c.id !== targetChat.id)]
+  }
+  setTimeout(() => {
+    fetchChats(true)
+  }, 500)
+}
+
 onMounted(async () => {
+  const notificationStore = useNotificationStore()
+  notificationStore.clearMessages()
+
   await fetchChats()
   await initChatFromUrl()
 
@@ -146,38 +178,12 @@ onMounted(async () => {
   if (token) {
     await signalrService.startConnection(token)
 
-    signalrService.onReceiveMessage((newMessage) => {
-      const isMyMsg = newMessage.senderId?.toLowerCase() === currentUserId.value?.toLowerCase()
-      const targetChat = chats.value.find((c) => c.interlocutor.id === newMessage.senderId)
-      const isCurrentChatOpen =
-        currentChat.value && (newMessage.senderId === currentChat.value.interlocutor.id || isMyMsg)
-
-      if (isCurrentChatOpen) {
-        messages.value.push(newMessage)
-        if (!isMyMsg) {
-          apiClient.patch(`/chats/${currentChat.value?.id}/read`).catch((e) => console.error(e))
-        }
-      } else {
-        if (targetChat && !isMyMsg) {
-          targetChat.unreadCount = (targetChat.unreadCount || 0) + 1
-        }
-      }
-      if (targetChat) {
-        if (!isMyMsg) {
-          targetChat.lastMessage = newMessage.content
-          targetChat.lastMessageAt = newMessage.sentAt
-        }
-        chats.value = [targetChat, ...chats.value.filter((c) => c.id !== targetChat.id)]
-      }
-      setTimeout(() => {
-        fetchChats(true)
-      }, 500)
-    })
+    signalrService.onReceiveMessage(handleNewMessage)
   }
 })
 
 onUnmounted(() => {
-  signalrService.stopConnection()
+  signalrService.offReceiveMessage(handleNewMessage)
 })
 </script>
 
@@ -204,27 +210,16 @@ onUnmounted(() => {
 </template>
 
 <style scoped>
-/* .chat-page-root {
-  display: flex;
-  flex-direction: column;
-  height: calc(100vh - 380px);
-  min-height: 500px;
-  max-width: 900px;
-  width: 100%;
-  margin: 0 auto 32px auto;
-} */
 .chat-page-root {
   display: flex;
   flex-direction: column;
-  height: calc(100vh - 380px);
+  /* height: calc(100vh - 380px); */
+  height: 60vh;
   min-height: 500px;
   max-width: 900px;
   width: 100%;
   margin: 0 auto 32px auto;
-  padding: 0 20px; /* Добавлен аккуратный отступ от краев экрана */
-}
-.chat-page-root.is-employer {
-  height: calc(100vh - 430px);
+  padding: 0 20px;
 }
 
 .page-title {

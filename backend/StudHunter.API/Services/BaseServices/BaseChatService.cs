@@ -41,7 +41,10 @@ public abstract class BaseChatService(StudHunterDbContext context, IRegistration
 
         var stageReceiverCheck = EnsureCanPerform(receiver, UserAction.SendMessage);
         if (!stageReceiverCheck.IsSuccess)
-            return stageReceiverCheck;
+        {
+            string roleName = GetRole(receiver) == UserRoles.Employer ? "работодателя" : "студента";
+            return Result<bool>.Failure($"Невозможно отправить сообщение: профиль {roleName} не активен или ожидает подтверждения модератором.", StatusCodes.Status403Forbidden);
+        }
 
         var blackListCheck = await EnsureCommunicationAllowedAsync(senderId, receiverId);
         if (!blackListCheck.IsSuccess)

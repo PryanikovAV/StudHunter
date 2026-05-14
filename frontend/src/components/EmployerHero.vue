@@ -1,11 +1,12 @@
 <script setup lang="ts">
-import { ref, onMounted, computed } from 'vue'
+import { ref, onMounted, computed, watch } from 'vue'
 import { useToast } from 'vue-toastification'
 import apiClient from '@/api'
 import AppCard from '@/components/AppCard.vue'
 import IconBuilding from '@/components/icons/IconBuilding.vue'
 import InteractionButtons from '@/components/InteractionButtons.vue'
 import type { EmployerHeroDto } from '@/types/employer'
+import { useUserStore } from '@/stores/user' // <-- Импорт Pinia
 
 const props = withDefaults(
   defineProps<{
@@ -21,7 +22,7 @@ const props = withDefaults(
 )
 
 const toast = useToast()
-// const isDev = import.meta.env.DEV // TODO: вернуть на релизе
+const userStore = useUserStore() // <-- Инициализация Store
 const heroData = ref<EmployerHeroDto | null>(null)
 const isLoading = ref(true)
 const fileInput = ref<HTMLInputElement | null>(null)
@@ -51,6 +52,10 @@ const loadHeroData = async () => {
 
     const response = await apiClient.get<EmployerHeroDto>(endpoint)
     heroData.value = response.data
+
+    if (!props.employerId) {
+      userStore.updateProfileLocally(response.data as unknown as Record<string, unknown>)
+    }
   } catch (err) {
     console.error('Employer Hero load error:', err)
   } finally {
@@ -60,6 +65,16 @@ const loadHeroData = async () => {
 
 onMounted(loadHeroData)
 defineExpose({ loadHeroData })
+
+watch(
+  () => userStore.profile,
+  (newProfile) => {
+    if (!props.employerId && newProfile && heroData.value) {
+      heroData.value = { ...heroData.value, ...newProfile } as EmployerHeroDto
+    }
+  },
+  { deep: true },
+)
 
 const vacanciesText = computed(() => {
   const count = heroData.value?.activeVacanciesCount || 0
@@ -158,11 +173,7 @@ const handleFileSelect = async (event: Event) => {
         <template v-else>
           <div class="col-main">
             <div class="title-row">
-              <h1 class="page-title">{{ heroData.name }}</h1>
-              <div class="status-indicator" :class="statusInfo.colorClass">
-                <span class="status-dot"></span>
-                <span class="status-text">{{ statusInfo.text }}</span>
-              </div>
+              <h1 class="page-title" :title="heroData.name">{{ heroData.name }}</h1>
             </div>
 
             <h2 class="specialization-name" v-if="heroData.specializationName">
@@ -225,12 +236,6 @@ const handleFileSelect = async (event: Event) => {
           </div>
 
           <div class="col-visual">
-            <!-- <div
-              class="debug-wrapper"
-              v-if="isDev && !readonlyMode"
-              title="Сменить стадию аккредитации"
-            > -->
-            <!-- TODO: вернуть на релизе -->
             <div class="debug-wrapper" v-if="!readonlyMode" title="Сменить стадию аккредитации">
               <span class="debug-badge">DEBUG</span>
               <select
@@ -260,6 +265,11 @@ const handleFileSelect = async (event: Event) => {
             </div>
 
             <p class="vacancies-count">{{ vacanciesText }}</p>
+
+            <div class="status-indicator" :class="statusInfo.colorClass">
+              <span class="status-dot"></span>
+              <span class="status-text">{{ statusInfo.text }}</span>
+            </div>
 
             <div class="employer-actions" v-if="showInteractions && heroData.id">
               <InteractionButtons
@@ -297,6 +307,7 @@ const handleFileSelect = async (event: Event) => {
   display: flex;
   flex-direction: column;
   gap: 8px;
+  min-width: 0;
 }
 .title-row {
   display: flex;
@@ -310,6 +321,13 @@ const handleFileSelect = async (event: Event) => {
   font-weight: 700;
   line-height: 1.2;
   color: var(--dark-text);
+
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 .specialization-name {
   font-size: 15px;

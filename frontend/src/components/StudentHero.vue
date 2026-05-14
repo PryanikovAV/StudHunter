@@ -1,19 +1,25 @@
 <script setup lang="ts">
-import { ref, onMounted, computed } from 'vue'
+import { ref, onMounted, computed, watch } from 'vue'
+import { useToast } from 'vue-toastification'
 import { calculateAge } from '@/utils/dateUtils'
 import apiClient from '@/api'
 import AppCard from '@/components/AppCard.vue'
 import type { StudentHeroDto } from '@/types/student'
+import { useUserStore } from '@/stores/user'
 
 const heroData = ref<StudentHeroDto | null>(null)
 const isLoading = ref(true)
 const fileInput = ref<HTMLInputElement | null>(null)
 const isUploading = ref(false)
 
+const toast = useToast()
+const userStore = useUserStore()
+
 const fetchHeroData = async () => {
   try {
     const response = await apiClient.get<StudentHeroDto>('/students/me/hero')
     heroData.value = response.data
+    userStore.updateProfileLocally(response.data as unknown as Record<string, unknown>)
   } catch (err) {
     console.error('Hero load error:', err)
   }
@@ -23,6 +29,16 @@ onMounted(async () => {
   await fetchHeroData()
   isLoading.value = false
 })
+
+watch(
+  () => userStore.profile,
+  (newProfile) => {
+    if (newProfile && heroData.value) {
+      heroData.value = { ...heroData.value, ...newProfile } as StudentHeroDto
+    }
+  },
+  { deep: true },
+)
 
 const ageDisplay = computed(() => calculateAge(heroData.value?.birthDate))
 
@@ -69,13 +85,12 @@ const handleAvatarClick = () => {
 
 const handleFileSelect = async (event: Event) => {
   const target = event.target as HTMLInputElement
-
   const file = target.files?.[0]
 
   if (!file) return
 
   if (file.size > 5 * 1024 * 1024) {
-    window.alert('Размер файла не должен превышать 5 Мб')
+    toast.warning('Размер файла не должен превышать 5 Мб')
     return
   }
 
@@ -95,7 +110,6 @@ const handleFileSelect = async (event: Event) => {
     await fetchHeroData()
   } catch (error) {
     console.error('Ошибка при обновлении аватара:', error)
-    window.alert('Не удалось обновить фотографию.')
   } finally {
     isUploading.value = false
     if (fileInput.value) fileInput.value.value = ''
@@ -165,7 +179,6 @@ const handleFileSelect = async (event: Event) => {
   align-items: center;
   width: 100%;
 }
-
 .hero-message {
   grid-column: 1 / -1;
   text-align: center;
@@ -175,34 +188,29 @@ const handleFileSelect = async (event: Event) => {
 .hero-message.error {
   color: var(--red-text-error);
 }
-
 .col-personal {
   display: flex;
   flex-direction: column;
   align-items: flex-start;
   gap: 8px;
 }
-
 .page-title {
   margin: 0;
   font-size: 24px;
   line-height: 1.3;
   color: var(--dark-text);
 }
-
 .text-muted {
   font-size: 15px;
   color: var(--gray-text);
   margin-top: auto;
 }
-
 .col-study {
   display: flex;
   flex-direction: column;
   align-items: center;
   text-align: center;
 }
-
 .uni-name {
   font-size: 18px;
   font-weight: 700;
@@ -210,26 +218,22 @@ const handleFileSelect = async (event: Event) => {
   margin: 0 0 8px 0;
   line-height: 1.3;
 }
-
 .study-info p {
   margin: 0 0 4px 0;
   font-size: 15px;
   color: var(--gray-text-focus);
   line-height: 1.4;
 }
-
 .course-num {
   color: var(--dark-text);
   font-weight: 500;
 }
-
 .col-visual {
   display: flex;
   flex-direction: column;
   align-items: flex-end;
   gap: 8px;
 }
-
 .avatar {
   position: relative;
   width: 80px;
@@ -239,13 +243,11 @@ const handleFileSelect = async (event: Event) => {
   background-color: var(--background-page);
   cursor: pointer;
 }
-
 .avatar img {
   width: 100%;
   height: 100%;
   object-fit: cover;
 }
-
 .avatar-placeholder {
   width: 100%;
   height: 100%;
@@ -257,7 +259,6 @@ const handleFileSelect = async (event: Event) => {
   font-size: 24px;
   font-weight: 600;
 }
-
 .avatar-overlay {
   position: absolute;
   inset: 0;
@@ -268,23 +269,19 @@ const handleFileSelect = async (event: Event) => {
   opacity: 0;
   transition: opacity 0.2s ease;
 }
-
 .avatar:hover .avatar-overlay {
   opacity: 1;
 }
-
 .avatar.is-loading .avatar-overlay {
   opacity: 1;
   background: rgba(0, 0, 0, 0.8);
 }
-
 .overlay-text {
   color: #fff;
   font-size: 12px;
   font-weight: 500;
   text-align: center;
 }
-
 .status-text {
   font-size: 13px;
   color: var(--gray-text);
@@ -292,22 +289,18 @@ const handleFileSelect = async (event: Event) => {
   text-align: center;
   width: 80px;
 }
-
 @media (max-width: 768px) {
   .hero-grid {
     grid-template-columns: 1fr;
     gap: 20px;
     text-align: center;
   }
-
   .col-personal {
     align-items: center;
   }
-
   .col-visual {
     align-items: center;
   }
-
   .col-study {
     padding-top: 16px;
     border-top: 1px solid var(--gray-border);

@@ -1,7 +1,7 @@
 import axios from 'axios'
-import { createToastInterface } from 'vue-toastification'
+import { useToast } from 'vue-toastification'
 
-const toast = createToastInterface()
+const toast = useToast()
 
 const apiClient = axios.create({
   baseURL: '/api/v1',
@@ -50,6 +50,8 @@ apiClient.interceptors.response.use(
         errorMessage = data.detail
       } else if (data.title) {
         errorMessage = data.title
+      } else if (typeof data === 'string') {
+        errorMessage = data
       }
     }
 
@@ -58,6 +60,8 @@ apiClient.interceptors.response.use(
         toast.error(errorMessage)
         break
       case 401:
+        localStorage.removeItem('token')
+        localStorage.removeItem('userRole')
         toast.error('Ошибка авторизации. Пожалуйста, войдите в систему.')
         break
       case 403:

@@ -20,6 +20,6 @@ public class Notification
         System = 0,             // Системное (тех. работы, новости)
         InvitationIncome = 1,   // Кто-то прислал новый отклик/оффер
         InvitationStatus = 2,   // Статус вашего отклика изменился
-        ChatMessage = 3         // Новое сообщение в чате
+        // ChatMessage = 3         // Новое сообщение в чате
     }
 }
